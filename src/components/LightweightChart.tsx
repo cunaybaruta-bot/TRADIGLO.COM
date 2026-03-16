@@ -1631,34 +1631,30 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           <div className="w-px self-stretch bg-white/10 mx-1 flex-shrink-0" />
 
           {/* ── Indicators dropdown toggle ── */}
-          <div className="relative flex-shrink-0">
-            <IndicatorDropdown
-              buttons={INDICATOR_BUTTONS}
-              activeIndicators={activeIndicators}
-              onToggle={toggleIndicator}
-            />
-          </div>
+          <IndicatorDropdown
+            buttons={INDICATOR_BUTTONS}
+            activeIndicators={activeIndicators}
+            onToggle={toggleIndicator}
+          />
 
           {/* ── Divider ── */}
           <div className="w-px self-stretch bg-white/10 mx-1 flex-shrink-0" />
 
           {/* ── Drawing tools dropdown toggle ── */}
-          <div className="relative flex-shrink-0">
-            <DrawingDropdown
-              tools={DRAWING_TOOLS}
-              activeTool={activeTool}
-              drawColor={drawColor}
-              drawings={drawings}
-              pendingTrendP1={pendingTrendP1}
-              onToggleTool={toggleDrawingTool}
-              onColorChange={setDrawColor}
-              onClearAll={() => {
-                setDrawings([]);
-                setPendingTrendP1(null);
-                setPendingMousePos(null);
-              }}
-            />
-          </div>
+          <DrawingDropdown
+            tools={DRAWING_TOOLS}
+            activeTool={activeTool}
+            drawColor={drawColor}
+            drawings={drawings}
+            pendingTrendP1={pendingTrendP1}
+            onToggleTool={toggleDrawingTool}
+            onColorChange={setDrawColor}
+            onClearAll={() => {
+              setDrawings([]);
+              setPendingTrendP1(null);
+              setPendingMousePos(null);
+            }}
+          />
         </div>
 
         {/* Main chart container + canvas overlay */}
@@ -1775,21 +1771,32 @@ interface IndicatorDropdownProps {
 function IndicatorDropdown({ buttons, activeIndicators, onToggle }: IndicatorDropdownProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [dropPos, setDropPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const activeCount = buttons.filter(b => activeIndicators.has(b.key)).length;
 
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node) && btnRef.current && !btnRef.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
+  const handleOpen = () => {
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setDropPos({ top: rect.bottom + 4, left: rect.left });
+    }
+    setOpen(v => !v);
+  };
+
   return (
-    <div ref={ref} className="relative">
+    <div className="relative flex-shrink-0">
       <button
-        onClick={() => setOpen(v => !v)}
+        ref={btnRef}
+        onClick={handleOpen}
         title="Indicators"
         className={`flex items-center gap-1 px-2 h-[34px] text-[11px] font-medium transition-all ${
           open || activeCount > 0 ? 'text-indigo-400' : 'text-slate-500 hover:text-slate-200'
@@ -1817,8 +1824,9 @@ function IndicatorDropdown({ buttons, activeIndicators, onToggle }: IndicatorDro
 
       {open && (
         <div
-          className="absolute left-0 top-full mt-1 z-50 rounded-lg border border-white/10 shadow-2xl p-2"
-          style={{ background: '#0f1117', minWidth: 200 }}
+          ref={ref}
+          className="z-[9999] rounded-lg border border-white/10 shadow-2xl p-2"
+          style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, background: '#0f1117', minWidth: 200 }}
         >
           <div className="text-[9px] text-slate-600 uppercase tracking-widest font-semibold px-1 mb-1.5">Indicators</div>
           <div className="grid grid-cols-3 gap-1">
@@ -1861,21 +1869,32 @@ interface DrawingDropdownProps {
 function DrawingDropdown({ tools, activeTool, drawColor, drawings, pendingTrendP1, onToggleTool, onColorChange, onClearAll }: DrawingDropdownProps) {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [dropPos, setDropPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
   const hasActiveTool = activeTool !== null;
 
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node) && btnRef.current && !btnRef.current.contains(e.target as Node)) setOpen(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
+  const handleOpen = () => {
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setDropPos({ top: rect.bottom + 4, left: rect.left });
+    }
+    setOpen(v => !v);
+  };
+
   return (
-    <div ref={ref} className="relative">
+    <div className="relative flex-shrink-0">
       <button
-        onClick={() => setOpen(v => !v)}
+        ref={btnRef}
+        onClick={handleOpen}
         title="Drawing Tools"
         className={`flex items-center gap-1 px-2 h-[34px] text-[11px] font-medium transition-all ${
           open || hasActiveTool ? 'text-indigo-400' : 'text-slate-500 hover:text-slate-200'
@@ -1895,8 +1914,9 @@ function DrawingDropdown({ tools, activeTool, drawColor, drawings, pendingTrendP
 
       {open && (
         <div
-          className="absolute left-0 top-full mt-1 z-50 rounded-lg border border-white/10 shadow-2xl p-2"
-          style={{ background: '#0f1117', minWidth: 180 }}
+          ref={ref}
+          className="z-[9999] rounded-lg border border-white/10 shadow-2xl p-2"
+          style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, background: '#0f1117', minWidth: 180 }}
         >
           <div className="text-[9px] text-slate-600 uppercase tracking-widest font-semibold px-1 mb-1.5">Drawing Tools</div>
           <div className="flex flex-col gap-0.5">
