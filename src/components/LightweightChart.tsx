@@ -1083,8 +1083,8 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
             vertLine: { color: 'rgba(255,255,255,0.2)', labelBackgroundColor: '#1e293b' },
             horzLine: { color: 'rgba(255,255,255,0.2)', labelBackgroundColor: '#1e293b' },
           },
-          rightPriceScale: { borderColor: 'rgba(255,255,255,0.1)', textColor: '#94a3b8' },
-          timeScale: { borderColor: 'rgba(255,255,255,0.1)', timeVisible: true, secondsVisible: false },
+          rightPriceScale: { borderColor: 'rgba(255,255,255,0.1)', textColor: '#94a3b8', scaleMargins: { top: 0.1, bottom: 0.1 } },
+          timeScale: { borderColor: 'rgba(255,255,255,0.1)', timeVisible: true, secondsVisible: false, minBarSpacing: 1 },
           handleScroll: true,
           handleScale: true,
         });
