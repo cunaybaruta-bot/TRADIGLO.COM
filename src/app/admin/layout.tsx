@@ -4,28 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import {
-  HomeIcon,
-  UsersIcon,
-  WalletIcon,
-  ArrowDownTrayIcon,
-  ArrowUpTrayIcon,
-  ChartBarIcon,
-  UserGroupIcon,
-  CpuChipIcon,
-  CubeIcon,
-  DocumentChartBarIcon,
-  ShieldExclamationIcon,
-  CommandLineIcon,
-  ServerIcon,
-  Cog6ToothIcon,
-  BellIcon,
-  ArrowRightOnRectangleIcon,
-  Bars3Icon,
-  XMarkIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-} from '@heroicons/react/24/outline';
+import { HomeIcon, UsersIcon, WalletIcon, ArrowDownTrayIcon, ArrowUpTrayIcon, ChartBarIcon, UserGroupIcon, CpuChipIcon, CubeIcon, DocumentChartBarIcon, ShieldExclamationIcon, CommandLineIcon, ServerIcon, Cog6ToothIcon, BellIcon, ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon, ChevronDownIcon, ChevronRightIcon,  } from '@heroicons/react/24/outline';
+import { NotificationProvider } from '@/contexts/NotificationContext';
+import NotificationBell from '@/components/admin/NotificationBell';
 
 interface SubMenuItem {
   href: string;
@@ -67,9 +48,12 @@ const navItems: NavItem[] = [
     icon: ArrowDownTrayIcon,
     subItems: [
       { href: '/admin/deposits?status=pending', label: 'Pending' },
-      { href: '/admin/deposits?status=completed', label: 'Approved' },
-      { href: '/admin/deposits?status=failed', label: 'Rejected' },
+      { href: '/admin/deposits?status=approved', label: 'Approved' },
+      { href: '/admin/deposits?status=rejected', label: 'Rejected' },
       { href: '/admin/deposits', label: 'All History' },
+      { href: '/admin/payment-methods', label: 'Payment Methods' },
+      { href: '/admin/currency-rates', label: 'Currency Rates' },
+      { href: '/admin/settings/bonus', label: 'Bonus Settings' },
     ],
   },
   {
@@ -97,12 +81,6 @@ const navItems: NavItem[] = [
     href: '/admin/copy-trading',
     label: 'Copy Trading',
     icon: UserGroupIcon,
-    subItems: [
-      { href: '/admin/copy-trading', label: 'Trader Management' },
-      { href: '/admin/copy-trading/performance', label: 'Strategy Performance' },
-      { href: '/admin/copy-trading/followers', label: 'Followers' },
-      { href: '/admin/copy-trading/settings', label: 'Settings' },
-    ],
   },
   {
     href: '/admin/ai-intelligence',
@@ -164,6 +142,11 @@ const navItems: NavItem[] = [
       { href: '/admin/system/database', label: 'Database Status' },
       { href: '/admin/system/api', label: 'API Performance' },
     ],
+  },
+  {
+    href: '/admin/notifications',
+    label: 'Notifications',
+    icon: BellIcon,
   },
   {
     href: '/admin/settings',
@@ -254,8 +237,30 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   const isSubItemActive = (sub: SubMenuItem) => {
-    const path = sub.href.split('?')[0];
-    return pathname === path;
+    const subPath = sub.href.split('?')[0];
+    const subQuery = sub.href.includes('?') ? sub.href.split('?')[1] : null;
+
+    // For items with query params (e.g. ?status=pending), match both path AND query
+    if (subQuery) {
+      const currentSearch = typeof window !== 'undefined' ? window.location.search.replace('?', '') : '';
+      return pathname === subPath && currentSearch === subQuery;
+    }
+
+    // For items without query params, match exact path only
+    // But for parent-like paths (e.g. /admin/deposits), only match if no query string is present
+    if (pathname === subPath) {
+      if (typeof window !== 'undefined' && window.location.search) {
+        return false; // path matches but there's a query string — don't highlight "All History"
+      }
+      return true;
+    }
+
+    // For sub-pages like /admin/payment-methods
+    if (subPath !== '/admin/deposits' && subPath !== '/admin/withdrawals') {
+      return pathname === subPath || pathname.startsWith(subPath + '/');
+    }
+
+    return false;
   };
 
   if (isLoginPage) return <>{children}</>;
@@ -269,135 +274,137 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen bg-[#0f172a] flex">
-      {/* Mobile overlay */}
-      {sidebarOpen && (
-        <div className="fixed inset-0 bg-black/60 z-20 lg:hidden" onClick={() => setSidebarOpen(false)} />
-      )}
+    <NotificationProvider>
+      <div className="min-h-screen bg-[#0f172a] flex">
+        {/* Mobile overlay */}
+        {sidebarOpen && (
+          <div className="fixed inset-0 bg-black/60 z-20 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        )}
 
-      {/* Sidebar */}
-      <aside
-        className={`fixed top-0 left-0 h-full w-64 bg-[#1e293b] z-30 flex flex-col transform transition-transform duration-300
-          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:z-auto`}
-      >
-        {/* Logo */}
-        <div className="flex items-center gap-3 px-4 py-4 border-b border-slate-700 flex-shrink-0">
-          <div className="w-9 h-9 rounded-lg bg-[#22c55e] flex items-center justify-center flex-shrink-0">
-            <span className="text-black font-bold text-sm">I</span>
-          </div>
-          <div className="min-w-0">
-            <div className="text-white font-bold text-base leading-tight">Investoft</div>
-            <div className="text-slate-400 text-xs">Admin Panel</div>
-          </div>
-          <button className="ml-auto lg:hidden text-slate-400 hover:text-white" onClick={() => setSidebarOpen(false)}>
-            <XMarkIcon className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Nav */}
-        <nav className="flex-1 px-2 py-3 overflow-y-auto space-y-0.5">
-          {navItems.map((item) => {
-            const isActive = isItemActive(item);
-            const isExpanded = expandedMenus.has(item.href);
-            const hasSubItems = item.subItems && item.subItems.length > 0;
-
-            return (
-              <div key={item.href}>
-                {hasSubItems ? (
-                  <button
-                    onClick={() => toggleMenu(item.href)}
-                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                      ${isActive
-                        ? 'bg-[#22c55e]/10 text-[#22c55e]'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
-                      }`}
-                  >
-                    <item.icon className="w-4 h-4 flex-shrink-0" />
-                    <span className="flex-1 text-left truncate">{item.label}</span>
-                    {isExpanded
-                      ? <ChevronDownIcon className="w-3.5 h-3.5 flex-shrink-0" />
-                      : <ChevronRightIcon className="w-3.5 h-3.5 flex-shrink-0" />
-                    }
-                  </button>
-                ) : (
-                  <Link
-                    href={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
-                      ${isActive
-                        ? 'bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20'
-                        : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
-                      }`}
-                  >
-                    <item.icon className="w-4 h-4 flex-shrink-0" />
-                    <span className="truncate">{item.label}</span>
-                  </Link>
-                )}
-
-                {/* Sub-menu */}
-                {hasSubItems && isExpanded && (
-                  <div className="ml-4 mt-0.5 space-y-0.5 border-l border-slate-700 pl-3">
-                    {item.subItems!.map((sub) => (
-                      <Link
-                        key={sub.href}
-                        href={sub.href}
-                        onClick={() => setSidebarOpen(false)}
-                        className={`flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-medium transition-colors
-                          ${isSubItemActive(sub)
-                            ? 'text-[#22c55e] bg-[#22c55e]/5'
-                            : 'text-slate-500 hover:text-slate-300 hover:bg-slate-700/30'
-                          }`}
-                      >
-                        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isSubItemActive(sub) ? 'bg-[#22c55e]' : 'bg-slate-600'}`} />
-                        {sub.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </nav>
-
-        {/* Logout */}
-        <div className="px-2 py-3 border-t border-slate-700 flex-shrink-0">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-400/10 transition-colors w-full"
-          >
-            <ArrowRightOnRectangleIcon className="w-4 h-4" />
-            Logout
-          </button>
-        </div>
-      </aside>
-
-      {/* Main */}
-      <div className="flex-1 flex flex-col min-w-0 lg:ml-0">
-        {/* Top bar */}
-        <header className="bg-[#1e293b] border-b border-slate-700 px-4 lg:px-6 py-4 flex items-center gap-4 sticky top-0 z-10">
-          <button className="lg:hidden text-slate-400 hover:text-white" onClick={() => setSidebarOpen(true)}>
-            <Bars3Icon className="w-6 h-6" />
-          </button>
-          <div className="flex-1">
-            <h1 className="text-white font-semibold text-base">Investoft Admin Panel</h1>
-          </div>
-          <button className="relative text-slate-400 hover:text-white transition-colors">
-            <BellIcon className="w-6 h-6" />
-            <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#22c55e] rounded-full text-[10px] text-black font-bold flex items-center justify-center">!</span>
-          </button>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-[#22c55e]/20 border border-[#22c55e]/30 flex items-center justify-center">
-              <span className="text-[#22c55e] text-xs font-bold">{adminEmail.charAt(0).toUpperCase()}</span>
+        {/* Sidebar */}
+        <aside
+          className={`fixed top-0 left-0 h-full w-64 bg-[#1e293b] z-30 flex flex-col transform transition-transform duration-300
+            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 lg:static lg:z-auto`}
+        >
+          {/* Logo */}
+          <div className="flex items-center gap-3 px-4 py-4 border-b border-slate-700 flex-shrink-0">
+            <div className="w-9 h-9 rounded-lg bg-[#22c55e] flex items-center justify-center flex-shrink-0">
+              <span className="text-black font-bold text-sm">I</span>
             </div>
-            <span className="text-slate-300 text-sm hidden sm:block max-w-[150px] truncate">{adminEmail}</span>
+            <div className="min-w-0">
+              <div className="text-white font-bold text-base leading-tight">Investoft</div>
+              <div className="text-slate-400 text-xs">Admin Panel</div>
+            </div>
+            <button className="ml-auto lg:hidden text-slate-400 hover:text-white" onClick={() => setSidebarOpen(false)}>
+              <XMarkIcon className="w-5 h-5" />
+            </button>
           </div>
-        </header>
 
-        {/* Page content */}
-        <main className="flex-1 p-4 lg:p-6 overflow-auto">
-          {children}
-        </main>
+          {/* Nav */}
+          <nav className="flex-1 px-2 py-3 overflow-y-auto space-y-0.5">
+            {navItems.map((item) => {
+              const isActive = isItemActive(item);
+              const isExpanded = expandedMenus.has(item.href);
+              const hasSubItems = item.subItems && item.subItems.length > 0;
+
+              return (
+                <div key={item.href}>
+                  {hasSubItems ? (
+                    <button
+                      onClick={() => toggleMenu(item.href)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                        ${isActive
+                          ? 'bg-[#22c55e]/10 text-[#22c55e]'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                        }`}
+                    >
+                      <item.icon className="w-4 h-4 flex-shrink-0" />
+                      <span className="flex-1 text-left truncate">{item.label}</span>
+                      {isExpanded
+                        ? <ChevronDownIcon className="w-3.5 h-3.5 flex-shrink-0" />
+                        : <ChevronRightIcon className="w-3.5 h-3.5 flex-shrink-0" />
+                      }
+                    </button>
+                  ) : (
+                    <Link
+                      href={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
+                        ${isActive
+                          ? 'bg-[#22c55e]/10 text-[#22c55e] border border-[#22c55e]/20'
+                          : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+                        }`}
+                    >
+                      <item.icon className="w-4 h-4 flex-shrink-0" />
+                      <span className="truncate">{item.label}</span>
+                    </Link>
+                  )}
+
+                  {/* Sub-menu */}
+                  {hasSubItems && isExpanded && (
+                    <div className="ml-4 mt-0.5 space-y-0.5 border-l border-slate-700 pl-3">
+                      {item.subItems!.map((sub) => {
+                        const subActive = isSubItemActive(sub);
+                        return (
+                          <Link
+                            key={sub.href}
+                            href={sub.href}
+                            onClick={() => setSidebarOpen(false)}
+                            className={`flex items-center gap-2 px-2 py-2 rounded-lg text-xs font-medium transition-colors
+                              ${subActive
+                                ? 'text-[#22c55e] bg-[#22c55e]/5'
+                                : 'text-slate-500 hover:text-slate-300 hover:bg-slate-700/30'
+                              }`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${subActive ? 'bg-[#22c55e]' : 'bg-slate-600'}`} />
+                            {sub.label}
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </nav>
+
+          {/* Logout */}
+          <div className="px-2 py-3 border-t border-slate-700 flex-shrink-0">
+            <button
+              onClick={handleLogout}
+              className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-400/10 transition-colors w-full"
+            >
+              <ArrowRightOnRectangleIcon className="w-4 h-4" />
+              Logout
+            </button>
+          </div>
+        </aside>
+
+        {/* Main */}
+        <div className="flex-1 flex flex-col min-w-0 lg:ml-0">
+          {/* Top bar */}
+          <header className="bg-[#1e293b] border-b border-slate-700 px-4 lg:px-6 py-4 flex items-center gap-4 sticky top-0 z-10">
+            <button className="lg:hidden text-slate-400 hover:text-white" onClick={() => setSidebarOpen(true)}>
+              <Bars3Icon className="w-6 h-6" />
+            </button>
+            <div className="flex-1">
+              <h1 className="text-white font-semibold text-base">Investoft Admin Panel</h1>
+            </div>
+            <NotificationBell />
+            <div className="flex items-center gap-2">
+              <div className="w-8 h-8 rounded-full bg-[#22c55e]/20 border border-[#22c55e]/30 flex items-center justify-center">
+                <span className="text-[#22c55e] text-xs font-bold">{adminEmail.charAt(0).toUpperCase()}</span>
+              </div>
+              <span className="text-slate-300 text-sm hidden sm:block max-w-[150px] truncate">{adminEmail}</span>
+            </div>
+          </header>
+
+          {/* Page content */}
+          <main className="flex-1 p-4 lg:p-6 overflow-auto">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </NotificationProvider>
   );
 }

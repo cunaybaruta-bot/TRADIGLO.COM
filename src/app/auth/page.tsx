@@ -114,7 +114,8 @@ function FloatingBackground() {
       fadeTarget: null,
     }));
 
-    const FADE_SPEED = 0.003; // opacity change per ms
+    const FADE_SPEED = 0.0018; // opacity change per ms — slower for smoother feel
+    const FADE_ZONE = 120;    // px from edge where fade out begins
     const EDGE_MARGIN = 5;
 
     let lastTime = performance.now();
@@ -140,6 +141,9 @@ function FloatingBackground() {
             fading = 'in';
             fadeTarget = null;
           }
+          // Keep moving while fading out
+          x += vx * delta;
+          y += vy * delta;
           return { ...p, x, y, vx, vy, opacity, fading, fadeTarget };
         }
 
@@ -158,19 +162,26 @@ function FloatingBackground() {
         x += vx * delta;
         y += vy * delta;
 
-        // Check if reaching edge — start fade out and compute opposite entry point
-        const hitLeft   = x <= EDGE_MARGIN;
-        const hitRight  = x + p.size >= cW - EDGE_MARGIN;
-        const hitTop    = y <= EDGE_MARGIN;
-        const hitBottom = y + p.size >= cH - 48 - EDGE_MARGIN;
+        // Compute distance to nearest edge
+        const distLeft   = x;
+        const distRight  = cW - (x + p.size);
+        const distTop    = y;
+        const distBottom = (cH - 48) - (y + p.size);
+        const minDist    = Math.min(distLeft, distRight, distTop, distBottom);
 
-        if (hitLeft || hitRight || hitTop || hitBottom) {
+        // Start fade out when within FADE_ZONE of any edge
+        if (minDist <= FADE_ZONE) {
           let tx = x;
           let ty = y;
-          if (hitLeft)   tx = cW - p.size - EDGE_MARGIN - 10;
-          if (hitRight)  tx = EDGE_MARGIN + 10;
-          if (hitTop)    ty = cH - p.size - 48 - EDGE_MARGIN - 10;
-          if (hitBottom) ty = EDGE_MARGIN + 10;
+          // Determine which edge is closest and set teleport target on opposite side
+          if (distLeft <= FADE_ZONE && vx < 0)   { tx = cW - p.size - EDGE_MARGIN - 20; ty = y; }
+          else if (distRight <= FADE_ZONE && vx > 0)  { tx = EDGE_MARGIN + 20; ty = y; }
+          else if (distTop <= FADE_ZONE && vy < 0)    { tx = x; ty = cH - p.size - 48 - EDGE_MARGIN - 20; }
+          else if (distBottom <= FADE_ZONE && vy > 0) { tx = x; ty = EDGE_MARGIN + 20; }
+          else {
+            // Not moving toward the close edge, skip fade
+            return { ...p, x, y, vx, vy, opacity, fading, fadeTarget };
+          }
 
           fading = 'out';
           fadeTarget = { x: tx, y: ty };
@@ -359,6 +370,20 @@ function AuthForm() {
   const [signUpError, setSignUpError] = useState<string | null>(null);
   const [signUpSuccess, setSignUpSuccess] = useState(false);
 
+  const getPasswordStrength = (pwd: string): { level: 0 | 1 | 2 | 3; label: string; color: string; bars: string } => {
+    if (!pwd) return { level: 0, label: '', color: '', bars: '' };
+    let score = 0;
+    if (pwd.length >= 8) score++;
+    if (/[A-Z]/.test(pwd) && /[a-z]/.test(pwd)) score++;
+    if (/[0-9]/.test(pwd)) score++;
+    if (/[^A-Za-z0-9]/.test(pwd)) score++;
+    if (score <= 1) return { level: 1, label: 'Weak', color: 'bg-red-500', bars: 'text-red-400' };
+    if (score === 2 || score === 3) return { level: 2, label: 'Medium', color: 'bg-yellow-400', bars: 'text-yellow-400' };
+    return { level: 3, label: 'Strong', color: 'bg-green-500', bars: 'text-green-400' };
+  };
+
+  const passwordStrength = getPasswordStrength(signUpPassword);
+
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setSignInError(null);
@@ -526,6 +551,23 @@ function AuthForm() {
                         <EyeIcon open={showSignUpPassword} />
                       </button>
                     </div>
+                    {signUpPassword && (
+                      <div className="mt-2">
+                        <div className="flex gap-1 mb-1">
+                          {[1, 2, 3].map((bar) => (
+                            <div
+                              key={bar}
+                              className={`h-1 flex-1 rounded-full transition-all duration-300 ${
+                                passwordStrength.level >= bar ? passwordStrength.color : 'bg-white/10'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                        <p className={`text-xs font-medium ${passwordStrength.bars}`}>
+                          {passwordStrength.label}
+                        </p>
+                      </div>
+                    )}
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-400 mb-1.5">Confirm Password</label>

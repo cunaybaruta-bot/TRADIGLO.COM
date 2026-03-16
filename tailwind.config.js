@@ -26,6 +26,8 @@ module.exports = {
       },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
+        mono: ['"Geist Mono"', 'ui-monospace', 'monospace'],
+        numeric: ['"Geist Mono"', 'ui-monospace', 'monospace'],
       },
       animation: {
         'float-bonus': 'floatBonus 3s ease-in-out infinite',
