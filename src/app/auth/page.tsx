@@ -448,12 +448,29 @@ function AuthForm() {
         >
           {/* Heading */}
           <div className="flex justify-center mb-6">
-            <a href="/" className="cursor-pointer">
-              <img
-                src="/assets/images/LOGO_BARU_TANPA_BACKGROUND-1773102064187.png"
-                alt="Investoft Logo"
-                className="h-12 object-contain"
+            <a href="/" className="cursor-pointer flex items-center gap-1">
+              <div
+                style={{
+                  width: 28,
+                  height: 28,
+                  background: 'linear-gradient(to right, #60a5fa, #6366f1, #a855f7)',
+                  WebkitMaskImage: 'url(/assets/images/chart-646_1024-1773102864640.png)',
+                  WebkitMaskSize: 'contain',
+                  WebkitMaskRepeat: 'no-repeat',
+                  WebkitMaskPosition: 'center',
+                  maskImage: 'url(/assets/images/chart-646_1024-1773102864640.png)',
+                  maskSize: 'contain',
+                  maskRepeat: 'no-repeat',
+                  maskPosition: 'center',
+                }}
+                className="h-7 w-7 flex-shrink-0"
               />
+              <span
+                style={{ fontFamily: "'Satoshi', 'Inter', sans-serif", fontWeight: 700, letterSpacing: '0.04em' }}
+                className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-500 to-purple-500 text-base tracking-wide select-none"
+              >
+                INVESTOFT
+              </span>
             </a>
           </div>
 
