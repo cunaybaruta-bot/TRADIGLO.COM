@@ -89,23 +89,24 @@ export default function DashboardTopBar({
 
       {/* Center: Single balance toggle */}
       <div className="flex items-center gap-1.5">
-        {/* Demo/Real toggle buttons */}
-        <div className="flex rounded-lg overflow-hidden border border-white/15">
+        {/* Demo/Real Segmented Control */}
+        <div className="relative flex items-center bg-white/5 border border-white/10 rounded-full p-0.5" style={{ minWidth: 112 }}>
+          {/* Sliding background pill */}
+          <span
+            className={`absolute top-0.5 bottom-0.5 rounded-full transition-all duration-300 ease-in-out ${isDemo ? 'bg-blue-600 left-0.5 right-[calc(50%+1px)]' : 'bg-orange-600 left-[calc(50%+1px)] right-0.5'}`}
+            aria-hidden="true"
+          />
           <button
             onClick={() => onToggleDemo(true)}
-            className={`px-2.5 py-1 text-[10px] font-semibold transition-all ${
-              isDemo ? 'bg-blue-600 text-white' : 'bg-transparent text-slate-500 hover:text-slate-300'
-            }`}
+            className={`relative z-10 flex-1 px-3 py-1 text-[10px] font-bold tracking-wide rounded-full transition-colors duration-200 ${isDemo ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
           >
-            Demo
+            DEMO
           </button>
           <button
             onClick={() => onToggleDemo(false)}
-            className={`px-2.5 py-1 text-[10px] font-semibold transition-all ${
-              !isDemo ? 'bg-orange-600 text-white' : 'bg-transparent text-slate-500 hover:text-slate-300'
-            }`}
+            className={`relative z-10 flex-1 px-3 py-1 text-[10px] font-bold tracking-wide rounded-full transition-colors duration-200 ${!isDemo ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
           >
-            Real
+            REAL
           </button>
         </div>
         {/* Active balance display */}
