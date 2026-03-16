@@ -520,7 +520,7 @@ function BottomNav({ active, onChange }: { active: NavSection; onChange: (s: Nav
     { id: 'history', label: 'History', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3.5 3.5" /></svg> },
     { id: 'copytrade', label: 'Copy Trade', icon: (
       <svg className="w-6 h-6" viewBox="0 0 100 50" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <path d="M75,5 C60,5 51,16 50,25 C49,16 40,5 25,5 C11.2,5 0,16.2 0,30 C0,43.8 11.2,55 25,55 C40,55 49,44 44.5,30 C41,23.5 33.5,16 25,16 C11,16 0,18.7 0,25 C0,31.3 11,34 25,34 C40,34 49,31.3 49,25 C49,18.7 38,16 25,16 C17,16 11,18.7 11,25 C11,31.3 20,34 25,34 C39,34 50,36.5 55.5,30 C59,23.5 66.5,16 75,16 C88.8,16 100,18.7 100,25 C100,31.3 89,34 75,34 C66.5,34 59,36.5 55.5,30 C50,25 41,23.5 33.5,16 C25,16 17,16 11,18.7 C11,25 C11,31.3 20,34 25,34 C39,34 50,36.5 55.5,30 C59,23.5 66.5,16 75,16 C82.7,16 89,18.7 89,25 C89,31.3 82.7,34 75,34 Z M25,44 C17.3,44 11,37.7 11,30 C11,22.3 17.3,16 25,16 C33.5,16 41,23.5 44.5,30 C41,36.5 33.5,44 25,44 Z M75,44 C66.5,44 59,36.5 55.5,30 C59,23.5 66.5,16 75,16 C82.7,16 89,18.7 89,25 C89,31.3 82.7,34 75,34 Z" />
+        <path d="M75,5 C60,5 51,16 50,25 C49,16 40,5 25,5 C11.2,5 0,16.2 0,30 C0,43.8 11.2,55 25,55 C40,55 49,44 44.5,30 C41,23.5 33.5,16 25,16 C17,16 11,18.7 11,25 C11,31.3 20,34 25,34 C39,34 50,36.5 55.5,30 C59,23.5 66.5,16 75,16 C88.8,16 100,18.7 100,25 C100,31.3 89,34 75,34 Z M25,44 C17.3,44 11,37.7 11,30 C11,22.3 17.3,16 25,16 C33.5,16 41,23.5 44.5,30 C41,36.5 33.5,44 25,44 Z M75,44 C66.5,44 59,36.5 55.5,30 C59,23.5 66.5,16 75,16 C82.7,16 89,18.7 89,25 C89,31.3 82.7,34 75,34 Z" />
       </svg>
     ) },
     { id: 'account', label: 'Account', icon: (
@@ -528,7 +528,7 @@ function BottomNav({ active, onChange }: { active: NavSection; onChange: (s: Nav
         {/* Innermost loop - core of fingerprint */}
         <path d="M44 62 C44 55 56 55 56 62 C56 69 44 69 44 62" />
         {/* Ridge 2 */}
-        <path d="M38 65 C37 52 44 44 50 44 C56 44 63 52 62 65 C61 74 56 78 50 79 C44 78 39 74 38 65" />
+        <path d="M38 65 C37 52 44 44 50 44 C56 44 49 52 49 65 C49 74 41 78 33.5 79 C25 78 18 74 17 64" />
         {/* Ridge 3 */}
         <path d="M31 67 C30 48 38 36 50 36 C62 36 70 48 69 67 C68 80 61 88 50 90 C29 88 18 85 17 64" />
         {/* Ridge 4 */}
@@ -1975,6 +1975,11 @@ export default function DashboardPage() {
                 onClick={() => handleTrade('sell')}
                 disabled={buyLoading || sellLoading || !selectedAsset || isFollowingCopyTrade}
                 title={isFollowingCopyTrade ? 'You are currently copying Investoft trades' : undefined}
+                style={{
+                  background: 'linear-gradient(135deg, #c0392b 0%, #e74c3c 50%, #c0392b 100%)',
+                  boxShadow: sellLoading || buyLoading || !selectedAsset || isFollowingCopyTrade ? 'none' : '0 0 18px rgba(231,76,60,0.55), 0 0 6px rgba(231,76,60,0.3), inset 0 1px 0 rgba(255,255,255,0.12)',
+                  transition: 'all 0.2s ease',
+                }}
                 className="flex-1 py-3.5 bg-red-600 hover:bg-red-500 active:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-lg tracking-widest transition-all flex items-center justify-center gap-2"
               >
                 {sellLoading ? (
@@ -1990,6 +1995,11 @@ export default function DashboardPage() {
                 onClick={() => handleTrade('buy')}
                 disabled={buyLoading || sellLoading || !selectedAsset || isFollowingCopyTrade}
                 title={isFollowingCopyTrade ? 'You are currently copying Investoft trades' : undefined}
+                style={{
+                  background: 'linear-gradient(135deg, #1a7a3a 0%, #27ae60 50%, #1a7a3a 100%)',
+                  boxShadow: buyLoading || sellLoading || !selectedAsset || isFollowingCopyTrade ? 'none' : '0 0 18px rgba(39,174,96,0.55), 0 0 6px rgba(39,174,96,0.3), inset 0 1px 0 rgba(255,255,255,0.12)',
+                  transition: 'all 0.2s ease',
+                }}
                 className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-lg tracking-widest transition-all flex items-center justify-center gap-2"
               >
                 {buyLoading ? (
