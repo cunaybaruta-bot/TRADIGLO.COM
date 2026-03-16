@@ -520,12 +520,10 @@ function BottomNav({ active, onChange }: { active: NavSection; onChange: (s: Nav
     { id: 'history', label: 'History', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3.5 3.5" /></svg> },
     { id: 'copytrade', label: 'Copy Trade', icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
-        {/* Arrow pointing right */}
-        <path d="M5 12h11" />
-        <path d="M13 8l4 4-4 4" />
-        {/* Small user head above arrow */}
-        <circle cx="19" cy="5" r="2" strokeWidth={1.6} />
-        <path d="M15.5 9.5c0-1.933 1.567-2.5 3.5-2.5s3.5.567 3.5 2.5" strokeWidth={1.6} />
+        <path d="M1.5 4v5h5" />
+        <path d="M22.5 20v-5h-5" />
+        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1.5 9" />
+        <path d="M3.51 15a9 9 0 0 0 14.85 3.36L22.5 15" />
       </svg>
     ) },
     { id: 'account', label: 'Account', icon: (
