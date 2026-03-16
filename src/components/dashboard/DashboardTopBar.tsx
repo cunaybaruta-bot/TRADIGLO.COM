@@ -93,7 +93,7 @@ export default function DashboardTopBar({
         <div className="relative flex items-center bg-white/5 border border-white/10 rounded-full p-0.5" style={{ minWidth: 112 }}>
           {/* Sliding background pill */}
           <span
-            className={`absolute top-0.5 bottom-0.5 rounded-full transition-all duration-300 ease-in-out ${isDemo ? 'bg-blue-600 left-0.5 right-[calc(50%+1px)]' : 'bg-orange-600 left-[calc(50%+1px)] right-0.5'}`}
+            className={`absolute top-0.5 bottom-0.5 rounded-full transition-all duration-300 ease-in-out ${isDemo ? 'bg-blue-600 left-0.5 right-[calc(50%+1px)]' : 'bg-emerald-600 left-[calc(50%+1px)] right-0.5'}`}
             aria-hidden="true"
           />
           <button
@@ -111,9 +111,9 @@ export default function DashboardTopBar({
         </div>
         {/* Active balance display */}
         <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs font-semibold ${
-          isDemo ? 'bg-blue-500/10 border-blue-500/30 text-blue-300' : 'bg-orange-500/10 border-orange-500/30 text-orange-300'
+          isDemo ? 'bg-blue-500/10 border-blue-500/30 text-blue-300' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
         }`}>
-          <span className={`w-1.5 h-1.5 rounded-full ${isDemo ? 'bg-blue-400' : 'bg-orange-400'}`} />
+          <span className={`w-1.5 h-1.5 rounded-full ${isDemo ? 'bg-blue-400' : 'bg-emerald-400'}`} />
           <span className="text-white font-bold tabular-nums" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>
             {walletLoading ? '…' : `$${formatCurrency(activeBalance)}`}
           </span>
