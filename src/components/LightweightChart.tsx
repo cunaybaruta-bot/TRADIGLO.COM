@@ -183,7 +183,97 @@ async function fetchTwelveDataKlines(symbol: string, interval: string, limit = 1
   }
 }
 
-// ─── New indicator calculation helpers ───────────────────────────────────────
+// ─── Indicator calculation helpers ───────────────────────────────────────────
+
+function calcSMA(closes: number[], period: number): (number | null)[] {
+  const result: (number | null)[] = new Array(closes.length).fill(null);
+  for (let i = period - 1; i < closes.length; i++) {
+    const sum = closes.slice(i - period + 1, i + 1).reduce((a, b) => a + b, 0);
+    result[i] = sum / period;
+  }
+  return result;
+}
+
+function calcEMA(closes: number[], period: number): (number | null)[] {
+  const result: (number | null)[] = new Array(closes.length).fill(null);
+  const k = 2 / (period + 1);
+  let ema: number | null = null;
+  for (let i = 0; i < closes.length; i++) {
+    if (i < period - 1) continue;
+    if (ema === null) {
+      ema = closes.slice(0, period).reduce((a, b) => a + b, 0) / period;
+    } else {
+      ema = closes[i] * k + ema * (1 - k);
+    }
+    result[i] = ema;
+  }
+  return result;
+}
+
+function calcBB(closes: number[], period = 20, stdDev = 2): { upper: (number | null)[]; middle: (number | null)[]; lower: (number | null)[] } {
+  const middle = calcSMA(closes, period);
+  const upper: (number | null)[] = new Array(closes.length).fill(null);
+  const lower: (number | null)[] = new Array(closes.length).fill(null);
+  for (let i = period - 1; i < closes.length; i++) {
+    const slice = closes.slice(i - period + 1, i + 1);
+    const mean = middle[i] as number;
+    const variance = slice.reduce((sum, v) => sum + (v - mean) ** 2, 0) / period;
+    const sd = Math.sqrt(variance);
+    upper[i] = mean + stdDev * sd;
+    lower[i] = mean - stdDev * sd;
+  }
+  return { upper, middle, lower };
+}
+
+function calcRSI(closes: number[], period = 14): (number | null)[] {
+  const result: (number | null)[] = new Array(closes.length).fill(null);
+  if (closes.length < period + 1) return result;
+  let avgGain = 0, avgLoss = 0;
+  for (let i = 1; i <= period; i++) {
+    const diff = closes[i] - closes[i - 1];
+    if (diff > 0) avgGain += diff; else avgLoss += Math.abs(diff);
+  }
+  avgGain /= period; avgLoss /= period;
+  result[period] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
+  for (let i = period + 1; i < closes.length; i++) {
+    const diff = closes[i] - closes[i - 1];
+    const gain = diff > 0 ? diff : 0;
+    const loss = diff < 0 ? Math.abs(diff) : 0;
+    avgGain = (avgGain * (period - 1) + gain) / period;
+    avgLoss = (avgLoss * (period - 1) + loss) / period;
+    result[i] = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
+  }
+  return result;
+}
+
+function calcMACD(closes: number[], fast = 12, slow = 26, signal = 9): { macd: (number | null)[]; signal: (number | null)[]; histogram: (number | null)[] } {
+  const fastEMA = calcEMA(closes, fast);
+  const slowEMA = calcEMA(closes, slow);
+  const macd: (number | null)[] = closes.map((_, i) =>
+    fastEMA[i] !== null && slowEMA[i] !== null ? (fastEMA[i] as number) - (slowEMA[i] as number) : null
+  );
+  const macdValues = macd.map(v => v ?? 0);
+  const signalLine = calcEMA(macdValues, signal);
+  const histogram: (number | null)[] = macd.map((v, i) =>
+    v !== null && signalLine[i] !== null ? v - (signalLine[i] as number) : null
+  );
+  return { macd, signal: signalLine, histogram };
+}
+
+function calcStoch(candles: CandlestickData[], kPeriod = 14, dPeriod = 3, smooth = 3): { k: (number | null)[]; d: (number | null)[] } {
+  const n = candles.length;
+  const rawK: (number | null)[] = new Array(n).fill(null);
+  for (let i = kPeriod - 1; i < n; i++) {
+    const slice = candles.slice(i - kPeriod + 1, i + 1);
+    const high = Math.max(...slice.map(c => c.high as number));
+    const low = Math.min(...slice.map(c => c.low as number));
+    const close = candles[i].close as number;
+    rawK[i] = high === low ? 0 : ((close - low) / (high - low)) * 100;
+  }
+  const smoothK = calcSMA(rawK.map(v => v ?? 0), smooth);
+  const d = calcSMA(smoothK.map(v => v ?? 0), dPeriod);
+  return { k: smoothK, d };
+}
 
 function calcIchimoku(candles: CandlestickData[], tenkanPeriod = 9, kijunPeriod = 26, senkouBPeriod = 52): {
   tenkan: (number | null)[];
@@ -207,7 +297,6 @@ function calcIchimoku(candles: CandlestickData[], tenkanPeriod = 9, kijunPeriod 
   const tenkan: (number | null)[] = candles.map((_, i) => midpoint(tenkanPeriod, i));
   const kijun: (number | null)[] = candles.map((_, i) => midpoint(kijunPeriod, i));
 
-  // Senkou A = (Tenkan + Kijun) / 2, shifted forward kijunPeriod
   const senkouA: (number | null)[] = new Array(n).fill(null);
   for (let i = 0; i < n; i++) {
     if (tenkan[i] !== null && kijun[i] !== null) {
@@ -218,7 +307,6 @@ function calcIchimoku(candles: CandlestickData[], tenkanPeriod = 9, kijunPeriod 
     }
   }
 
-  // Senkou B = midpoint of senkouBPeriod, shifted forward kijunPeriod
   const senkouB: (number | null)[] = new Array(n).fill(null);
   for (let i = 0; i < n; i++) {
     const val = midpoint(senkouBPeriod, i);
@@ -230,7 +318,6 @@ function calcIchimoku(candles: CandlestickData[], tenkanPeriod = 9, kijunPeriod 
     }
   }
 
-  // Chikou = close shifted back kijunPeriod
   const chikou: (number | null)[] = new Array(n).fill(null);
   for (let i = kijunPeriod; i < n; i++) {
     chikou[i - kijunPeriod] = closes[i];
@@ -246,7 +333,7 @@ function calcParabolicSAR(candles: CandlestickData[], step = 0.02, maxAF = 0.2):
   if (n < 2) return { sar: [], trend: [] };
 
   const sar: number[] = new Array(n).fill(0);
-  const trend: boolean[] = new Array(n).fill(true); // true = bullish
+  const trend: boolean[] = new Array(n).fill(true);
   let af = step;
   let ep = highs[0];
   let isUptrend = true;
@@ -306,7 +393,6 @@ function calcATR(candles: CandlestickData[], period = 14): (number | null)[] {
     trueRanges.push(Math.max(high - low, Math.abs(high - prevClose), Math.abs(low - prevClose)));
   }
 
-  // Initial ATR = simple average of first period TRs
   if (n >= period) {
     let atr = trueRanges.slice(0, period).reduce((a, b) => a + b, 0) / period;
     result[period - 1] = atr;
@@ -339,7 +425,7 @@ function calcVWAP(candles: CandlestickData[]): (number | null)[] {
 
   for (const c of candles) {
     const tp = ((c.high as number) + (c.low as number) + (c.close as number)) / 3;
-    const vol = (c as any).volume ?? 1; // fallback to 1 if no volume
+    const vol = (c as any).volume ?? 1;
     cumulativeTPV += tp * vol;
     cumulativeVol += vol;
     result.push(cumulativeVol > 0 ? cumulativeTPV / cumulativeVol : null);
@@ -349,7 +435,6 @@ function calcVWAP(candles: CandlestickData[]): (number | null)[] {
 
 function calcPivotPoints(candles: CandlestickData[]): { pp: number; r1: number; r2: number; s1: number; s2: number; s3: number } | null {
   if (candles.length < 2) return null;
-  // Use the previous candle (second to last) as the "previous period"
   const prev = candles[candles.length - 2];
   const high = prev.high as number;
   const low = prev.low as number;
@@ -388,7 +473,6 @@ function drawAllOnCanvas(
     else ctx.setLineDash([]);
     ctx.beginPath();
     if (extended && p1.x !== p2.x) {
-      // Extend line to canvas edges
       const slope = (p2.y - p1.y) / (p2.x - p1.x);
       const yAtLeft = p1.y - slope * p1.x;
       const yAtRight = p1.y + slope * (canvas.width - p1.x);
@@ -402,11 +486,9 @@ function drawAllOnCanvas(
     ctx.restore();
   };
 
-  // Draw completed drawings
   for (const d of drawings) {
     if (d.type === 'trendline') {
       drawLine(d.p1, d.p2, d.color, false, true);
-      // Draw endpoint dots
       ctx.save();
       ctx.fillStyle = d.color;
       ctx.beginPath(); ctx.arc(d.p1.x, d.p1.y, 4, 0, Math.PI * 2); ctx.fill();
@@ -440,7 +522,6 @@ function drawAllOnCanvas(
     }
   }
 
-  // Draw pending trendline preview
   if (activeTool === 'trendline' && pendingTrendP1 && pendingMousePos) {
     drawLine(pendingTrendP1, pendingMousePos, drawColor, true, false);
     ctx.save();
@@ -507,7 +588,6 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     const lastBarRef = useRef<CandlestickData | null>(null);
     const entryLinesRef = useRef<Map<string, IPriceLine>>(new Map());
 
-    // Indicator series refs
     const maSeriesRef = useRef<ISeriesApi<'Line'>[]>([]);
     const emaSeriesRef = useRef<ISeriesApi<'Line'>[]>([]);
     const bbSeriesRef = useRef<ISeriesApi<'Line'>[]>([]);
@@ -521,35 +601,27 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     const stochKRef = useRef<ISeriesApi<'Line'> | null>(null);
     const stochDRef = useRef<ISeriesApi<'Line'> | null>(null);
 
-    // New indicator refs
     const atrChartRef = useRef<IChartApi | null>(null);
     const atrSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
     const cciChartRef = useRef<IChartApi | null>(null);
     const cciSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
-    // Ichimoku series refs (overlay on main chart)
     const ichimokuSeriesRef = useRef<ISeriesApi<'Line'>[]>([]);
-    // SAR series ref (overlay on main chart)
     const sarSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
-    // VWAP series ref (overlay on main chart)
     const vwapSeriesRef = useRef<ISeriesApi<'Line'> | null>(null);
-    // Pivot price lines
     const pivotLinesRef = useRef<IPriceLine[]>([]);
 
-    // Stored candle data for indicator recalculation
     const candleDataRef = useRef<CandlestickData[]>([]);
 
     const [timeframe, setTimeframe] = useState('1m');
     const [isLoading, setIsLoading] = useState(true);
     const [activeIndicators, setActiveIndicators] = useState<Set<IndicatorKey>>(new Set());
 
-    // ─── Drawing state ────────────────────────────────────────────────────────
     const [activeTool, setActiveTool] = useState<DrawingTool>(null);
     const [drawColor, setDrawColor] = useState('#f59e0b');
     const [drawings, setDrawings] = useState<Drawing[]>([]);
     const [pendingTrendP1, setPendingTrendP1] = useState<Point | null>(null);
     const [pendingMousePos, setPendingMousePos] = useState<Point | null>(null);
 
-    // Refs for drawing (avoid stale closures in event handlers)
     const activeToolRef = useRef<DrawingTool>(null);
     const drawColorRef = useRef('#f59e0b');
     const drawingsRef = useRef<Drawing[]>([]);
@@ -558,7 +630,6 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     const freehandPointsRef = useRef<Point[]>([]);
     const pendingMousePosRef = useRef<Point | null>(null);
 
-    // Keep refs in sync with state
     useEffect(() => { activeToolRef.current = activeTool; }, [activeTool]);
     useEffect(() => { drawColorRef.current = drawColor; }, [drawColor]);
     useEffect(() => { drawingsRef.current = drawings; }, [drawings]);
@@ -589,7 +660,6 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
       );
     }, []);
 
-    // Redraw whenever drawings, pending state, or tool changes
     useEffect(() => { redrawCanvas(); }, [drawings, pendingTrendP1, pendingMousePos, activeTool, drawColor, redrawCanvas]);
 
     // ── Expose API ────────────────────────────────────────────────────────────
@@ -697,12 +767,10 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
       bbSeriesRef.current.forEach(s => { try { chartRef.current!.removeSeries(s); } catch {} });
       bbSeriesRef.current = [];
       if (volSeriesRef.current) { try { chartRef.current!.removeSeries(volSeriesRef.current); } catch {} volSeriesRef.current = null; }
-      // Remove new overlay indicators
       ichimokuSeriesRef.current.forEach(s => { try { chartRef.current!.removeSeries(s); } catch {} });
       ichimokuSeriesRef.current = [];
       if (sarSeriesRef.current) { try { chartRef.current!.removeSeries(sarSeriesRef.current); } catch {} sarSeriesRef.current = null; }
       if (vwapSeriesRef.current) { try { chartRef.current!.removeSeries(vwapSeriesRef.current); } catch {} vwapSeriesRef.current = null; }
-      // Remove pivot lines
       if (seriesRef.current) {
         pivotLinesRef.current.forEach(pl => { try { seriesRef.current!.removePriceLine(pl); } catch {} });
       }
@@ -846,7 +914,6 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         }
       }
 
-      // ── Ichimoku Cloud ────────────────────────────────────────────────────
       if (indicators.has('Ichimoku') && chartRef.current) {
         const { tenkan, kijun, senkouA, senkouB, chikou } = calcIchimoku(candles);
         const ichimokuDefs = [
@@ -867,24 +934,21 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         });
       }
 
-      // ── Parabolic SAR ─────────────────────────────────────────────────────
       if (indicators.has('SAR') && chartRef.current) {
         const { sar, trend } = calcParabolicSAR(candles);
-        // Split into bullish and bearish segments for coloring
         const bullData: { time: Time; value: number }[] = [];
         const bearData: { time: Time; value: number }[] = [];
         sar.forEach((v, i) => {
           if (trend[i]) bullData.push({ time: times[i], value: v });
           else bearData.push({ time: times[i], value: v });
         });
-        // Use a single line series with alternating colors via two series
         if (bullData.length > 0) {
           const bullS = chartRef.current.addSeries(LineSeries, {
             color: '#22c55e', lineWidth: 1, lineStyle: LineStyle.Dotted,
             priceLineVisible: false, lastValueVisible: false, title: 'SAR↑',
           });
           bullS.setData(bullData);
-          ichimokuSeriesRef.current.push(bullS); // reuse array for cleanup
+          ichimokuSeriesRef.current.push(bullS);
         }
         if (bearData.length > 0) {
           const bearS = chartRef.current.addSeries(LineSeries, {
@@ -896,7 +960,6 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         }
       }
 
-      // ── ATR sub-panel ─────────────────────────────────────────────────────
       if (indicators.has('ATR') && atrContainerRef.current) {
         if (!atrChartRef.current) {
           atrChartRef.current = createChart(atrContainerRef.current, subPanelOptions(90));
@@ -911,7 +974,6 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         }
       }
 
-      // ── CCI sub-panel ─────────────────────────────────────────────────────
       if (indicators.has('CCI') && cciContainerRef.current) {
         if (!cciChartRef.current) {
           cciChartRef.current = createChart(cciContainerRef.current, subPanelOptions(90));
@@ -922,14 +984,12 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           const s = cciChartRef.current.addSeries(LineSeries, { color: '#06b6d4', lineWidth: 1, priceLineVisible: false, lastValueVisible: true, title: 'CCI(20)' });
           s.setData(cciData);
           cciSeriesRef.current = s;
-          // Add +100 / -100 lines
           s.createPriceLine({ price: 100, color: 'rgba(239,68,68,0.6)', lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: '+100' });
           s.createPriceLine({ price: -100, color: 'rgba(34,197,94,0.6)', lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: '-100' });
           cciChartRef.current.timeScale().fitContent();
         }
       }
 
-      // ── VWAP overlay ──────────────────────────────────────────────────────
       if (indicators.has('VWAP') && chartRef.current) {
         const vwapValues = calcVWAP(candles);
         const vwapData = vwapValues.map((v, i) => v !== null ? { time: times[i], value: v } : null).filter(Boolean) as { time: Time; value: number }[];
@@ -942,7 +1002,6 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         }
       }
 
-      // ── Pivot Points overlay ──────────────────────────────────────────────
       if (indicators.has('Pivot') && seriesRef.current) {
         const pivots = calcPivotPoints(candles);
         if (pivots) {
@@ -1041,7 +1100,6 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         });
         seriesRef.current = series;
 
-        // Subscribe to chart scroll/zoom to redraw canvas
         chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
           requestAnimationFrame(() => {
             drawAllOnCanvas(
@@ -1066,7 +1124,6 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
               [rsiChartRef, macdChartRef, stochChartRef, atrChartRef, cciChartRef].forEach(r => {
                 if (r.current) { try { r.current.applyOptions({ width: cw }); } catch {} }
               });
-              // Resize canvas
               if (canvasRef.current) {
                 canvasRef.current.width = cw;
                 canvasRef.current.height = newH;
@@ -1181,7 +1238,6 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         setPendingMousePos(pt);
       } else if (tool === 'freehand' && isFreehandDrawingRef.current) {
         freehandPointsRef.current.push(pt);
-        // Draw live freehand on canvas directly for performance
         if (canvasRef.current) {
           const ctx = canvasRef.current.getContext('2d');
           if (ctx && freehandPointsRef.current.length >= 2) {
@@ -1232,7 +1288,6 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     const toggleDrawingTool = useCallback((tool: DrawingTool) => {
       setActiveTool(prev => {
         if (prev === tool) {
-          // Deactivate
           setPendingTrendP1(null);
           setPendingMousePos(null);
           return null;
@@ -1310,10 +1365,8 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
               onPriceUpdateRef.current?.(last.close, change, changePct);
             }
 
-            // Store candles for indicator use
             candleDataRef.current = unique;
 
-            // Re-apply active indicators with new data
             if (activeIndicators.size > 0) {
               applyIndicators(unique, activeIndicators);
             }
@@ -1543,123 +1596,66 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
       { key: 'delete', label: 'Delete', icon: '✕', title: 'Delete: click a drawing to remove it' },
     ];
 
-    // Cursor style based on active tool
     const canvasCursor = activeTool === 'delete' ? 'crosshair'
-      : activeTool === 'freehand'? 'crosshair' : activeTool ?'crosshair' :'default';
+      : activeTool === 'freehand' ? 'crosshair' : activeTool ? 'crosshair' : 'default';
 
-    // Pointer events: only pass through to chart when no tool active
     const canvasPointerEvents = activeTool ? 'auto' : 'none';
 
     return (
       <div className="w-full relative" style={{ background: '#000' }}>
-        {/* Timeframe selector */}
-        <div className="flex items-center gap-0.5 px-2 py-1.5 border-b border-white/10 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          {TIMEFRAMES.map((tf) => (
-            <button
-              key={tf.label}
-              onClick={() => setTimeframe(tf.label)}
-              className={`px-2 py-1 rounded text-[11px] font-medium transition-all whitespace-nowrap flex-shrink-0 ${
-                timeframe === tf.label
-                  ? 'bg-blue-600 text-white' : 'text-slate-400 hover:text-white hover:bg-white/10'
-              }`}
-            >
-              {tf.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Indicator toolbar */}
-        <div className="flex items-center gap-1 px-2 py-1.5 border-b border-white/10 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          <span className="text-[10px] text-slate-500 mr-1 flex-shrink-0 font-medium uppercase tracking-wide">Indicators</span>
-          {INDICATOR_BUTTONS.map(({ key, label, color }) => {
-            const isActive = activeIndicators.has(key);
-            return (
+        {/* ── Single compact toolbar row ── */}
+        <div
+          className="flex items-center border-b border-white/10 overflow-x-auto"
+          style={{ scrollbarWidth: 'none', height: 34, minHeight: 34, background: 'rgba(255,255,255,0.02)' }}
+        >
+          {/* ── Timeframe pills ── */}
+          <div className="flex items-center gap-0.5 px-2 flex-shrink-0">
+            {TIMEFRAMES.map((tf) => (
               <button
-                key={key}
-                onClick={() => toggleIndicator(key)}
-                className={`px-2 py-0.5 rounded text-[11px] font-medium transition-all duration-150 whitespace-nowrap flex-shrink-0 border flex items-center gap-1 ${
-                  isActive
-                    ? 'text-black border-transparent' : 'bg-transparent text-slate-400 border-white/10 hover:border-white/30 hover:text-white'
-                }`}
-                style={isActive ? { backgroundColor: color, borderColor: color } : {}}
-              >
-                <span className="text-[12px] leading-none">{label}</span>
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Drawing toolbar */}
-        <div className="flex items-center gap-1 px-2 py-1.5 border-b border-white/10 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          <span className="text-[10px] text-slate-500 mr-1 flex-shrink-0 font-medium uppercase tracking-wide">Draw</span>
-          {DRAWING_TOOLS.map(({ key, label, icon, title }) => {
-            const isActive = activeTool === key;
-            return (
-              <button
-                key={key}
-                onClick={() => toggleDrawingTool(key)}
-                title={title}
-                className={`px-2 py-0.5 rounded text-[11px] font-medium transition-all duration-150 whitespace-nowrap flex-shrink-0 border flex items-center gap-1 ${
-                  isActive
-                    ? key === 'delete'
-                      ? 'bg-red-600 border-red-600 text-white' :'bg-blue-600 border-blue-600 text-white' :'bg-transparent text-slate-400 border-white/10 hover:border-white/30 hover:text-white'
+                key={tf.label}
+                onClick={() => setTimeframe(tf.label)}
+                className={`px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide transition-all whitespace-nowrap flex-shrink-0 ${
+                  timeframe === tf.label
+                    ? 'bg-indigo-600 text-white' :'text-slate-500 hover:text-slate-200 hover:bg-white/10'
                 }`}
               >
-                <span className="text-[12px] leading-none">{icon}</span>
-                <span>{label}</span>
+                {tf.label.toUpperCase()}
               </button>
-            );
-          })}
-
-          {/* Divider */}
-          <div className="w-px h-4 bg-white/10 mx-0.5 flex-shrink-0" />
-
-          {/* Color picker */}
-          <div className="relative flex items-center flex-shrink-0" title="Drawing color">
-            <label className="flex items-center gap-1 cursor-pointer">
-              <span className="text-[10px] text-slate-500">Color</span>
-              <div
-                className="w-5 h-5 rounded border border-white/20 cursor-pointer overflow-hidden relative"
-                style={{ backgroundColor: drawColor }}
-              >
-                <input
-                  type="color"
-                  value={drawColor}
-                  onChange={e => setDrawColor(e.target.value)}
-                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
-                  style={{ padding: 0, border: 'none' }}
-                />
-              </div>
-            </label>
+            ))}
           </div>
 
-          {/* Divider */}
-          <div className="w-px h-4 bg-white/10 mx-0.5 flex-shrink-0" />
+          {/* ── Divider ── */}
+          <div className="w-px self-stretch bg-white/10 mx-1 flex-shrink-0" />
 
-          {/* Clear All */}
-          <button
-            onClick={() => {
-              setDrawings([]);
-              setPendingTrendP1(null);
-              setPendingMousePos(null);
-            }}
-            title="Clear all drawings"
-            disabled={drawings.length === 0}
-            className={`px-2 py-0.5 rounded text-[11px] font-medium transition-all duration-150 whitespace-nowrap flex-shrink-0 border ${
-              drawings.length > 0
-                ? 'text-slate-300 border-white/20 hover:border-red-500/60 hover:text-red-400 hover:bg-red-500/10' :'text-slate-600 border-white/5 cursor-not-allowed'
-            }`}
-          >
-            Clear All {drawings.length > 0 && <span className="ml-0.5 text-[10px] opacity-70">({drawings.length})</span>}
-          </button>
+          {/* ── Indicators dropdown toggle ── */}
+          <div className="relative flex-shrink-0">
+            <IndicatorDropdown
+              buttons={INDICATOR_BUTTONS}
+              activeIndicators={activeIndicators}
+              onToggle={toggleIndicator}
+            />
+          </div>
 
-          {/* Pending trendline hint */}
-          {activeTool === 'trendline' && pendingTrendP1 && (
-            <span className="text-[10px] text-blue-400 ml-1 flex-shrink-0 animate-pulse">Click second point…</span>
-          )}
-          {activeTool === 'trendline' && !pendingTrendP1 && (
-            <span className="text-[10px] text-slate-500 ml-1 flex-shrink-0">Click first point…</span>
-          )}
+          {/* ── Divider ── */}
+          <div className="w-px self-stretch bg-white/10 mx-1 flex-shrink-0" />
+
+          {/* ── Drawing tools dropdown toggle ── */}
+          <div className="relative flex-shrink-0">
+            <DrawingDropdown
+              tools={DRAWING_TOOLS}
+              activeTool={activeTool}
+              drawColor={drawColor}
+              drawings={drawings}
+              pendingTrendP1={pendingTrendP1}
+              onToggleTool={toggleDrawingTool}
+              onColorChange={setDrawColor}
+              onClearAll={() => {
+                setDrawings([]);
+                setPendingTrendP1(null);
+                setPendingMousePos(null);
+              }}
+            />
+          </div>
         </div>
 
         {/* Main chart container + canvas overlay */}
@@ -1672,7 +1668,6 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
               display: 'block',
             }}
           />
-          {/* Canvas overlay for drawings */}
           <canvas
             ref={canvasRef}
             style={{
@@ -1751,7 +1746,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         {isLoading && (
           <div
             className="absolute flex items-center justify-center pointer-events-none"
-            style={{ top: 40, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.55)' }}
+            style={{ top: 34, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.55)' }}
           >
             <div className="flex flex-col items-center gap-2">
               <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
@@ -1765,5 +1760,206 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
 );
 
 LightweightChart.displayName = 'LightweightChart';
+
+// ─── IndicatorDropdown sub-component ─────────────────────────────────────────
+
+interface IndicatorDropdownProps {
+  buttons: { key: IndicatorKey; label: string; color: string }[];
+  activeIndicators: Set<IndicatorKey>;
+  onToggle: (key: IndicatorKey) => void;
+}
+
+function IndicatorDropdown({ buttons, activeIndicators, onToggle }: IndicatorDropdownProps) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const activeCount = buttons.filter(b => activeIndicators.has(b.key)).length;
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(v => !v)}
+        title="Indicators"
+        className={`flex items-center gap-1 px-2 h-[34px] text-[11px] font-medium transition-all ${
+          open || activeCount > 0 ? 'text-indigo-400' : 'text-slate-500 hover:text-slate-200'
+        }`}
+      >
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="0" y="7" width="2.5" height="6" rx="0.5" fill="currentColor" opacity="0.7"/>
+          <rect x="3.5" y="4" width="2.5" height="9" rx="0.5" fill="currentColor" opacity="0.85"/>
+          <rect x="7" y="1" width="2.5" height="12" rx="0.5" fill="currentColor"/>
+          <rect x="10.5" y="5" width="2.5" height="8" rx="0.5" fill="currentColor" opacity="0.7"/>
+        </svg>
+        <span>Indicators</span>
+        {activeCount > 0 && (
+          <span
+            className="text-[9px] font-bold px-1 rounded-full leading-none py-0.5"
+            style={{ background: 'rgba(99,102,241,0.25)', color: '#818cf8' }}
+          >
+            {activeCount}
+          </span>
+        )}
+        <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className={`transition-transform ${open ? 'rotate-180' : ''}`}>
+          <path d="M1 2.5L4 5.5L7 2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          className="absolute left-0 top-full mt-1 z-50 rounded-lg border border-white/10 shadow-2xl p-2"
+          style={{ background: '#0f1117', minWidth: 200 }}
+        >
+          <div className="text-[9px] text-slate-600 uppercase tracking-widest font-semibold px-1 mb-1.5">Indicators</div>
+          <div className="grid grid-cols-3 gap-1">
+            {buttons.map(({ key, label, color }) => {
+              const isActive = activeIndicators.has(key);
+              return (
+                <button
+                  key={key}
+                  onClick={() => onToggle(key)}
+                  className={`px-2 py-1 rounded text-[10px] font-semibold transition-all border text-center ${
+                    isActive
+                      ? 'text-black border-transparent' :'bg-transparent text-slate-400 border-white/10 hover:border-white/20 hover:text-white'
+                  }`}
+                  style={isActive ? { backgroundColor: color, borderColor: color } : {}}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── DrawingDropdown sub-component ───────────────────────────────────────────
+
+interface DrawingDropdownProps {
+  tools: { key: DrawingTool; label: string; icon: string; title: string }[];
+  activeTool: DrawingTool;
+  drawColor: string;
+  drawings: Drawing[];
+  pendingTrendP1: Point | null;
+  onToggleTool: (tool: DrawingTool) => void;
+  onColorChange: (color: string) => void;
+  onClearAll: () => void;
+}
+
+function DrawingDropdown({ tools, activeTool, drawColor, drawings, pendingTrendP1, onToggleTool, onColorChange, onClearAll }: DrawingDropdownProps) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const hasActiveTool = activeTool !== null;
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  return (
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen(v => !v)}
+        title="Drawing Tools"
+        className={`flex items-center gap-1 px-2 h-[34px] text-[11px] font-medium transition-all ${
+          open || hasActiveTool ? 'text-indigo-400' : 'text-slate-500 hover:text-slate-200'
+        }`}
+      >
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M8.5 1.5L10.5 3.5L4 10L1.5 10.5L2 8L8.5 1.5Z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        <span>Draw</span>
+        {hasActiveTool && (
+          <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: '#6366f1' }} />
+        )}
+        <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className={`transition-transform ${open ? 'rotate-180' : ''}`}>
+          <path d="M1 2.5L4 5.5L7 2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          className="absolute left-0 top-full mt-1 z-50 rounded-lg border border-white/10 shadow-2xl p-2"
+          style={{ background: '#0f1117', minWidth: 180 }}
+        >
+          <div className="text-[9px] text-slate-600 uppercase tracking-widest font-semibold px-1 mb-1.5">Drawing Tools</div>
+          <div className="flex flex-col gap-0.5">
+            {tools.map(({ key, label, icon, title }) => {
+              const isActive = activeTool === key;
+              return (
+                <button
+                  key={key}
+                  onClick={() => onToggleTool(key)}
+                  title={title}
+                  className={`flex items-center gap-2 px-2 py-1.5 rounded text-[11px] font-medium transition-all text-left ${
+                    isActive
+                      ? key === 'delete'
+                        ? 'bg-red-600/20 text-red-400 border border-red-600/40' :'bg-indigo-600/20 text-indigo-300 border border-indigo-600/40' :'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
+                  }`}
+                >
+                  <span className="text-[13px] w-4 text-center leading-none">{icon}</span>
+                  <span>{label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="h-px bg-white/10 my-2" />
+
+          <div className="flex items-center justify-between px-1">
+            <label className="flex items-center gap-1.5 cursor-pointer" title="Drawing color">
+              <span className="text-[10px] text-slate-500">Color</span>
+              <div
+                className="w-5 h-5 rounded border border-white/20 overflow-hidden relative"
+                style={{ backgroundColor: drawColor }}
+              >
+                <input
+                  type="color"
+                  value={drawColor}
+                  onChange={e => onColorChange(e.target.value)}
+                  className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                  style={{ padding: 0, border: 'none' }}
+                />
+              </div>
+            </label>
+
+            <button
+              onClick={onClearAll}
+              disabled={drawings.length === 0}
+              title="Clear all drawings"
+              className={`text-[10px] font-medium px-2 py-1 rounded transition-all ${
+                drawings.length > 0
+                  ? 'text-slate-400 hover:text-red-400 hover:bg-red-500/10' :'text-slate-700 cursor-not-allowed'
+              }`}
+            >
+              Clear {drawings.length > 0 && `(${drawings.length})`}
+            </button>
+          </div>
+
+          {activeTool === 'trendline' && (
+            <div className="mt-2 px-1">
+              <span className={`text-[10px] ${pendingTrendP1 ? 'text-blue-400 animate-pulse' : 'text-slate-500'}`}>
+                {pendingTrendP1 ? 'Click second point…' : 'Click first point…'}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default LightweightChart;
