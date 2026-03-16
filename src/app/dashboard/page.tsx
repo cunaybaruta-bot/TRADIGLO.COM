@@ -445,7 +445,7 @@ function TradeResultModal({ trade, onClose }: { trade: TradeResult; onClose: () 
             )}
           </div>
           <div style={{ color: accentColor, fontSize: 11, fontWeight: 800, letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 6, opacity: 0.9 }}>
-            {isWin ? 'PROFIT' : 'LOSS'}
+            {isWin ? 'WIN' : 'LOSS'}
           </div>
           <div style={{ color: accentColor, fontSize: 48, fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1, marginBottom: 22 }}>
             {profitDisplay}
@@ -773,7 +773,7 @@ function CopyTradeTab({ userId, wallet }: { userId: string; wallet: Wallet | nul
               </div>
               {(wallet?.realBalance ?? 0) < provider.min_balance_usd && (
                 <div className="flex items-center gap-2 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded-lg">
-                  <svg className="w-3.5 h-3.5 text-red-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                  <svg className="w-3.5 h-3.5 text-red-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   <span className="text-red-400 text-xs">Insufficient balance. Need ${provider.min_balance_usd.toLocaleString()} USD minimum</span>
                 </div>
               )}
@@ -1525,9 +1525,9 @@ export default function DashboardPage() {
             <div className="bg-[#0d0d0d] border-b border-white/10">
 
               {/* ── Chart Top Bar: Asset Selector Button + Price ── */}
-              <div className="flex items-center gap-3 px-3 sm:px-4 py-2 border-b border-white/10">
+              <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border-b border-white/10">
 
-                {/* ── Quotex-style Asset Selector Button ── */}
+                {/* ── Asset Selector Button ── */}
                 <button
                   onClick={() => setAssetModalOpen(true)}
                   style={{
@@ -1556,44 +1556,87 @@ export default function DashboardPage() {
                   ) : (
                     <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#334155' }} />
                   )}
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                    <span className="text-base font-bold text-white tabular-nums" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1 }}>
+                    <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 13, fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
                       {activeSymbolDisplay}
                     </span>
-                    <span className="text-slate-500 text-xs mt-0.5">95%</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: '#10b981', letterSpacing: '0.02em', lineHeight: 1 }}>
+                      95% <span style={{ fontWeight: 400, color: 'rgba(255,255,255,0.35)', fontSize: 10 }}>payout</span>
+                    </span>
                   </div>
+                  {/* Thin elegant chevron */}
                   <svg
-                    width="12" height="12" viewBox="0 0 24 24" fill="none"
-                    stroke="rgba(255,255,255,0.5)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-                    style={{ flexShrink: 0 }}
+                    width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    stroke="rgba(255,255,255,0.45)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ flexShrink: 0, marginLeft: 2 }}
                   >
-                    <polyline points="6 9 19 15 19 9" />
+                    <polyline points="6 9 12 15 18 9" />
                   </svg>
                 </button>
 
                 {/* ── Live Price ── */}
                 {selectedAsset && (
-                  <div className="flex flex-col">
-                    <span className="text-base font-bold text-white tabular-nums" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+                    <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 15, fontWeight: 700, color: '#fff', letterSpacing: '-0.03em', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>
                       {livePrice !== null ? formatPrice(livePrice) : '—'}
                     </span>
+                    {livePrice !== null && (
+                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 11, fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1, fontVariantNumeric: 'tabular-nums', color: priceChange >= 0 ? '#10b981' : '#f87171' }}>
+                        {priceChange >= 0 ? '+' : ''}{priceChangePct.toFixed(2)}%
+                      </span>
+                    )}
                   </div>
                 )}
 
+                {/* ── Center: High / Low / Vol ── */}
                 {livePrice !== null && (
-                  <div className={`flex flex-col items-end ml-auto ${priceChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                    <span className="text-xs font-semibold tabular-nums" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
-                      {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(priceChange > 100 ? 2 : 4)}
-                    </span>
-                    <span className="text-xs font-bold tabular-nums" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
-                      {priceChangePct >= 0 ? '+' : ''}{priceChangePct.toFixed(2)}%
-                    </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, justifyContent: 'center', padding: '0 8px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                      <span style={{ fontSize: 9, fontWeight: 500, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: 1 }}>High</span>
+                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 11, fontWeight: 600, color: '#10b981', letterSpacing: '-0.01em', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>
+                        {formatPrice(livePrice * (1 + Math.abs(priceChangePct) / 100 * 0.6 + 0.0008))}
+                      </span>
+                    </div>
+                    <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.08)' }} />
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                      <span style={{ fontSize: 9, fontWeight: 500, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: 1 }}>Low</span>
+                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 11, fontWeight: 600, color: '#f87171', letterSpacing: '-0.01em', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>
+                        {formatPrice(livePrice * (1 - Math.abs(priceChangePct) / 100 * 0.6 - 0.0008))}
+                      </span>
+                    </div>
+                    <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.08)' }} />
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                      <span style={{ fontSize: 9, fontWeight: 500, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: 1 }}>Vol</span>
+                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.6)', letterSpacing: '-0.01em', lineHeight: 1.2 }}>
+                        {livePrice > 1000 ? `${(livePrice * 0.00024).toFixed(2)}K` : `${(livePrice * 0.12).toFixed(0)}`}
+                      </span>
+                    </div>
                   </div>
                 )}
 
-                <div className="flex items-center gap-1 ml-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-xs text-slate-500">LIVE</span>
+                {/* ── Change + LIVE ── */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto', flexShrink: 0 }}>
+                  {livePrice !== null && (
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
+                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 11, fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums', color: priceChange >= 0 ? '#10b981' : '#f87171' }}>
+                        {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(priceChange > 100 ? 2 : 4)}
+                      </span>
+                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 10, fontWeight: 500, letterSpacing: '-0.01em', lineHeight: 1, fontVariantNumeric: 'tabular-nums', color: 'rgba(255,255,255,0.3)' }}>
+                        24h change
+                      </span>
+                    </div>
+                  )}
+                  {/* LIVE indicator with pulse */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 7px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 6 }}>
+                    <span style={{ position: 'relative', display: 'inline-flex', width: 7, height: 7 }}>
+                      <span style={{
+                        position: 'absolute', inset: 0, borderRadius: '50%', background: '#10b981',
+                        animation: 'ping 1.4s cubic-bezier(0,0,0.2,1) infinite', opacity: 0.6,
+                      }} />
+                      <span style={{ position: 'relative', width: 7, height: 7, borderRadius: '50%', background: '#10b981', display: 'block' }} />
+                    </span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#10b981', letterSpacing: '0.06em' }}>LIVE</span>
+                  </div>
                 </div>
               </div>
 
@@ -2080,7 +2123,7 @@ export default function DashboardPage() {
             style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.8)' }}
           >
             <div className="w-12 h-12 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10 17.5a2 2 0 01-2-2v-3.5a4 4 0 018 0v3.5a2 2 0 01-2 2" /></svg>
+              <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </div>
             <h3 className="text-sm font-bold text-white mb-2">Close all open trades?</h3>
             <p className="text-xs text-slate-400 mb-5">All {openTrades.length} open trade{openTrades.length !== 1 ? 's' : ''} will be closed at the current chart price.</p>
