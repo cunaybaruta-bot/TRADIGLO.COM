@@ -1978,6 +1978,7 @@ export default function DashboardPage() {
                 style={{
                   background: '#e53935',
                   transition: 'all 0.2s ease',
+                  borderRadius: 8,
                 }}
                 className="flex-1 py-3.5 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-lg tracking-widest transition-all flex items-center justify-center gap-2"
               >
@@ -1997,6 +1998,7 @@ export default function DashboardPage() {
                 style={{
                   background: '#2e7d32',
                   transition: 'all 0.2s ease',
+                  borderRadius: 8,
                 }}
                 className="flex-1 py-3.5 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-lg tracking-widest transition-all flex items-center justify-center gap-2"
               >
