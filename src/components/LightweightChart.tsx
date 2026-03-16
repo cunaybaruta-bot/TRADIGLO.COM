@@ -690,7 +690,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
       },
     }));
 
-    // ── Sync entry lines ──────────────────────────────────────────────────────
+    // ─── Sync entry lines ──────────────────────────────────────────────────────
 
     const syncEntryLines = useCallback(() => {
       if (!seriesRef.current) return;
@@ -751,7 +751,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         horzLine: { color: 'rgba(255,255,255,0.2)', labelBackgroundColor: '#1e293b' },
       },
       rightPriceScale: { borderColor: 'rgba(255,255,255,0.1)', textColor: '#94a3b8' },
-      timeScale: { borderColor: 'rgba(255,255,255,0.1)', timeVisible: true, secondsVisible: false, visible: false },
+      timeScale: { borderColor: 'rgba(255,255,255,0.1)', timeVisible: true, secondsVisible: false, minBarSpacing: 1 },
       handleScroll: true,
       handleScale: true,
     });
