@@ -1519,13 +1519,13 @@ export default function DashboardPage() {
           </div>
 
           {/* SCROLLABLE CONTENT */}
-          <div className="flex-1 overflow-y-auto" style={{ paddingBottom: 180 }}>
+          <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ paddingBottom: 160 }}>
 
             {/* CHART AREA */}
             <div className="bg-[#0d0d0d] border-b border-white/10">
 
               {/* ── Chart Top Bar: Asset Selector Button + Price ── */}
-              <div className="flex items-center gap-2 px-3 sm:px-4 py-2.5 border-b border-white/10">
+              <div className="flex items-center gap-1.5 px-2 sm:px-4 py-2 border-b border-white/10 overflow-hidden">
 
                 {/* ── Asset Selector Button ── */}
                 <button
@@ -1533,8 +1533,8 @@ export default function DashboardPage() {
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 8,
-                    padding: '6px 10px',
+                    gap: 6,
+                    padding: '5px 8px',
                     background: 'rgba(255,255,255,0.07)',
                     border: '1px solid rgba(255,255,255,0.15)',
                     borderRadius: 8,
@@ -1557,18 +1557,18 @@ export default function DashboardPage() {
                     <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#334155' }} />
                   )}
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1 }}>
-                    <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 13, fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
+                    <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
                       {activeSymbolDisplay}
                     </span>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: '#10b981', letterSpacing: '0.02em', lineHeight: 1 }}>
-                      95% <span style={{ fontWeight: 400, color: 'rgba(255,255,255,0.35)', fontSize: 10 }}>payout</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#10b981', letterSpacing: '0.02em', lineHeight: 1 }}>
+                      95% <span style={{ fontWeight: 400, color: 'rgba(255,255,255,0.35)', fontSize: 9 }}>payout</span>
                     </span>
                   </div>
                   {/* Thin elegant chevron */}
                   <svg
-                    width="14" height="14" viewBox="0 0 24 24" fill="none"
+                    width="12" height="12" viewBox="0 0 24 24" fill="none"
                     stroke="rgba(255,255,255,0.45)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
-                    style={{ flexShrink: 0, marginLeft: 2 }}
+                    style={{ flexShrink: 0 }}
                   >
                     <polyline points="6 9 12 15 18 9" />
                   </svg>
@@ -1577,37 +1577,37 @@ export default function DashboardPage() {
                 {/* ── Live Price ── */}
                 {selectedAsset && (
                   <div style={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
-                    <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 15, fontWeight: 700, color: '#fff', letterSpacing: '-0.03em', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>
+                    <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 13, fontWeight: 700, color: '#fff', letterSpacing: '-0.03em', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>
                       {livePrice !== null ? formatPrice(livePrice) : '—'}
                     </span>
                     {livePrice !== null && (
-                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 11, fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1, fontVariantNumeric: 'tabular-nums', color: priceChange >= 0 ? '#10b981' : '#f87171' }}>
+                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 10, fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1, fontVariantNumeric: 'tabular-nums', color: priceChange >= 0 ? '#10b981' : '#f87171' }}>
                         {priceChange >= 0 ? '+' : ''}{priceChangePct.toFixed(2)}%
                       </span>
                     )}
                   </div>
                 )}
 
-                {/* ── Center: High / Low / Vol ── */}
+                {/* ── Center: High / Low / Vol — hidden on very small screens ── */}
                 {livePrice !== null && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 12, flex: 1, justifyContent: 'center', padding: '0 8px' }}>
+                  <div className="hidden sm:flex items-center gap-3 flex-1 justify-center px-2">
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                       <span style={{ fontSize: 9, fontWeight: 500, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: 1 }}>High</span>
-                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 11, fontWeight: 600, color: '#10b981', letterSpacing: '-0.01em', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>
+                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 10, fontWeight: 600, color: '#10b981', letterSpacing: '-0.01em', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>
                         {formatPrice(livePrice * (1 + Math.abs(priceChangePct) / 100 * 0.6 + 0.0008))}
                       </span>
                     </div>
-                    <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.08)' }} />
+                    <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.08)' }} />
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                       <span style={{ fontSize: 9, fontWeight: 500, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: 1 }}>Low</span>
-                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 11, fontWeight: 600, color: '#f87171', letterSpacing: '-0.01em', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>
+                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 10, fontWeight: 600, color: '#f87171', letterSpacing: '-0.01em', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>
                         {formatPrice(livePrice * (1 - Math.abs(priceChangePct) / 100 * 0.6 - 0.0008))}
                       </span>
                     </div>
-                    <div style={{ width: 1, height: 20, background: 'rgba(255,255,255,0.08)' }} />
+                    <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.08)' }} />
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                       <span style={{ fontSize: 9, fontWeight: 500, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: 1 }}>Vol</span>
-                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.6)', letterSpacing: '-0.01em', lineHeight: 1.2 }}>
+                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.6)', letterSpacing: '-0.01em', lineHeight: 1.2 }}>
                         {livePrice > 1000 ? `${(livePrice * 0.00024).toFixed(2)}K` : `${(livePrice * 0.12).toFixed(0)}`}
                       </span>
                     </div>
@@ -1615,27 +1615,27 @@ export default function DashboardPage() {
                 )}
 
                 {/* ── Change + LIVE ── */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 'auto', flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', flexShrink: 0 }}>
                   {livePrice !== null && (
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
-                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 11, fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums', color: priceChange >= 0 ? '#10b981' : '#f87171' }}>
+                    <div className="hidden xs:flex flex-col items-end gap-0.5">
+                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 10, fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums', color: priceChange >= 0 ? '#10b981' : '#f87171' }}>
                         {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(priceChange > 100 ? 2 : 4)}
                       </span>
-                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 10, fontWeight: 500, letterSpacing: '-0.01em', lineHeight: 1, fontVariantNumeric: 'tabular-nums', color: 'rgba(255,255,255,0.3)' }}>
-                        24h change
+                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 9, fontWeight: 500, letterSpacing: '-0.01em', lineHeight: 1, fontVariantNumeric: 'tabular-nums', color: 'rgba(255,255,255,0.3)' }}>
+                        24h
                       </span>
                     </div>
                   )}
                   {/* LIVE indicator with pulse */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 7px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 6 }}>
-                    <span style={{ position: 'relative', display: 'inline-flex', width: 7, height: 7 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 6px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 6, flexShrink: 0 }}>
+                    <span style={{ position: 'relative', display: 'inline-flex', width: 6, height: 6 }}>
                       <span style={{
                         position: 'absolute', inset: 0, borderRadius: '50%', background: '#10b981',
                         animation: 'ping 1.4s cubic-bezier(0,0,0.2,1) infinite', opacity: 0.6,
                       }} />
-                      <span style={{ position: 'relative', width: 7, height: 7, borderRadius: '50%', background: '#10b981', display: 'block' }} />
+                      <span style={{ position: 'relative', width: 6, height: 6, borderRadius: '50%', background: '#10b981', display: 'block' }} />
                     </span>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: '#10b981', letterSpacing: '0.06em' }}>LIVE</span>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: '#10b981', letterSpacing: '0.06em' }}>LIVE</span>
                   </div>
                 </div>
               </div>
@@ -1661,7 +1661,7 @@ export default function DashboardPage() {
                     }}
                   />
                 ) : (
-                  <div className="flex flex-col items-center justify-center gap-3" style={{ height: 280 }}>
+                  <div className="flex flex-col items-center justify-center gap-3" style={{ height: 240 }}>
                     <span className="text-slate-500 text-sm">Select an asset to view chart</span>
                     <button
                       onClick={() => setAssetModalOpen(true)}
@@ -1676,9 +1676,9 @@ export default function DashboardPage() {
 
             {/* OPEN TRADES TABLE */}
             {activeNav === 'trade' && (
-              <div className="px-3 pt-3 pb-2">
+              <div className="px-2 sm:px-3 pt-3 pb-2">
                 <div className="bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden">
-                  <div className="px-4 py-2.5 border-b border-white/10 flex items-center justify-between">
+                  <div className="px-3 py-2.5 border-b border-white/10 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
                       <h3 className="text-xs font-semibold text-white uppercase tracking-wider">Open Trades</h3>
@@ -1706,7 +1706,7 @@ export default function DashboardPage() {
                       <span className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                     </div>
                   ) : openTrades.length === 0 ? (
-                    <div className="text-center py-6 text-slate-500 text-sm">No open trades</div>
+                    <div className="text-center py-5 text-slate-500 text-sm">No open trades</div>
                   ) : (
                     <>
                       {/* Desktop table */}
@@ -1761,11 +1761,11 @@ export default function DashboardPage() {
                       {/* Mobile cards */}
                       <div className="sm:hidden flex flex-col divide-y divide-white/5">
                         {openTrades.map((trade) => (
-                          <div key={trade.id} className={`px-3 py-3 flex flex-col gap-2 transition-all duration-300 ${fadingTradeIds.has(trade.id) ? 'opacity-0' : 'opacity-100'}`}>
+                          <div key={trade.id} className={`px-3 py-2.5 flex flex-col gap-1.5 transition-all duration-300 ${fadingTradeIds.has(trade.id) ? 'opacity-0' : 'opacity-100'}`}>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <span className="text-sm font-bold text-white">{trade.asset_symbol}</span>
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${trade.order_type === 'buy' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${trade.order_type === 'buy' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
                                   {trade.order_type.toUpperCase()}
                                 </span>
                               </div>
@@ -1782,14 +1782,14 @@ export default function DashboardPage() {
                                 )}
                               </button>
                             </div>
-                            <div className="grid grid-cols-3 gap-2 text-xs">
+                            <div className="grid grid-cols-3 gap-1.5 text-xs">
                               <div>
                                 <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Amount</div>
-                                <div className="text-slate-300 font-medium" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.amount)}</div>
+                                <div className="text-slate-300 font-medium text-[11px]" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.amount)}</div>
                               </div>
                               <div>
                                 <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Entry</div>
-                                <div className="text-slate-300 font-medium" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.entry_price)}</div>
+                                <div className="text-slate-300 font-medium text-[11px]" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.entry_price)}</div>
                               </div>
                               <div>
                                 <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Remaining</div>
@@ -1807,9 +1807,9 @@ export default function DashboardPage() {
 
             {/* TRADE HISTORY */}
             {activeNav === 'history' && (
-              <div className="px-3 py-3">
+              <div className="px-2 sm:px-3 py-3">
                 <div className="bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden">
-                  <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+                  <div className="px-3 py-3 border-b border-white/10 flex items-center justify-between">
                     <h3 className="text-xs font-semibold text-white uppercase tracking-wider">Trade History</h3>
                     <span className="text-xs text-slate-500">{tradeHistory.length} trades</span>
                   </div>
@@ -1862,9 +1862,9 @@ export default function DashboardPage() {
                         </table>
                       </div>
 
-                      <div className="sm:hidden flex flex-col divide-y divide-white/5 max-h-[400px] overflow-y-auto">
+                      <div className="sm:hidden flex flex-col divide-y divide-white/5">
                         {tradeHistory.map((trade) => (
-                          <div key={trade.id} className="px-3 py-3 flex flex-col gap-2">
+                          <div key={trade.id} className="px-3 py-2.5 flex flex-col gap-1.5">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <span className="text-sm font-bold text-white">{trade.asset_symbol}</span>
@@ -1883,18 +1883,18 @@ export default function DashboardPage() {
                                 </span>
                               </div>
                             </div>
-                            <div className="grid grid-cols-3 gap-2 text-xs">
+                            <div className="grid grid-cols-3 gap-1.5 text-xs">
                               <div>
                                 <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Amount</div>
-                                <div className="text-slate-300">${formatCurrency(trade.amount)}</div>
+                                <div className="text-slate-300 text-[11px]">${formatCurrency(trade.amount)}</div>
                               </div>
                               <div>
                                 <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Entry</div>
-                                <div className="text-slate-400">${formatCurrency(trade.entry_price)}</div>
+                                <div className="text-slate-300 text-[11px]">${formatCurrency(trade.entry_price)}</div>
                               </div>
                               <div>
                                 <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Exit</div>
-                                <div className="text-slate-400">{trade.exit_price != null ? `$${formatCurrency(trade.exit_price)}` : '—'}</div>
+                                <div className="text-slate-300 text-[11px]">{trade.exit_price != null ? `$${formatCurrency(trade.exit_price)}` : '—'}</div>
                               </div>
                             </div>
                             {trade.closed_at && (
@@ -1935,7 +1935,7 @@ export default function DashboardPage() {
             )}
 
             {activeNav === 'account' && (
-              <div className="px-3 py-3">
+              <div className="px-2 sm:px-3 py-3">
                 <div className="bg-[#0d0d0d] border border-white/10 rounded-xl p-4">
                   <h3 className="text-xs font-semibold text-white uppercase tracking-wider mb-4">Account</h3>
                   <div className="flex flex-col gap-3">
@@ -1966,30 +1966,30 @@ export default function DashboardPage() {
             {/* Duration + Amount row */}
             <div className="flex items-center gap-0 border-b border-white/10">
               {/* Duration */}
-              <div className="flex-1 flex items-center gap-2 px-3 py-2 border-r border-white/10">
+              <div className="flex-1 flex items-center gap-1.5 px-2 py-1.5 border-r border-white/10">
                 <span className="text-[9px] text-slate-500 uppercase tracking-wider flex-shrink-0">Dur</span>
                 <button
                   onClick={decrementDuration}
                   disabled={durationIndex <= 0 || isFollowingCopyTrade}
-                  className="w-7 h-7 rounded bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-base flex items-center justify-center flex-shrink-0"
+                  className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm flex items-center justify-center flex-shrink-0"
                 >−</button>
-                <div className="flex-1 text-center bg-white/5 border border-white/20 rounded py-1 text-xs font-semibold text-white min-w-[40px]">
+                <div className="flex-1 text-center bg-white/5 border border-white/20 rounded py-0.5 text-xs font-semibold text-white min-w-[36px]">
                   {currentDurationLabel}
                 </div>
                 <button
                   onClick={incrementDuration}
                   disabled={durationIndex >= DURATION_STEPS.length - 1 || isFollowingCopyTrade}
-                  className="w-7 h-7 rounded bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-base flex items-center justify-center flex-shrink-0"
+                  className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm flex items-center justify-center flex-shrink-0"
                 >+</button>
               </div>
 
               {/* Amount */}
-              <div className="flex-1 flex items-center gap-2 px-3 py-2">
+              <div className="flex-1 flex items-center gap-1.5 px-2 py-1.5">
                 <span className="text-[9px] text-slate-500 uppercase tracking-wider flex-shrink-0">Amt</span>
                 <button
                   onClick={handleAmountDecrement}
                   disabled={amount <= 1 || isFollowingCopyTrade}
-                  className="w-7 h-7 rounded bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-base flex items-center justify-center flex-shrink-0"
+                  className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm flex items-center justify-center flex-shrink-0"
                 >−</button>
                 <input
                   type="text"
@@ -1998,21 +1998,21 @@ export default function DashboardPage() {
                   onChange={handleAmountInputChange}
                   onBlur={handleAmountInputBlur}
                   disabled={isFollowingCopyTrade}
-                  className="flex-1 text-center bg-white/5 border border-white/20 rounded py-1 text-xs font-semibold text-white min-w-[40px] focus:outline-none focus:border-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 text-center bg-white/5 border border-white/20 rounded py-0.5 text-xs font-semibold text-white min-w-[36px] focus:outline-none focus:border-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}
                 />
                 <button
                   onClick={handleAmountIncrement}
                   disabled={amount >= 10000 || isFollowingCopyTrade}
-                  className="w-7 h-7 rounded bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-base flex items-center justify-center flex-shrink-0"
+                  className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm flex items-center justify-center flex-shrink-0"
                 >+</button>
               </div>
             </div>
 
             {/* Copy Trade Active Banner */}
             {isFollowingCopyTrade && (
-              <div className="px-3 py-2 bg-blue-500/10 border-b border-blue-500/20 flex items-center gap-2">
-                <svg className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+              <div className="px-3 py-1.5 bg-blue-500/10 border-b border-blue-500/20 flex items-center gap-2">
+                <svg className="w-3 h-3 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 <span className="text-blue-400 text-[10px] font-medium">You are currently copying Investoft trades</span>
               </div>
             )}
@@ -2028,13 +2028,13 @@ export default function DashboardPage() {
                   transition: 'all 0.2s ease',
                   borderRadius: 8,
                 }}
-                className="flex-1 py-3.5 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-lg tracking-widest transition-all flex items-center justify-center gap-2"
+                className="flex-1 py-3 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-base tracking-widest transition-all flex items-center justify-center gap-2"
               >
                 {sellLoading ? (
                   <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l-8-8h5V4h6v8h5z"/></svg>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l-8-8h5V4h6v8h5z"/></svg>
                     SELL
                   </>
                 )}
@@ -2048,13 +2048,13 @@ export default function DashboardPage() {
                   transition: 'all 0.2s ease',
                   borderRadius: 8,
                 }}
-                className="flex-1 py-3.5 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-lg tracking-widest transition-all flex items-center justify-center gap-2"
+                className="flex-1 py-3 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-base tracking-widest transition-all flex items-center justify-center gap-2"
               >
                 {buyLoading ? (
                   <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l8 8h-5v8H9v-8H4z"/></svg>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l8 8h-5v8H9v-8H4z"/></svg>
                     BUY
                   </>
                 )}
