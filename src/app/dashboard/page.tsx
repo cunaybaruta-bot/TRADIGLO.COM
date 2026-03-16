@@ -519,8 +519,13 @@ function BottomNav({ active, onChange }: { active: NavSection; onChange: (s: Nav
     ) },
     { id: 'history', label: 'History', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3.5 3.5" /></svg> },
     { id: 'copytrade', label: 'Copy Trade', icon: (
-      <svg className="w-6 h-6" viewBox="0 0 100 50" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <path d="M75,5 C60,5 51,16 50,25 C49,16 40,5 25,5 C11.2,5 0,16.2 0,30 C0,43.8 11.2,55 25,55 C40,55 49,44 44.5,30 C41,23.5 33.5,16 25,16 C17,16 11,18.7 11,25 C11,31.3 20,34 25,34 C39,34 50,36.5 55.5,30 C59,23.5 66.5,16 75,16 C88.8,16 100,18.7 100,25 C100,31.3 89,34 75,34 Z M25,44 C17.3,44 11,37.7 11,30 C11,22.3 17.3,16 25,16 C33.5,16 41,23.5 44.5,30 C41,36.5 33.5,44 25,44 Z M75,44 C66.5,44 59,36.5 55.5,30 C59,23.5 66.5,16 75,16 C82.7,16 89,18.7 89,25 C89,31.3 82.7,34 75,34 Z" />
+      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+        {/* Arrow pointing right */}
+        <path d="M5 12h11" />
+        <path d="M13 8l4 4-4 4" />
+        {/* Small user head above arrow */}
+        <circle cx="19" cy="5" r="2" strokeWidth={1.6} />
+        <path d="M15.5 9.5c0-1.933 1.567-2.5 3.5-2.5s3.5.567 3.5 2.5" strokeWidth={1.6} />
       </svg>
     ) },
     { id: 'account', label: 'Account', icon: (
