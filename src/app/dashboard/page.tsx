@@ -1976,11 +1976,10 @@ export default function DashboardPage() {
                 disabled={buyLoading || sellLoading || !selectedAsset || isFollowingCopyTrade}
                 title={isFollowingCopyTrade ? 'You are currently copying Investoft trades' : undefined}
                 style={{
-                  background: 'linear-gradient(135deg, #c0392b 0%, #e74c3c 50%, #c0392b 100%)',
-                  boxShadow: sellLoading || buyLoading || !selectedAsset || isFollowingCopyTrade ? 'none' : '0 0 18px rgba(231,76,60,0.55), 0 0 6px rgba(231,76,60,0.3), inset 0 1px 0 rgba(255,255,255,0.12)',
+                  background: '#e53935',
                   transition: 'all 0.2s ease',
                 }}
-                className="flex-1 py-3.5 bg-red-600 hover:bg-red-500 active:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-lg tracking-widest transition-all flex items-center justify-center gap-2"
+                className="flex-1 py-3.5 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-lg tracking-widest transition-all flex items-center justify-center gap-2"
               >
                 {sellLoading ? (
                   <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -1996,11 +1995,10 @@ export default function DashboardPage() {
                 disabled={buyLoading || sellLoading || !selectedAsset || isFollowingCopyTrade}
                 title={isFollowingCopyTrade ? 'You are currently copying Investoft trades' : undefined}
                 style={{
-                  background: 'linear-gradient(135deg, #1a7a3a 0%, #27ae60 50%, #1a7a3a 100%)',
-                  boxShadow: buyLoading || sellLoading || !selectedAsset || isFollowingCopyTrade ? 'none' : '0 0 18px rgba(39,174,96,0.55), 0 0 6px rgba(39,174,96,0.3), inset 0 1px 0 rgba(255,255,255,0.12)',
+                  background: '#2e7d32',
                   transition: 'all 0.2s ease',
                 }}
-                className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-lg tracking-widest transition-all flex items-center justify-center gap-2"
+                className="flex-1 py-3.5 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-lg tracking-widest transition-all flex items-center justify-center gap-2"
               >
                 {buyLoading ? (
                   <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
