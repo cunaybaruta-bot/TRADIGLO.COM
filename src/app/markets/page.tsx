@@ -178,86 +178,86 @@ export default function MarketsPage() {
       <TickerTape />
 
       {/* Page Header */}
-      <div className="container mx-auto px-4 sm:px-6 py-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold text-white">Markets</h1>
-            <p className="text-slate-400 mt-1 text-sm">Practice trading with virtual funds</p>
+            <h1 className="text-xl sm:text-3xl font-bold text-white">Markets</h1>
+            <p className="text-slate-400 mt-0.5 text-xs sm:text-sm">Practice trading with virtual funds</p>
           </div>
           <div
             style={{
               background: 'linear-gradient(135deg, #7c3aed 0%, #6d28d9 50%, #5b21b6 100%)',
               borderRadius: '12px',
-              padding: '16px 24px',
-              minWidth: '200px',
+              padding: '12px 16px',
+              minWidth: '160px',
             }}
-            className="text-right"
+            className="text-right w-full sm:w-auto"
           >
-            <p className="text-purple-200 text-xs font-medium mb-1">Demo Account Balance</p>
-            <p className="text-white text-3xl font-bold">$10,000</p>
+            <p className="text-purple-200 text-xs font-medium mb-0.5">Demo Account Balance</p>
+            <p className="text-white text-2xl sm:text-3xl font-bold">$10,000</p>
           </div>
         </div>
       </div>
 
       {/* Stats Bar */}
-      <div className="container mx-auto px-4 sm:px-6 pb-6">
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="container mx-auto px-4 sm:px-6 pb-4 sm:pb-6">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
           {/* Total Trades */}
-          <div className="rounded-xl p-4" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(59,130,246,0.15)' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <div className="rounded-xl p-3 sm:p-4" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(59,130,246,0.15)' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
                 </svg>
               </div>
               <div>
-                <p className="text-slate-400 text-xs">Total Trades</p>
-                <p className="text-white text-xl font-bold">0</p>
+                <p className="text-slate-400 text-[10px] sm:text-xs">Total Trades</p>
+                <p className="text-white text-lg sm:text-xl font-bold">0</p>
               </div>
             </div>
           </div>
           {/* Win Rate */}
-          <div className="rounded-xl p-4" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(34,197,94,0.15)' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <div className="rounded-xl p-3 sm:p-4" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(34,197,94,0.15)' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 2a10 10 0 1 0 10 10" />
                   <path d="M12 6v6l4 2" />
                 </svg>
               </div>
               <div>
-                <p className="text-slate-400 text-xs">Win Rate</p>
-                <p className="text-white text-xl font-bold">0.0%</p>
+                <p className="text-slate-400 text-[10px] sm:text-xs">Win Rate</p>
+                <p className="text-white text-lg sm:text-xl font-bold">0.0%</p>
               </div>
             </div>
           </div>
           {/* Total Profit */}
-          <div className="rounded-xl p-4" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(34,197,94,0.15)' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <div className="rounded-xl p-3 sm:p-4" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(34,197,94,0.15)' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="12" y1="1" x2="12" y2="23" />
                   <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
                 </svg>
               </div>
               <div>
-                <p className="text-slate-400 text-xs">Total Profit</p>
-                <p className="text-white text-xl font-bold">$0.00</p>
+                <p className="text-slate-400 text-[10px] sm:text-xs">Total Profit</p>
+                <p className="text-white text-lg sm:text-xl font-bold">$0.00</p>
               </div>
             </div>
           </div>
           {/* Open Positions */}
-          <div className="rounded-xl p-4" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: 'rgba(251,146,60,0.15)' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fb923c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <div className="rounded-xl p-3 sm:p-4" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(251,146,60,0.15)' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fb923c" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10" />
                   <polyline points="12 6 12 12 16 14" />
                 </svg>
               </div>
               <div>
-                <p className="text-slate-400 text-xs">Open Positions</p>
-                <p className="text-white text-xl font-bold">0</p>
+                <p className="text-slate-400 text-[10px] sm:text-xs">Open Positions</p>
+                <p className="text-white text-lg sm:text-xl font-bold">0</p>
               </div>
             </div>
           </div>
@@ -265,17 +265,17 @@ export default function MarketsPage() {
       </div>
 
       {/* Trading Section */}
-      <div className="container mx-auto px-4 sm:px-6 pb-6">
+      <div className="container mx-auto px-4 sm:px-6 pb-4 sm:pb-6">
         <div className="rounded-xl overflow-hidden" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
           {/* Symbol Header */}
-          <div className="flex items-start justify-between px-5 pt-5 pb-3">
+          <div className="flex items-start justify-between px-4 pt-4 pb-3">
             <div>
-              <p className="text-slate-400 text-xs mb-1">Trading Symbol</p>
-              <p className="text-white text-xl font-bold">Bitcoin</p>
-              <p className="text-slate-500 text-sm">BINANCE:BTCUSDT</p>
+              <p className="text-slate-400 text-xs mb-0.5">Trading Symbol</p>
+              <p className="text-white text-lg sm:text-xl font-bold">Bitcoin</p>
+              <p className="text-slate-500 text-xs sm:text-sm">BINANCE:BTCUSDT</p>
             </div>
-            <button className="w-9 h-9 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <button className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors flex-shrink-0" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="11" cy="11" r="8" />
                 <path d="m21 21-4.3-4.3" />
               </svg>
@@ -288,26 +288,26 @@ export default function MarketsPage() {
           </div>
 
           {/* Chart Footer */}
-          <div className="flex items-center justify-between px-5 py-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="flex items-center justify-between px-4 py-2.5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-green-500 inline-block" style={{ boxShadow: '0 0 6px #22c55e' }} />
-              <span className="text-green-400 text-sm font-medium">Live Market</span>
+              <span className="text-green-400 text-xs font-medium">Live Market</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="text-slate-400 text-sm">Current Price:</span>
-              <span className="text-red-400 text-lg font-bold">$69,302.20</span>
-              <span className="text-red-400">▼</span>
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-400 text-xs">Price:</span>
+              <span className="text-red-400 text-sm sm:text-lg font-bold">$69,302.20</span>
+              <span className="text-red-400 text-xs">▼</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Trade Controls */}
-      <div className="container mx-auto px-4 sm:px-6 pb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="container mx-auto px-4 sm:px-6 pb-4 sm:pb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
           {/* Investment Amount */}
-          <div className="rounded-xl p-5" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <p className="text-white font-semibold mb-4">Investment Amount</p>
+          <div className="rounded-xl p-4" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <p className="text-white font-semibold text-sm mb-3">Investment Amount</p>
             <div className="flex items-center gap-2 mb-2">
               <button
                 onClick={handleInvestmentMinus}
@@ -345,8 +345,8 @@ export default function MarketsPage() {
           </div>
 
           {/* Trade Duration */}
-          <div className="rounded-xl p-5" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <p className="text-white font-semibold mb-4">Trade Duration</p>
+          <div className="rounded-xl p-4" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <p className="text-white font-semibold text-sm mb-3">Trade Duration</p>
             <div className="flex items-center gap-2 mb-2">
               <button
                 onClick={handleDurationMinus}
@@ -401,8 +401,8 @@ export default function MarketsPage() {
           </div>
 
           {/* Execute Trade */}
-          <div className="rounded-xl p-5" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <p className="text-white font-semibold mb-4">Execute Trade</p>
+          <div className="rounded-xl p-4" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
+            <p className="text-white font-semibold text-sm mb-3">Execute Trade</p>
             <div className="space-y-3 mb-5">
               <div className="flex items-center justify-between">
                 <span className="text-slate-400 text-sm">Market Status</span>
@@ -436,7 +436,7 @@ export default function MarketsPage() {
       </div>
 
       {/* Positions Section */}
-      <div className="container mx-auto px-4 sm:px-6 pb-6">
+      <div className="container mx-auto px-4 sm:px-6 pb-4 sm:pb-6">
         <div className="rounded-xl overflow-hidden" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
           {/* Tabs */}
           <div className="flex" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
@@ -469,20 +469,21 @@ export default function MarketsPage() {
       </div>
 
       {/* Popular Assets */}
-      <div style={{ background: '#000000' }} className="py-10">
+      <div style={{ background: '#000000' }} className="py-8 sm:py-10">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-white mb-2">Popular Assets</h2>
-            <p className="text-slate-400 text-sm">Track and trade the most popular stocks, cryptocurrencies, forex pairs, and commodities</p>
+          <div className="text-center mb-6 sm:mb-8">
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-1.5">Popular Assets</h2>
+            <p className="text-slate-400 text-xs sm:text-sm">Track and trade the most popular stocks, cryptocurrencies, forex pairs, and commodities</p>
           </div>
           <div
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(3, 1fr)',
+              gridTemplateColumns: 'repeat(2, 1fr)',
               gap: '1px',
               background: '#222222',
               border: '1px solid #222222',
             }}
+            className="sm:grid-cols-3"
           >
             {POPULAR_ASSETS.map((asset) => (
               <div
@@ -490,13 +491,13 @@ export default function MarketsPage() {
                 style={{ background: '#111111', overflow: 'hidden' }}
               >
                 {/* Card Header */}
-                <div className="flex items-center justify-between px-3 pt-3 pb-1">
-                  <div>
-                    <p className="text-white text-xs font-bold tracking-wide">{asset.symbol}</p>
-                    <p style={{ color: '#888888', fontSize: '10px' }}>{asset.name}</p>
+                <div className="flex items-center justify-between px-2 sm:px-3 pt-2.5 pb-1">
+                  <div className="min-w-0">
+                    <p className="text-white text-xs font-bold tracking-wide truncate">{asset.symbol}</p>
+                    <p className="truncate" style={{ color: '#888888', fontSize: '9px' }}>{asset.name}</p>
                   </div>
-                  <div style={{ opacity: 0.5 }}>
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                  <div style={{ opacity: 0.5, flexShrink: 0 }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
                       <rect x="2" y="2" width="20" height="20" rx="3" fill="#1a1a2e" />
                       <text x="4" y="17" fontSize="12" fontWeight="bold" fill="#2962ff">TV</text>
                     </svg>

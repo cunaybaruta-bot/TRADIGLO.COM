@@ -435,10 +435,10 @@ function AuthForm() {
       <FloatingBackground />
 
       {/* Page wrapper */}
-      <div className="relative min-h-screen flex flex-col items-center justify-center px-4 pb-12" style={{ zIndex: 10 }}>
+      <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-8 pb-16" style={{ zIndex: 10 }}>
         {/* Form card — pure black */}
         <div
-          className="w-full max-w-md rounded-2xl px-8 py-8 shadow-2xl"
+          className="w-full max-w-md rounded-2xl px-5 sm:px-8 py-6 sm:py-8 shadow-2xl"
           style={{
             background: '#0a0a0a',
             border: '1px solid rgba(255,255,255,0.1)',
@@ -447,7 +447,7 @@ function AuthForm() {
           }}
         >
           {/* Heading */}
-          <div className="flex justify-center mb-6">
+          <div className="flex justify-center mb-5">
             <a href="/" className="cursor-pointer flex items-center gap-1">
               <div
                 style={{
@@ -475,7 +475,7 @@ function AuthForm() {
           </div>
 
           {/* Tab Toggle */}
-          <div className="flex rounded-lg bg-[#111111] border border-white/10 p-1 mb-7">
+          <div className="flex rounded-lg bg-[#111111] border border-white/10 p-1 mb-5">
             <button
               onClick={() => { setTab('signup'); setSignUpError(null); setSignUpSuccess(false); }}
               className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${
@@ -495,7 +495,7 @@ function AuthForm() {
           </div>
 
           {/* Fixed-height form container */}
-          <div style={{ minHeight: 340, position: 'relative' }}>
+          <div style={{ minHeight: 320, position: 'relative' }}>
 
             {/* SIGN UP Form */}
             <div

@@ -179,49 +179,49 @@ export default function MarketsTable() {
 
   return (
     <section className="bg-black w-full" style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif" }}>
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4">
 
         {/* Category Tab Bar */}
-        <div className="flex items-center justify-between border-b border-[#1e2a4a] overflow-x-auto">
-          <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center justify-between border-b border-[#1e2a4a] overflow-x-auto scrollbar-none" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="flex items-center gap-0.5 flex-shrink-0">
             {CATEGORY_TABS.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
+                className={`flex items-center gap-1 px-3 py-2.5 text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
                   activeTab === tab.id
                     ? 'border-green-500 text-green-400 bg-green-500/10' :'border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
                 }`}
               >
-                {tab.fire && <span className="text-base leading-none">🔥</span>}
+                {tab.fire && <span className="text-sm leading-none">🔥</span>}
                 {tab.icon && !tab.fire && (
-                  <span className="text-slate-500 text-sm">{tab.icon}</span>
+                  <span className="text-slate-500 text-xs">{tab.icon}</span>
                 )}
                 {tab.id === 'all' && activeTab === 'all' && (
-                  <span className="w-2 h-2 rounded-full bg-green-400 inline-block" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
                 )}
                 {tab.label}
               </button>
             ))}
           </div>
-          <button className="flex items-center gap-1.5 px-4 py-2.5 ml-2 rounded-lg border border-[#2a3a5c] text-slate-400 hover:text-slate-200 hover:border-slate-500 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0">
-            <span className="text-base">✦</span>
-            Customize
+          <button className="flex items-center gap-1 px-3 py-2 ml-1 rounded-lg border border-[#2a3a5c] text-slate-400 hover:text-slate-200 hover:border-slate-500 text-xs font-medium transition-colors whitespace-nowrap flex-shrink-0">
+            <span className="text-sm">✦</span>
+            <span className="hidden sm:inline">Customize</span>
           </button>
         </div>
 
         {/* Table Header Bar */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#1e2a4a]">
-          <div className="flex items-center gap-3">
-            <span className="text-white font-semibold text-sm tracking-tight">All Markets</span>
-            <span className="px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-400 text-xs font-medium">
+        <div className="flex items-center justify-between px-2 sm:px-4 py-2.5 border-b border-[#1e2a4a]">
+          <div className="flex items-center gap-2">
+            <span className="text-white font-semibold text-xs tracking-tight">All Markets</span>
+            <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-[10px] font-medium">
               {loading ? '...' : `${TOTAL_RESULTS.toLocaleString()}+ Coins`}
             </span>
           </div>
           <button
             onClick={() => fetchCoins(currentPage, rowsPerPage)}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white text-xs font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-1 px-2.5 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white text-[10px] font-medium transition-colors disabled:opacity-50"
           >
             <svg className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
