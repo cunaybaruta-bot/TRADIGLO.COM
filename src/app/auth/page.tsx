@@ -447,9 +447,15 @@ function AuthForm() {
           }}
         >
           {/* Heading */}
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-6 text-center">
-            Welcome to Investoft!
-          </h1>
+          <div className="flex justify-center mb-6">
+            <a href="/" className="cursor-pointer">
+              <img
+                src="/assets/images/LOGO_BARU_TANPA_BACKGROUND-1773102064187.png"
+                alt="Investoft Logo"
+                className="h-12 object-contain"
+              />
+            </a>
+          </div>
 
           {/* Tab Toggle */}
           <div className="flex rounded-lg bg-[#111111] border border-white/10 p-1 mb-7">
