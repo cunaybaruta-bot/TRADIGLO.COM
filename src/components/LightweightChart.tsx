@@ -1375,7 +1375,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           openTrades.forEach((t) => {
             if (t.status === 'open' && seriesRef.current && !entryLinesRef.current.has(t.id)) {
               try {
-                const priceLine = seriesRef.current.createPriceLine({
+                const priceLine = seriesRef.current!.createPriceLine({
                   price: t.entry_price,
                   color: t.order_type === 'buy' ? '#22c55e' : '#ef4444',
                   lineWidth: 1,
@@ -1605,11 +1605,14 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
       <div className="w-full relative" style={{ background: '#000' }}>
         {/* ── Single compact toolbar row ── */}
         <div
-          className="flex items-center border-b border-white/10 overflow-x-auto"
-          style={{ scrollbarWidth: 'none', height: 34, minHeight: 34, background: 'rgba(255,255,255,0.02)' }}
+          className="flex items-center border-b border-white/10"
+          style={{ height: 34, minHeight: 34, background: 'rgba(255,255,255,0.02)', overflow: 'visible', position: 'relative', zIndex: 10 }}
         >
-          {/* ── Timeframe pills ── */}
-          <div className="flex items-center gap-0.5 px-2 flex-shrink-0">
+          {/* ── Timeframe pills (scrollable) ── */}
+          <div
+            className="flex items-center gap-0.5 px-2 flex-shrink-0 overflow-x-auto"
+            style={{ scrollbarWidth: 'none', maxWidth: 'calc(100% - 160px)' }}
+          >
             {TIMEFRAMES.map((tf) => (
               <button
                 key={tf.label}
@@ -1910,7 +1913,7 @@ function DrawingDropdown({ tools, activeTool, drawColor, drawings, pendingTrendP
                         ? 'bg-red-600/20 text-red-400 border border-red-600/40' :'bg-indigo-600/20 text-indigo-300 border border-indigo-600/40' :'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
                   }`}
                 >
-                  <span className="text-[13px] w-4 text-center leading-none">{icon}</span>
+                  <span className="text-[13px] ${isActive ? 'text-indigo-400' : 'text-slate-500'} w-4 text-center leading-none">{icon}</span>
                   <span>{label}</span>
                 </button>
               );
