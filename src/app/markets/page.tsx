@@ -291,18 +291,17 @@ export default function MarketsPage() {
   const [isPlacing, setIsPlacing] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Binance WebSocket for real-time BTC price (same data source as TradingView BINANCE:BTCUSDT)
+  // Real-time BTC price via polling internal API (Twelve Data)
   useEffect(() => {
-    let ws: WebSocket | null = null;
-    let reconnectTimer: NodeJS.Timeout | null = null;
+    let pollTimer: NodeJS.Timeout | null = null;
+    let cancelled = false;
 
-    const connect = () => {
-      ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@ticker');
-
-      ws.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          const price = parseFloat(data.c); // 'c' = current price
+    const fetchPrice = () => {
+      fetch('/api/markets/btc-price')
+        .then((r) => r.json())
+        .then((d) => {
+          if (cancelled) return;
+          const price = parseFloat(d.price);
           if (!isNaN(price) && price > 0) {
             setPriceDirection(
               prevPriceRef.current === null ? null : price >= prevPriceRef.current ? 'up' : 'down'
@@ -310,41 +309,20 @@ export default function MarketsPage() {
             prevPriceRef.current = price;
             setLivePrice(price);
           }
-        } catch {
-          // ignore parse errors
-        }
-      };
-
-      ws.onerror = () => {
-        ws?.close();
-      };
-
-      ws.onclose = () => {
-        // Reconnect after 3 seconds
-        reconnectTimer = setTimeout(connect, 3000);
-      };
+        })
+        .catch(() => {})
+        .finally(() => {
+          if (!cancelled) {
+            pollTimer = setTimeout(fetchPrice, 5000);
+          }
+        });
     };
 
-    // Initial REST fetch so price is available immediately before WS connects
-    fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
-      .then((r) => r.json())
-      .then((d) => {
-        const price = parseFloat(d.price);
-        if (!isNaN(price) && price > 0) {
-          prevPriceRef.current = price;
-          setLivePrice(price);
-        }
-      })
-      .catch(() => {});
-
-    connect();
+    fetchPrice();
 
     return () => {
-      if (reconnectTimer) clearTimeout(reconnectTimer);
-      if (ws) {
-        ws.onclose = null;
-        ws.close();
-      }
+      cancelled = true;
+      if (pollTimer) clearTimeout(pollTimer);
     };
   }, []);
 
