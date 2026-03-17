@@ -616,6 +616,8 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
 
     const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+    const lastWsMsgTimeRef = useRef<number>(0);
+
     const [timeframe, setTimeframe] = useState('1m');
     const [isLoading, setIsLoading] = useState(true);
     const [activeIndicators, setActiveIndicators] = useState<Set<IndicatorKey>>(new Set());
