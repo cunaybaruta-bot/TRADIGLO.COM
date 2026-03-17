@@ -615,6 +615,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     const [timeframe, setTimeframe] = useState('1m');
     const [isLoading, setIsLoading] = useState(true);
     const [activeIndicators, setActiveIndicators] = useState<Set<IndicatorKey>>(new Set());
+    const [chartHeight, setChartHeight] = useState<number>(CHART_HEIGHT);
 
     const [activeTool, setActiveTool] = useState<DrawingTool>(null);
     const [drawColor, setDrawColor] = useState('#f59e0b');
@@ -636,15 +637,20 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     useEffect(() => { pendingTrendP1Ref.current = pendingTrendP1; }, [pendingTrendP1]);
     useEffect(() => { pendingMousePosRef.current = pendingMousePos; }, [pendingMousePos]);
 
-    const onChartReadyRef = useRef(onChartReady);
-    onChartReadyRef.current = onChartReady;
-    const onPriceUpdateRef = useRef(onPriceUpdate);
-    onPriceUpdateRef.current = onPriceUpdate;
-
-    const lastWsMsgTimeRef = useRef<number>(0);
-    const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-    const firstCloseRef = useRef<number | null>(null);
-    const fetchAbortRef = useRef<AbortController | null>(null);
+    useEffect(() => {
+      const updateHeight = () => {
+        if (window.innerWidth < 640) {
+          setChartHeight(240);
+        } else if (window.innerWidth < 1024) {
+          setChartHeight(300);
+        } else {
+          setChartHeight(CHART_HEIGHT);
+        }
+      };
+      updateHeight();
+      window.addEventListener('resize', updateHeight);
+      return () => window.removeEventListener('resize', updateHeight);
+    }, []);
 
     // ─── Redraw canvas ────────────────────────────────────────────────────────
 
@@ -1663,7 +1669,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
             ref={containerRef}
             style={{
               width: '100%',
-              height: typeof window !== 'undefined' && window.innerWidth < 640 ? 240 : typeof window !== 'undefined' && window.innerWidth < 1024 ? 300 : CHART_HEIGHT,
+              height: chartHeight,
               display: 'block',
             }}
           />
