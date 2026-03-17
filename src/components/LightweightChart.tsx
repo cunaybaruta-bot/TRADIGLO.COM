@@ -618,6 +618,13 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
 
     const lastWsMsgTimeRef = useRef<number>(0);
 
+    const firstCloseRef = useRef<number | null>(null);
+    const onPriceUpdateRef = useRef<((price: number, change: number, changePct: number) => void) | undefined>(undefined);
+    const onChartReadyRef = useRef<(() => void) | undefined>(undefined);
+
+    useEffect(() => { onPriceUpdateRef.current = onPriceUpdate; }, [onPriceUpdate]);
+    useEffect(() => { onChartReadyRef.current = onChartReady; }, [onChartReady]);
+
     const [timeframe, setTimeframe] = useState('1m');
     const [isLoading, setIsLoading] = useState(true);
     const [activeIndicators, setActiveIndicators] = useState<Set<IndicatorKey>>(new Set());
