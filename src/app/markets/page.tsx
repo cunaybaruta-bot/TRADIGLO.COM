@@ -287,15 +287,18 @@ export default function MarketsPage() {
     }
   }, []);
 
-  // Real-time price polling from Binance public API
+  // Real-time price polling from CoinGecko (CORS-safe, no API key needed)
   useEffect(() => {
     const fetchPrice = async () => {
       try {
-        const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
+        const res = await fetch(
+          'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd',
+          { cache: 'no-store' }
+        );
         if (!res.ok) return;
         const data = await res.json();
-        const newPrice = parseFloat(data.price);
-        if (!isNaN(newPrice)) {
+        const newPrice = data?.bitcoin?.usd;
+        if (newPrice && !isNaN(newPrice)) {
           setPriceDirection(
             prevPriceRef.current === null ? null : newPrice >= prevPriceRef.current ? 'up' : 'down'
           );
@@ -308,7 +311,7 @@ export default function MarketsPage() {
     };
 
     fetchPrice();
-    const interval = setInterval(fetchPrice, 2000);
+    const interval = setInterval(fetchPrice, 5000);
     return () => clearInterval(interval);
   }, []);
 
@@ -675,16 +678,13 @@ export default function MarketsPage() {
             </div>
 
             {/* SELL / BUY buttons */}
-            {tradesRemaining === 0 ? (
+            {demoTradeCount >= DEMO_TRADE_LIMIT ? (
               <div className="p-3">
                 <button
                   onClick={() => setShowSignupModal(true)}
-                  className="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all hover:opacity-90"
+                  className="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center transition-all hover:opacity-90"
                   style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
                 >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  </svg>
                   Sign Up to Continue
                 </button>
               </div>
