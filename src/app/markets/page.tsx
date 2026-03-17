@@ -84,18 +84,16 @@ function MiniChart({ symbol }: { symbol: string }) {
   return <div ref={containerRef} style={{ width: '100%', height: '200px' }} />;
 }
 
-const DURATION_OPTIONS = [
-  { label: '5 Sec', value: 5, unit: 'sec' },
-  { label: '15 Sec', value: 15, unit: 'sec' },
-  { label: '30 Sec', value: 30, unit: 'sec' },
-  { label: '1 Min', value: 1, unit: 'min' },
-  { label: '5 Min', value: 5, unit: 'min' },
-  { label: '15 Min', value: 15, unit: 'min' },
-  { label: '30 Min', value: 30, unit: 'min' },
-  { label: '1 Hour', value: 1, unit: 'hour' },
-  { label: '4 Hour', value: 4, unit: 'hour' },
-  { label: '1 Day', value: 1, unit: 'day' },
-];
+const DURATION_STEPS = [5, 10, 15, 20, 30, 45, 60, 120, 300, 600, 900, 1800, 3600, 7200, 14400, 28800, 43200, 86400, 172800, 259200, 432000, 604800, 1209600, 2592000];
+
+function formatDuration(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d`;
+  if (seconds < 2592000) return `${Math.floor(seconds / 604800)}w`;
+  return `${Math.floor(seconds / 2592000)}mo`;
+}
 
 const POPULAR_ASSETS = [
   { symbol: 'BTCUSDT', name: 'BITCOIN / TETHERUS', tvSymbol: 'BINANCE:BTCUSDT' },
@@ -128,6 +126,7 @@ interface DemoTrade {
   duration: string;
   durationSeconds: number;
   openedAt: number;
+  entryPrice: number | null;
   result?: 'win' | 'loss';
   profit?: number;
   status: 'open' | 'closed';
@@ -261,9 +260,8 @@ function TradeToast({ trade, onDismiss }: { trade: DemoTrade; onDismiss: () => v
 
 export default function MarketsPage() {
   const [investmentAmount, setInvestmentAmount] = useState(10);
-  const [investmentSlider, setInvestmentSlider] = useState(10);
-  const [selectedDuration, setSelectedDuration] = useState('1 Min');
-  const [durationSlider, setDurationSlider] = useState(3);
+  const [amountInput, setAmountInput] = useState<string>('10');
+  const [durationIndex, setDurationIndex] = useState(6);
   const [activeTab, setActiveTab] = useState<'open' | 'history'>('open');
 
   // Live price state
@@ -347,7 +345,8 @@ export default function MarketsPage() {
     };
   }, [openTrades]);
 
-  const currentDuration = DURATION_OPTIONS[durationSlider];
+  const currentDurationSeconds = DURATION_STEPS[durationIndex];
+  const currentDurationLabel = formatDuration(currentDurationSeconds);
 
   // Derived stats
   const totalTrades = closedTrades.length;
@@ -359,43 +358,38 @@ export default function MarketsPage() {
   }, 0);
   const openPositions = openTrades.length;
 
-  const handleInvestmentMinus = () => {
-    setInvestmentAmount((prev) => Math.max(1, prev - 1));
-    setInvestmentSlider((prev) => Math.max(1, prev - 1));
+  // Amount handlers
+  const handleAmountDecrement = () => {
+    const newVal = Math.max(1, investmentAmount - 1);
+    setInvestmentAmount(newVal);
+    setAmountInput(String(newVal));
   };
-  const handleInvestmentPlus = () => {
-    setInvestmentAmount((prev) => Math.min(10000, prev + 1));
-    setInvestmentSlider((prev) => Math.min(10000, prev + 1));
+  const handleAmountIncrement = () => {
+    const newVal = Math.min(10000, investmentAmount + 1);
+    setInvestmentAmount(newVal);
+    setAmountInput(String(newVal));
   };
-  const handleInvestmentSlider = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = Number(e.target.value);
-    setInvestmentAmount(val);
-    setInvestmentSlider(val);
+  const handleAmountInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const raw = e.target.value.replace(/[^0-9]/g, '');
+    setAmountInput(raw);
+  };
+  const handleAmountInputBlur = () => {
+    const parsed = parseInt(amountInput, 10);
+    if (isNaN(parsed) || parsed < 1) {
+      setInvestmentAmount(1);
+      setAmountInput('1');
+    } else if (parsed > 10000) {
+      setInvestmentAmount(10000);
+      setAmountInput('10000');
+    } else {
+      setInvestmentAmount(parsed);
+      setAmountInput(String(parsed));
+    }
   };
 
-  const handleDurationMinus = () => {
-    setDurationSlider((prev) => {
-      const next = Math.max(0, prev - 1);
-      setSelectedDuration(DURATION_OPTIONS[next].label);
-      return next;
-    });
-  };
-  const handleDurationPlus = () => {
-    setDurationSlider((prev) => {
-      const next = Math.min(DURATION_OPTIONS.length - 1, prev + 1);
-      setSelectedDuration(DURATION_OPTIONS[next].label);
-      return next;
-    });
-  };
-  const handleDurationSlider = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = Number(e.target.value);
-    setDurationSlider(val);
-    setSelectedDuration(DURATION_OPTIONS[val].label);
-  };
-  const handleDurationPreset = (label: string, idx: number) => {
-    setSelectedDuration(label);
-    setDurationSlider(idx);
-  };
+  // Duration handlers
+  const decrementDuration = () => { if (durationIndex > 0) setDurationIndex((i) => i - 1); };
+  const incrementDuration = () => { if (durationIndex < DURATION_STEPS.length - 1) setDurationIndex((i) => i + 1); };
 
   const placeTrade = (direction: 'UP' | 'DOWN') => {
     const currentCount = parseInt(localStorage.getItem(DEMO_TRADE_KEY) ?? '0', 10);
@@ -412,20 +406,14 @@ export default function MarketsPage() {
     localStorage.setItem(DEMO_TRADE_KEY, String(newCount));
     setDemoTradeCount(newCount);
 
-    // Convert duration to seconds
-    const opt = DURATION_OPTIONS[durationSlider];
-    let durationSeconds = opt.value;
-    if (opt.unit === 'min') durationSeconds = opt.value * 60;
-    else if (opt.unit === 'hour') durationSeconds = opt.value * 3600;
-    else if (opt.unit === 'day') durationSeconds = opt.value * 86400;
-
     const trade: DemoTrade = {
       id: `demo-${Date.now()}`,
       direction,
       amount: investmentAmount,
-      duration: opt.label,
-      durationSeconds,
+      duration: currentDurationLabel,
+      durationSeconds: currentDurationSeconds,
       openedAt: Date.now(),
+      entryPrice: livePrice,
       status: 'open',
     };
 
@@ -582,187 +570,147 @@ export default function MarketsPage() {
             <TradingViewChart symbol="BINANCE:BTCUSDT" />
           </div>
 
-          {/* Chart Footer */}
-          <div className="flex items-center justify-between px-4 py-2.5" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+          {/* Chart Footer — Live Market + Real-time Price */}
+          <div className="flex items-center justify-between px-4 py-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-green-500 inline-block" style={{ boxShadow: '0 0 6px #22c55e' }} />
               <span className="text-green-400 text-xs font-medium">Live Market</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-slate-400 text-xs">Price:</span>
-              <span className="text-sm sm:text-lg font-bold transition-colors" style={{ color: priceColor }}>${displayPrice}</span>
-              <span className="text-xs" style={{ color: priceColor }}>{priceArrow}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-slate-400 text-xs">BTC/USDT</span>
+              <span
+                className="text-base sm:text-xl font-bold tabular-nums transition-colors"
+                style={{ color: priceColor, fontFamily: 'ui-monospace, monospace' }}
+              >
+                ${displayPrice}
+              </span>
+              <span className="text-sm font-bold" style={{ color: priceColor }}>{priceArrow}</span>
             </div>
           </div>
-        </div>
-      </div>
 
-      {/* Trade Controls */}
-      <div className="container mx-auto px-4 sm:px-6 pb-4 sm:pb-6">
-        {/* Duration + Amount side by side */}
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
-          {/* Investment Amount */}
-          <div className="rounded-xl p-4" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <p className="text-white font-semibold text-sm mb-3">Amount</p>
-            <div className="flex items-center gap-2 mb-2">
-              <button
-                onClick={handleInvestmentMinus}
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg hover:bg-white/10 transition-colors flex-shrink-0"
-                style={{ border: '1px solid rgba(255,255,255,0.15)' }}
-              >
-                −
-              </button>
-              <div
-                className="flex-1 h-8 sm:h-10 flex items-center justify-center rounded-lg text-white font-semibold text-sm"
-                style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.1)' }}
-              >
-                ${investmentAmount}
-              </div>
-              <button
-                onClick={handleInvestmentPlus}
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg hover:bg-white/10 transition-colors flex-shrink-0"
-                style={{ border: '1px solid rgba(255,255,255,0.15)' }}
-              >
-                +
-              </button>
-            </div>
-            <p className="text-slate-500 text-[10px] text-center mb-2">$1 – $10,000</p>
-            <input
-              type="range"
-              min={1}
-              max={10000}
-              value={investmentSlider}
-              onChange={handleInvestmentSlider}
-              className="w-full h-2 rounded-full appearance-none cursor-pointer"
-              style={{
-                background: `linear-gradient(to right, #7c3aed ${((investmentSlider - 1) / 9999) * 100}%, #2d2d4e ${((investmentSlider - 1) / 9999) * 100}%)`,
-              }}
-            />
-          </div>
-
-          {/* Trade Duration */}
-          <div className="rounded-xl p-4" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <p className="text-white font-semibold text-sm mb-3">Duration</p>
-            <div className="flex items-center gap-2 mb-2">
-              <button
-                onClick={handleDurationMinus}
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg hover:bg-white/10 transition-colors flex-shrink-0"
-                style={{ border: '1px solid rgba(255,255,255,0.15)' }}
-              >
-                −
-              </button>
-              <div
-                className="flex-1 h-8 sm:h-10 flex items-center justify-center rounded-lg text-white font-semibold text-sm"
-                style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.1)' }}
-              >
-                {DURATION_OPTIONS[durationSlider].label}
-              </div>
-              <button
-                onClick={handleDurationPlus}
-                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg hover:bg-white/10 transition-colors flex-shrink-0"
-                style={{ border: '1px solid rgba(255,255,255,0.15)' }}
-              >
-                +
-              </button>
-            </div>
-            <p className="text-slate-500 text-[10px] text-center mb-2">5 Sec – 1 Day</p>
-            <input
-              type="range"
-              min={0}
-              max={DURATION_OPTIONS.length - 1}
-              value={durationSlider}
-              onChange={handleDurationSlider}
-              className="w-full h-2 rounded-full appearance-none cursor-pointer mb-3"
-              style={{
-                background: `linear-gradient(to right, #7c3aed ${(durationSlider / (DURATION_OPTIONS.length - 1)) * 100}%, #2d2d4e ${(durationSlider / (DURATION_OPTIONS.length - 1)) * 100}%)`,
-              }}
-            />
-            {/* Time Presets */}
-            <div className="grid grid-cols-3 gap-1">
-              {DURATION_OPTIONS.map((opt, idx) => (
+          {/* Duration + Amount + BUY/SELL — compact dashboard style */}
+          <div style={{ borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+            {/* Duration + Amount row */}
+            <div className="flex items-center gap-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+              {/* Duration */}
+              <div className="flex-1 flex items-center gap-1.5 px-3 py-2" style={{ borderRight: '1px solid rgba(255,255,255,0.08)' }}>
+                <span className="text-[9px] text-slate-500 uppercase tracking-wider flex-shrink-0">Dur</span>
                 <button
-                  key={opt.label}
-                  onClick={() => handleDurationPreset(opt.label, idx)}
-                  className="py-1 rounded-lg text-[10px] font-medium transition-colors"
+                  onClick={decrementDuration}
+                  disabled={durationIndex <= 0}
+                  className="w-6 h-6 rounded flex items-center justify-center text-white font-bold text-sm flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  style={{ background: 'rgba(255,255,255,0.1)' }}
+                >−</button>
+                <div
+                  className="flex-1 text-center rounded py-0.5 text-xs font-semibold text-white min-w-[36px]"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.2)' }}
+                >
+                  {currentDurationLabel}
+                </div>
+                <button
+                  onClick={incrementDuration}
+                  disabled={durationIndex >= DURATION_STEPS.length - 1}
+                  className="w-6 h-6 rounded flex items-center justify-center text-white font-bold text-sm flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  style={{ background: 'rgba(255,255,255,0.1)' }}
+                >+</button>
+              </div>
+
+              {/* Amount */}
+              <div className="flex-1 flex items-center gap-1.5 px-3 py-2">
+                <span className="text-[9px] text-slate-500 uppercase tracking-wider flex-shrink-0">Amt</span>
+                <button
+                  onClick={handleAmountDecrement}
+                  disabled={investmentAmount <= 1}
+                  className="w-6 h-6 rounded flex items-center justify-center text-white font-bold text-sm flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  style={{ background: 'rgba(255,255,255,0.1)' }}
+                >−</button>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={amountInput}
+                  onChange={handleAmountInputChange}
+                  onBlur={handleAmountInputBlur}
+                  className="flex-1 text-center rounded py-0.5 text-xs font-semibold text-white min-w-[36px] focus:outline-none"
                   style={{
-                    background: selectedDuration === opt.label ? 'linear-gradient(135deg, #7c3aed, #6d28d9)' : '#111111',
-                    color: selectedDuration === opt.label ? '#fff' : '#94a3b8',
-                    border: selectedDuration === opt.label ? '1px solid #7c3aed' : '1px solid rgba(255,255,255,0.08)',
+                    background: 'rgba(255,255,255,0.05)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    fontFamily: 'ui-monospace, monospace',
+                    fontVariantNumeric: 'tabular-nums',
+                  }}
+                />
+                <button
+                  onClick={handleAmountIncrement}
+                  disabled={investmentAmount >= 10000}
+                  className="w-6 h-6 rounded flex items-center justify-center text-white font-bold text-sm flex-shrink-0 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  style={{ background: 'rgba(255,255,255,0.1)' }}
+                >+</button>
+              </div>
+            </div>
+
+            {/* Potential profit info */}
+            <div className="flex items-center justify-between px-3 py-1.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-500 text-[10px]">Potential Profit</span>
+                  <span className="text-green-400 text-[10px] font-semibold">+${potentialProfit}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-slate-500 text-[10px]">Payout</span>
+                  <span className="text-white text-[10px] font-semibold">95%</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-500 text-[10px]">Trades Left</span>
+                <span
+                  className="text-[10px] font-bold px-1.5 py-0.5 rounded"
+                  style={{
+                    background: tradesRemaining > 1 ? 'rgba(124,58,237,0.15)' : 'rgba(220,38,38,0.15)',
+                    color: tradesRemaining > 1 ? '#a78bfa' : '#f87171',
+                    border: `1px solid ${tradesRemaining > 1 ? 'rgba(124,58,237,0.3)' : 'rgba(220,38,38,0.3)'}`,
                   }}
                 >
-                  {opt.label}
+                  {tradesRemaining}/{DEMO_TRADE_LIMIT}
+                </span>
+              </div>
+            </div>
+
+            {/* SELL / BUY buttons */}
+            {tradesRemaining === 0 ? (
+              <div className="p-3">
+                <button
+                  onClick={() => setShowSignupModal(true)}
+                  className="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all hover:opacity-90"
+                  style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  </svg>
+                  Sign Up to Continue
                 </button>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div className="flex gap-0 w-full">
+                <button
+                  onClick={() => placeTrade('DOWN')}
+                  disabled={isPlacing}
+                  className="flex-1 py-3 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-base tracking-widest transition-all flex items-center justify-center gap-2"
+                  style={{ background: '#e53935', borderRadius: '0 0 0 12px' }}
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /></svg>
+                  SELL
+                </button>
+                <button
+                  onClick={() => placeTrade('UP')}
+                  disabled={isPlacing}
+                  className="flex-1 py-3 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-base tracking-widest transition-all flex items-center justify-center gap-2"
+                  style={{ background: '#2e7d32', borderRadius: '0 0 12px 0' }}
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l8 8h-5v8H9v-8H4z" /></svg>
+                  BUY
+                </button>
+              </div>
+            )}
           </div>
-        </div>
-
-        {/* Execute Trade — full width, BUY/SELL side by side */}
-        <div className="rounded-xl p-4" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
-          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 mb-4">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <span className="text-slate-400 text-sm">Market Status</span>
-                <span className="px-2 py-0.5 rounded text-xs font-semibold" style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)' }}>Open</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-slate-400 text-sm">Potential Profit</span>
-                <span className="text-green-400 font-semibold">+${potentialProfit}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-slate-400 text-sm">Payout</span>
-                <span className="text-white font-semibold">95%</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-slate-400 text-sm">Demo Trades Left</span>
-              <span
-                className="text-xs font-bold px-2 py-0.5 rounded"
-                style={{
-                  background: tradesRemaining > 1 ? 'rgba(124,58,237,0.15)' : 'rgba(220,38,38,0.15)',
-                  color: tradesRemaining > 1 ? '#a78bfa' : '#f87171',
-                  border: `1px solid ${tradesRemaining > 1 ? 'rgba(124,58,237,0.3)' : 'rgba(220,38,38,0.3)'}`,
-                }}
-              >
-                {tradesRemaining} / {DEMO_TRADE_LIMIT}
-              </span>
-            </div>
-          </div>
-
-          {tradesRemaining === 0 ? (
-            <button
-              onClick={() => setShowSignupModal(true)}
-              className="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all hover:opacity-90"
-              style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <line x1="19" y1="8" x2="19" y2="14" />
-                <line x1="22" y1="11" x2="16" y2="11" />
-              </svg>
-              Sign Up to Continue
-            </button>
-          ) : (
-            <div className="flex gap-3">
-              <button
-                onClick={() => placeTrade('UP')}
-                disabled={isPlacing}
-                className="flex-1 py-3 rounded-xl font-bold text-white text-base flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-95 disabled:opacity-60"
-                style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)' }}
-              >
-                <span>▲</span> BUY / UP
-              </button>
-              <button
-                onClick={() => placeTrade('DOWN')}
-                disabled={isPlacing}
-                className="flex-1 py-3 rounded-xl font-bold text-white text-base flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-95 disabled:opacity-60"
-                style={{ background: 'linear-gradient(135deg, #dc2626, #b91c1c)' }}
-              >
-                <span>▼</span> SELL / DOWN
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
@@ -911,10 +859,18 @@ function OpenTradeRow({ trade }: { trade: DemoTrade }) {
         {trade.direction === 'UP' ? '▲' : '▼'}
       </div>
       <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-white text-xs font-semibold">BTC/USDT · {trade.direction}</span>
+        <div className="flex items-center justify-between mb-0.5">
+          <span className="text-white text-xs font-semibold">BTC/USDT · {trade.direction === 'UP' ? 'BUY' : 'SELL'}</span>
           <span className="text-slate-400 text-xs">${trade.amount}</span>
         </div>
+        {trade.entryPrice !== null && (
+          <div className="flex items-center gap-1 mb-1">
+            <span className="text-slate-500 text-[10px]">Entry:</span>
+            <span className="text-slate-300 text-[10px] font-mono font-semibold">
+              ${trade.entryPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </span>
+          </div>
+        )}
         <div className="w-full h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.08)' }}>
           <div
             className="h-1 rounded-full transition-all"
