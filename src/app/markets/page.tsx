@@ -313,7 +313,7 @@ export default function MarketsPage() {
         .catch(() => {})
         .finally(() => {
           if (!cancelled) {
-            pollTimer = setTimeout(fetchPrice, 5000);
+            pollTimer = setTimeout(fetchPrice, 1000);
           }
         });
     };
