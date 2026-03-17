@@ -181,7 +181,7 @@ export default function MarketsPage() {
       <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl sm:text-3xl font-bold text-white">Markets</h1>
+            <h1 className="text-base sm:text-3xl font-bold text-white">Markets</h1>
             <p className="text-slate-400 mt-0.5 text-xs sm:text-sm">Practice trading with virtual funds</p>
           </div>
           <div
@@ -194,7 +194,7 @@ export default function MarketsPage() {
             className="text-right w-full sm:w-auto"
           >
             <p className="text-purple-200 text-xs font-medium mb-0.5">Demo Account Balance</p>
-            <p className="text-white text-2xl sm:text-3xl font-bold">$10,000</p>
+            <p className="text-white text-lg sm:text-3xl font-bold">$10,000</p>
           </div>
         </div>
       </div>
@@ -212,7 +212,7 @@ export default function MarketsPage() {
               </div>
               <div>
                 <p className="text-slate-400 text-[10px] sm:text-xs">Total Trades</p>
-                <p className="text-white text-lg sm:text-xl font-bold">0</p>
+                <p className="text-white text-sm sm:text-xl font-bold">0</p>
               </div>
             </div>
           </div>
@@ -227,7 +227,7 @@ export default function MarketsPage() {
               </div>
               <div>
                 <p className="text-slate-400 text-[10px] sm:text-xs">Win Rate</p>
-                <p className="text-white text-lg sm:text-xl font-bold">0.0%</p>
+                <p className="text-white text-sm sm:text-xl font-bold">0.0%</p>
               </div>
             </div>
           </div>
@@ -242,7 +242,7 @@ export default function MarketsPage() {
               </div>
               <div>
                 <p className="text-slate-400 text-[10px] sm:text-xs">Total Profit</p>
-                <p className="text-white text-lg sm:text-xl font-bold">$0.00</p>
+                <p className="text-white text-sm sm:text-xl font-bold">$0.00</p>
               </div>
             </div>
           </div>
@@ -257,7 +257,7 @@ export default function MarketsPage() {
               </div>
               <div>
                 <p className="text-slate-400 text-[10px] sm:text-xs">Open Positions</p>
-                <p className="text-white text-lg sm:text-xl font-bold">0</p>
+                <p className="text-white text-sm sm:text-xl font-bold">0</p>
               </div>
             </div>
           </div>
@@ -271,7 +271,7 @@ export default function MarketsPage() {
           <div className="flex items-start justify-between px-4 pt-4 pb-3">
             <div>
               <p className="text-slate-400 text-xs mb-0.5">Trading Symbol</p>
-              <p className="text-white text-lg sm:text-xl font-bold">Bitcoin</p>
+              <p className="text-white text-sm sm:text-xl font-bold">Bitcoin</p>
               <p className="text-slate-500 text-xs sm:text-sm">BINANCE:BTCUSDT</p>
             </div>
             <button className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors flex-shrink-0" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
