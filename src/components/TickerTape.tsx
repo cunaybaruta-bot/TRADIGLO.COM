@@ -67,7 +67,7 @@ export default function TickerTape() {
     displayMode: 'adaptive',
     colorTheme: 'dark',
     width: '100%',
-    height: 44,
+    height: 46,
     utm_source: 'canonsite-ap6zk07.public.builtwithrocket.new',
     utm_medium: 'widget',
     utm_campaign: 'ticker-tape',
@@ -84,17 +84,27 @@ export default function TickerTape() {
         background: '#000000',
         borderBottom: '1px solid rgba(255,255,255,0.08)',
         overflow: 'hidden',
-        height: '52px',
-        minHeight: '52px',
-        maxHeight: '52px',
+        height: '46px',
+        minHeight: '46px',
+        maxHeight: '46px',
         display: 'flex',
         alignItems: 'center',
+        position: 'relative',
       }}
     >
-      <div className="tradingview-widget-container" style={{ width: '100%', height: '44px' }}>
+      {/* Clip the right edge to hide TradingView branding badge */}
+      <div
+        style={{
+          width: 'calc(100% + 60px)',
+          height: '46px',
+          overflow: 'hidden',
+          position: 'relative',
+          flexShrink: 0,
+        }}
+      >
         <iframe
           scrolling="no"
-          allowtransparency="true"
+          allowTransparency={true}
           frameBorder={0}
           src={iframeSrc}
           title="ticker tape TradingView widget"
@@ -103,11 +113,24 @@ export default function TickerTape() {
             userSelect: 'none',
             boxSizing: 'border-box',
             display: 'block',
-            height: '44px',
+            height: '46px',
             width: '100%',
+            border: 'none',
           }}
         />
       </div>
+      {/* Overlay to cover the TradingView badge on the right */}
+      <div
+        style={{
+          position: 'absolute',
+          right: 0,
+          top: 0,
+          width: '60px',
+          height: '100%',
+          background: '#000000',
+          zIndex: 10,
+        }}
+      />
     </div>
   );
 }
