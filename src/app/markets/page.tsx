@@ -3,7 +3,61 @@ import React, { useState, useEffect, useRef } from 'react';
 import Header from '@/components/Header';
 import TickerTape from '@/components/TickerTape';
 import Link from 'next/link';
-import LightweightChart, { type LightweightChartHandle } from '@/components/LightweightChart';
+
+// TradingView Advanced Chart Widget (same as member dashboard)
+function TradingViewChart({ symbol }: { symbol: string }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!containerRef.current) return;
+    containerRef.current.innerHTML = '';
+
+    const script = document.createElement('script');
+    script.src = 'https://s3.tradingview.com/tv.js';
+    script.async = true;
+    script.onload = () => {
+      if (typeof (window as any).TradingView === 'undefined') return;
+      new (window as any).TradingView.widget({
+        container_id: 'tv_chart_markets',
+        symbol: symbol,
+        interval: '1',
+        timezone: 'Etc/UTC',
+        theme: 'dark',
+        style: '1',
+        locale: 'en',
+        toolbar_bg: '#0d0d0d',
+        enable_publishing: false,
+        hide_top_toolbar: false,
+        hide_legend: false,
+        save_image: false,
+        backgroundColor: '#000000',
+        gridColor: 'rgba(255,255,255,0.04)',
+        width: '100%',
+        height: 400,
+        allow_symbol_change: false,
+        hide_side_toolbar: true,
+        withdateranges: false,
+        details: false,
+        hotlist: false,
+        calendar: false,
+        studies: [],
+      });
+    };
+    containerRef.current.appendChild(script);
+
+    return () => {
+      if (containerRef.current) containerRef.current.innerHTML = '';
+    };
+  }, [symbol]);
+
+  return (
+    <div
+      id="tv_chart_markets"
+      ref={containerRef}
+      style={{ width: '100%', height: 400, background: '#000000' }}
+    />
+  );
+}
 
 // TradingView Mini Chart
 function MiniChart({ symbol }: { symbol: string }) {
@@ -222,12 +276,10 @@ export default function MarketsPage() {
   const [durationIndex, setDurationIndex] = useState(6);
   const [activeTab, setActiveTab] = useState<'open' | 'history'>('open');
 
-  // Live price state — driven by LightweightChart onPriceUpdate
+  // Live price state — fetched from Binance API (same source as TradingView chart)
   const [livePrice, setLivePrice] = useState<number | null>(null);
   const [priceDirection, setPriceDirection] = useState<'up' | 'down' | null>(null);
   const prevPriceRef = useRef<number | null>(null);
-  const chartRef = useRef<LightweightChartHandle>(null);
-  const [isChartReady, setIsChartReady] = useState(false);
 
   // Demo trading state
   const [demoTradeCount, setDemoTradeCount] = useState(0);
@@ -238,6 +290,63 @@ export default function MarketsPage() {
   const [toastTrade, setToastTrade] = useState<DemoTrade | null>(null);
   const [isPlacing, setIsPlacing] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Binance WebSocket for real-time BTC price (same data source as TradingView BINANCE:BTCUSDT)
+  useEffect(() => {
+    let ws: WebSocket | null = null;
+    let reconnectTimer: NodeJS.Timeout | null = null;
+
+    const connect = () => {
+      ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@ticker');
+
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          const price = parseFloat(data.c); // 'c' = current price
+          if (!isNaN(price) && price > 0) {
+            setPriceDirection(
+              prevPriceRef.current === null ? null : price >= prevPriceRef.current ? 'up' : 'down'
+            );
+            prevPriceRef.current = price;
+            setLivePrice(price);
+          }
+        } catch {
+          // ignore parse errors
+        }
+      };
+
+      ws.onerror = () => {
+        ws?.close();
+      };
+
+      ws.onclose = () => {
+        // Reconnect after 3 seconds
+        reconnectTimer = setTimeout(connect, 3000);
+      };
+    };
+
+    // Initial REST fetch so price is available immediately before WS connects
+    fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT')
+      .then((r) => r.json())
+      .then((d) => {
+        const price = parseFloat(d.price);
+        if (!isNaN(price) && price > 0) {
+          prevPriceRef.current = price;
+          setLivePrice(price);
+        }
+      })
+      .catch(() => {});
+
+    connect();
+
+    return () => {
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (ws) {
+        ws.onclose = null;
+        ws.close();
+      }
+    };
+  }, []);
 
   // Load demo count from Supabase by IP
   useEffect(() => {
@@ -519,22 +628,9 @@ export default function MarketsPage() {
             </button>
           </div>
 
-          {/* Chart — LightweightChart same as dashboard, provides live price via onPriceUpdate */}
+          {/* Chart — TradingView widget (BINANCE:BTCUSDT), price fetched separately from Binance API */}
           <div style={{ background: '#000000', height: 400 }}>
-            <LightweightChart
-              ref={chartRef}
-              symbol="BTC"
-              category="crypto"
-              openTrades={[]}
-              onChartReady={() => setIsChartReady(true)}
-              onPriceUpdate={(price) => {
-                setPriceDirection(
-                  prevPriceRef.current === null ? null : price >= prevPriceRef.current ? 'up' : 'down'
-                );
-                prevPriceRef.current = price;
-                setLivePrice(price);
-              }}
-            />
+            <TradingViewChart symbol="BINANCE:BTCUSDT" />
           </div>
 
           {/* Chart Footer — Live Market + Real-time Price */}
