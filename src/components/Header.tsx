@@ -166,7 +166,7 @@ export default function Header() {
       </div>
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-white/10 bg-black px-4 py-3">
+        <div className="md:hidden fixed top-[56px] left-0 right-0 z-40 border-t border-white/10 bg-black px-4 py-3 shadow-lg">
           <nav className="flex flex-col gap-1">
             {[...navItems, ...(mounted && !loading && user ? [{ label: 'Dashboard', href: '/dashboard' }] : []), { label: 'Trade', href: '#' }]?.map((item) => (
               <Link
