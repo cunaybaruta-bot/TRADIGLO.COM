@@ -104,7 +104,7 @@ export default function TickerTape() {
       >
         <iframe
           scrolling="no"
-          allowTransparency={true}
+          allowtransparency="true"
           frameBorder={0}
           src={iframeSrc}
           title="ticker tape TradingView widget"
