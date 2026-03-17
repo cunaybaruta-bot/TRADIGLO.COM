@@ -614,6 +614,8 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
 
     const fetchAbortRef = useRef<AbortController | null>(null);
 
+    const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
     const [timeframe, setTimeframe] = useState('1m');
     const [isLoading, setIsLoading] = useState(true);
     const [activeIndicators, setActiveIndicators] = useState<Set<IndicatorKey>>(new Set());
@@ -1820,7 +1822,7 @@ function IndicatorDropdown({ buttons, activeIndicators, onToggle }: IndicatorDro
         {activeCount > 0 && (
           <span
             className="text-[9px] font-bold px-1 rounded-full leading-none py-0.5"
-            style={{ background: 'rgba(99,102,241,0.25)', color: '#818cf8' }}
+            style={{ background: 'rgba(239,68,68,0.25)', color: '#818cf8' }}
           >
             {activeCount}
           </span>
