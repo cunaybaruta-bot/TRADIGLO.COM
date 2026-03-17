@@ -3,48 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Header from '@/components/Header';
 import TickerTape from '@/components/TickerTape';
 import Link from 'next/link';
-
-// TradingView Advanced Chart
-function TradingViewChart({ symbol }: { symbol: string }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!containerRef.current) return;
-    containerRef.current.innerHTML = '';
-
-    const widgetConfig = {
-      autosize: true,
-      symbol,
-      interval: '1',
-      timezone: 'Etc/UTC',
-      theme: 'dark',
-      style: '1',
-      locale: 'en',
-      toolbar_bg: '#000000',
-      enable_publishing: false,
-      hide_top_toolbar: false,
-      hide_legend: false,
-      save_image: false,
-      backgroundColor: '#000000',
-      gridColor: 'rgba(255,255,255,0.05)',
-      hide_volume: false,
-    };
-
-    const encodedConfig = encodeURIComponent(JSON.stringify(widgetConfig));
-    const iframeSrc = `https://www.tradingview-widget.com/embed-widget/advanced-chart/?locale=en#${encodedConfig}`;
-
-    const iframe = document.createElement('iframe');
-    iframe.src = iframeSrc;
-    iframe.style.width = '100%';
-    iframe.style.height = '400px';
-    iframe.style.border = 'none';
-    iframe.allowFullscreen = true;
-    iframe.title = 'TradingView Advanced Chart';
-    containerRef.current.appendChild(iframe);
-  }, [symbol]);
-
-  return <div ref={containerRef} style={{ width: '100%', height: '400px' }} />;
-}
+import LightweightChart, { type LightweightChartHandle } from '@/components/LightweightChart';
 
 // TradingView Mini Chart
 function MiniChart({ symbol }: { symbol: string }) {
@@ -116,7 +75,6 @@ const POPULAR_ASSETS = [
   { symbol: 'EURUSD', name: 'EURO / U.S. DOLLAR', tvSymbol: 'FX:EURUSD' },
 ];
 
-const DEMO_TRADE_KEY = 'demo_trade_count';
 const DEMO_TRADE_LIMIT = 5;
 
 interface DemoTrade {
@@ -264,13 +222,16 @@ export default function MarketsPage() {
   const [durationIndex, setDurationIndex] = useState(6);
   const [activeTab, setActiveTab] = useState<'open' | 'history'>('open');
 
-  // Live price state
+  // Live price state — driven by LightweightChart onPriceUpdate
   const [livePrice, setLivePrice] = useState<number | null>(null);
   const [priceDirection, setPriceDirection] = useState<'up' | 'down' | null>(null);
   const prevPriceRef = useRef<number | null>(null);
+  const chartRef = useRef<LightweightChartHandle>(null);
+  const [isChartReady, setIsChartReady] = useState(false);
 
   // Demo trading state
   const [demoTradeCount, setDemoTradeCount] = useState(0);
+  const [demoLimitLoaded, setDemoLimitLoaded] = useState(false);
   const [showSignupModal, setShowSignupModal] = useState(false);
   const [openTrades, setOpenTrades] = useState<DemoTrade[]>([]);
   const [closedTrades, setClosedTrades] = useState<DemoTrade[]>([]);
@@ -278,41 +239,22 @@ export default function MarketsPage() {
   const [isPlacing, setIsPlacing] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load demo count from localStorage
+  // Load demo count from Supabase by IP
   useEffect(() => {
-    const stored = localStorage.getItem(DEMO_TRADE_KEY);
-    if (stored) {
-      const count = parseInt(stored, 10);
-      if (!isNaN(count)) setDemoTradeCount(count);
-    }
-  }, []);
-
-  // Real-time price polling from CoinGecko (CORS-safe, no API key needed)
-  useEffect(() => {
-    const fetchPrice = async () => {
+    const fetchDemoCount = async () => {
       try {
-        const res = await fetch(
-          'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd',
-          { cache: 'no-store' }
-        );
-        if (!res.ok) return;
-        const data = await res.json();
-        const newPrice = data?.bitcoin?.usd;
-        if (newPrice && !isNaN(newPrice)) {
-          setPriceDirection(
-            prevPriceRef.current === null ? null : newPrice >= prevPriceRef.current ? 'up' : 'down'
-          );
-          prevPriceRef.current = newPrice;
-          setLivePrice(newPrice);
+        const res = await fetch('/api/demo-trade-limit');
+        if (res.ok) {
+          const data = await res.json();
+          setDemoTradeCount(data.trade_count ?? 0);
         }
       } catch {
-        // silently fail, keep last price
+        // silently fail — default to 0
+      } finally {
+        setDemoLimitLoaded(true);
       }
     };
-
-    fetchPrice();
-    const interval = setInterval(fetchPrice, 5000);
-    return () => clearInterval(interval);
+    fetchDemoCount();
   }, []);
 
   // Countdown timer for open trades
@@ -394,38 +336,47 @@ export default function MarketsPage() {
   const decrementDuration = () => { if (durationIndex > 0) setDurationIndex((i) => i - 1); };
   const incrementDuration = () => { if (durationIndex < DURATION_STEPS.length - 1) setDurationIndex((i) => i + 1); };
 
-  const placeTrade = (direction: 'UP' | 'DOWN') => {
-    const currentCount = parseInt(localStorage.getItem(DEMO_TRADE_KEY) ?? '0', 10);
-
-    if (currentCount >= DEMO_TRADE_LIMIT) {
+  const placeTrade = async (direction: 'UP' | 'DOWN') => {
+    if (demoTradeCount >= DEMO_TRADE_LIMIT) {
       setShowSignupModal(true);
       return;
     }
 
     setIsPlacing(true);
-    setTimeout(() => setIsPlacing(false), 600);
 
-    const newCount = currentCount + 1;
-    localStorage.setItem(DEMO_TRADE_KEY, String(newCount));
-    setDemoTradeCount(newCount);
+    try {
+      // Increment count in Supabase by IP
+      const res = await fetch('/api/demo-trade-limit', { method: 'POST' });
+      if (!res.ok) {
+        setIsPlacing(false);
+        return;
+      }
+      const data = await res.json();
+      const newCount = data.trade_count ?? demoTradeCount + 1;
+      setDemoTradeCount(newCount);
 
-    const trade: DemoTrade = {
-      id: `demo-${Date.now()}`,
-      direction,
-      amount: investmentAmount,
-      duration: currentDurationLabel,
-      durationSeconds: currentDurationSeconds,
-      openedAt: Date.now(),
-      entryPrice: livePrice,
-      status: 'open',
-    };
+      const trade: DemoTrade = {
+        id: `demo-${Date.now()}`,
+        direction,
+        amount: investmentAmount,
+        duration: currentDurationLabel,
+        durationSeconds: currentDurationSeconds,
+        openedAt: Date.now(),
+        entryPrice: livePrice,
+        status: 'open',
+      };
 
-    setOpenTrades((prev) => [trade, ...prev]);
-    setActiveTab('open');
+      setOpenTrades((prev) => [trade, ...prev]);
+      setActiveTab('open');
 
-    // If this was the 5th trade, show modal after a short delay
-    if (newCount >= DEMO_TRADE_LIMIT) {
-      setTimeout(() => setShowSignupModal(true), 800);
+      // If this was the 5th trade, show modal after a short delay
+      if (newCount >= DEMO_TRADE_LIMIT) {
+        setTimeout(() => setShowSignupModal(true), 800);
+      }
+    } catch {
+      // silently fail
+    } finally {
+      setTimeout(() => setIsPlacing(false), 600);
     }
   };
 
@@ -568,9 +519,22 @@ export default function MarketsPage() {
             </button>
           </div>
 
-          {/* Chart */}
-          <div style={{ background: '#000000' }}>
-            <TradingViewChart symbol="BINANCE:BTCUSDT" />
+          {/* Chart — LightweightChart same as dashboard, provides live price via onPriceUpdate */}
+          <div style={{ background: '#000000', height: 400 }}>
+            <LightweightChart
+              ref={chartRef}
+              symbol="BTC"
+              category="crypto"
+              openTrades={[]}
+              onChartReady={() => setIsChartReady(true)}
+              onPriceUpdate={(price) => {
+                setPriceDirection(
+                  prevPriceRef.current === null ? null : price >= prevPriceRef.current ? 'up' : 'down'
+                );
+                prevPriceRef.current = price;
+                setLivePrice(price);
+              }}
+            />
           </div>
 
           {/* Chart Footer — Live Market + Real-time Price */}
@@ -678,7 +642,7 @@ export default function MarketsPage() {
             </div>
 
             {/* SELL / BUY buttons */}
-            {demoTradeCount >= DEMO_TRADE_LIMIT ? (
+            {demoLimitLoaded && demoTradeCount >= DEMO_TRADE_LIMIT ? (
               <div className="p-3">
                 <button
                   onClick={() => setShowSignupModal(true)}
@@ -692,7 +656,7 @@ export default function MarketsPage() {
               <div className="flex gap-0 w-full">
                 <button
                   onClick={() => placeTrade('DOWN')}
-                  disabled={isPlacing}
+                  disabled={isPlacing || !demoLimitLoaded}
                   className="flex-1 py-3 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-base tracking-widest transition-all flex items-center justify-center gap-2"
                   style={{ background: '#e53935', borderRadius: '0 0 0 12px' }}
                 >
@@ -701,7 +665,7 @@ export default function MarketsPage() {
                 </button>
                 <button
                   onClick={() => placeTrade('UP')}
-                  disabled={isPlacing}
+                  disabled={isPlacing || !demoLimitLoaded}
                   className="flex-1 py-3 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-base tracking-widest transition-all flex items-center justify-center gap-2"
                   style={{ background: '#2e7d32', borderRadius: '0 0 12px 0' }}
                 >
