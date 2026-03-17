@@ -612,6 +612,8 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
 
     const candleDataRef = useRef<CandlestickData[]>([]);
 
+    const fetchAbortRef = useRef<AbortController | null>(null);
+
     const [timeframe, setTimeframe] = useState('1m');
     const [isLoading, setIsLoading] = useState(true);
     const [activeIndicators, setActiveIndicators] = useState<Set<IndicatorKey>>(new Set());
