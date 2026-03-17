@@ -266,6 +266,11 @@ export default function MarketsPage() {
   const [durationSlider, setDurationSlider] = useState(3);
   const [activeTab, setActiveTab] = useState<'open' | 'history'>('open');
 
+  // Live price state
+  const [livePrice, setLivePrice] = useState<number | null>(null);
+  const [priceDirection, setPriceDirection] = useState<'up' | 'down' | null>(null);
+  const prevPriceRef = useRef<number | null>(null);
+
   // Demo trading state
   const [demoTradeCount, setDemoTradeCount] = useState(0);
   const [showSignupModal, setShowSignupModal] = useState(false);
@@ -282,6 +287,31 @@ export default function MarketsPage() {
       const count = parseInt(stored, 10);
       if (!isNaN(count)) setDemoTradeCount(count);
     }
+  }, []);
+
+  // Real-time price polling from Binance public API
+  useEffect(() => {
+    const fetchPrice = async () => {
+      try {
+        const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
+        if (!res.ok) return;
+        const data = await res.json();
+        const newPrice = parseFloat(data.price);
+        if (!isNaN(newPrice)) {
+          setPriceDirection(
+            prevPriceRef.current === null ? null : newPrice >= prevPriceRef.current ? 'up' : 'down'
+          );
+          prevPriceRef.current = newPrice;
+          setLivePrice(newPrice);
+        }
+      } catch {
+        // silently fail, keep last price
+      }
+    };
+
+    fetchPrice();
+    const interval = setInterval(fetchPrice, 2000);
+    return () => clearInterval(interval);
   }, []);
 
   // Countdown timer for open trades
@@ -410,6 +440,12 @@ export default function MarketsPage() {
 
   const potentialProfit = (investmentAmount * 0.95).toFixed(2);
   const tradesRemaining = Math.max(0, DEMO_TRADE_LIMIT - demoTradeCount);
+
+  const displayPrice = livePrice !== null
+    ? livePrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    : '—';
+  const priceColor = priceDirection === 'up' ? '#22c55e' : priceDirection === 'down' ? '#ef4444' : '#94a3b8';
+  const priceArrow = priceDirection === 'up' ? '▲' : priceDirection === 'down' ? '▼' : '●';
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -554,8 +590,8 @@ export default function MarketsPage() {
             </div>
             <div className="flex items-center gap-1.5">
               <span className="text-slate-400 text-xs">Price:</span>
-              <span className="text-red-400 text-sm sm:text-lg font-bold">$69,302.20</span>
-              <span className="text-red-400 text-xs">▼</span>
+              <span className="text-sm sm:text-lg font-bold transition-colors" style={{ color: priceColor }}>${displayPrice}</span>
+              <span className="text-xs" style={{ color: priceColor }}>{priceArrow}</span>
             </div>
           </div>
         </div>
@@ -563,33 +599,34 @@ export default function MarketsPage() {
 
       {/* Trade Controls */}
       <div className="container mx-auto px-4 sm:px-6 pb-4 sm:pb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4">
+        {/* Duration + Amount side by side */}
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
           {/* Investment Amount */}
           <div className="rounded-xl p-4" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <p className="text-white font-semibold text-sm mb-3">Investment Amount</p>
+            <p className="text-white font-semibold text-sm mb-3">Amount</p>
             <div className="flex items-center gap-2 mb-2">
               <button
                 onClick={handleInvestmentMinus}
-                className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg hover:bg-white/10 transition-colors flex-shrink-0"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg hover:bg-white/10 transition-colors flex-shrink-0"
                 style={{ border: '1px solid rgba(255,255,255,0.15)' }}
               >
                 −
               </button>
               <div
-                className="flex-1 h-10 flex items-center justify-center rounded-lg text-white font-semibold"
+                className="flex-1 h-8 sm:h-10 flex items-center justify-center rounded-lg text-white font-semibold text-sm"
                 style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.1)' }}
               >
                 ${investmentAmount}
               </div>
               <button
                 onClick={handleInvestmentPlus}
-                className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg hover:bg-white/10 transition-colors flex-shrink-0"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg hover:bg-white/10 transition-colors flex-shrink-0"
                 style={{ border: '1px solid rgba(255,255,255,0.15)' }}
               >
                 +
               </button>
             </div>
-            <p className="text-slate-500 text-xs text-center mb-3">Range: $1 - $10,000</p>
+            <p className="text-slate-500 text-[10px] text-center mb-2">$1 – $10,000</p>
             <input
               type="range"
               min={1}
@@ -605,48 +642,48 @@ export default function MarketsPage() {
 
           {/* Trade Duration */}
           <div className="rounded-xl p-4" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <p className="text-white font-semibold text-sm mb-3">Trade Duration</p>
+            <p className="text-white font-semibold text-sm mb-3">Duration</p>
             <div className="flex items-center gap-2 mb-2">
               <button
                 onClick={handleDurationMinus}
-                className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg hover:bg-white/10 transition-colors flex-shrink-0"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg hover:bg-white/10 transition-colors flex-shrink-0"
                 style={{ border: '1px solid rgba(255,255,255,0.15)' }}
               >
                 −
               </button>
               <div
-                className="flex-1 h-10 flex items-center justify-center rounded-lg text-white font-semibold"
+                className="flex-1 h-8 sm:h-10 flex items-center justify-center rounded-lg text-white font-semibold text-sm"
                 style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.1)' }}
               >
                 {DURATION_OPTIONS[durationSlider].label}
               </div>
               <button
                 onClick={handleDurationPlus}
-                className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg hover:bg-white/10 transition-colors flex-shrink-0"
+                className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center text-white font-bold text-lg hover:bg-white/10 transition-colors flex-shrink-0"
                 style={{ border: '1px solid rgba(255,255,255,0.15)' }}
               >
                 +
               </button>
             </div>
-            <p className="text-slate-500 text-xs text-center mb-3">Range: 5 Sec – 1 Day</p>
+            <p className="text-slate-500 text-[10px] text-center mb-2">5 Sec – 1 Day</p>
             <input
               type="range"
               min={0}
               max={DURATION_OPTIONS.length - 1}
               value={durationSlider}
               onChange={handleDurationSlider}
-              className="w-full h-2 rounded-full appearance-none cursor-pointer mb-4"
+              className="w-full h-2 rounded-full appearance-none cursor-pointer mb-3"
               style={{
                 background: `linear-gradient(to right, #7c3aed ${(durationSlider / (DURATION_OPTIONS.length - 1)) * 100}%, #2d2d4e ${(durationSlider / (DURATION_OPTIONS.length - 1)) * 100}%)`,
               }}
             />
             {/* Time Presets */}
-            <div className="grid grid-cols-3 gap-1.5">
+            <div className="grid grid-cols-3 gap-1">
               {DURATION_OPTIONS.map((opt, idx) => (
                 <button
                   key={opt.label}
                   onClick={() => handleDurationPreset(opt.label, idx)}
-                  className="py-1.5 rounded-lg text-xs font-medium transition-colors"
+                  className="py-1 rounded-lg text-[10px] font-medium transition-colors"
                   style={{
                     background: selectedDuration === opt.label ? 'linear-gradient(135deg, #7c3aed, #6d28d9)' : '#111111',
                     color: selectedDuration === opt.label ? '#fff' : '#94a3b8',
@@ -658,73 +695,74 @@ export default function MarketsPage() {
               ))}
             </div>
           </div>
+        </div>
 
-          {/* Execute Trade */}
-          <div className="rounded-xl p-4" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
-            <p className="text-white font-semibold text-sm mb-3">Execute Trade</p>
-            <div className="space-y-3 mb-5">
-              <div className="flex items-center justify-between">
+        {/* Execute Trade — full width, BUY/SELL side by side */}
+        <div className="rounded-xl p-4" style={{ background: '#000000', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 mb-4">
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
                 <span className="text-slate-400 text-sm">Market Status</span>
                 <span className="px-2 py-0.5 rounded text-xs font-semibold" style={{ background: 'rgba(34,197,94,0.15)', color: '#22c55e', border: '1px solid rgba(34,197,94,0.3)' }}>Open</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
                 <span className="text-slate-400 text-sm">Potential Profit</span>
                 <span className="text-green-400 font-semibold">+${potentialProfit}</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
                 <span className="text-slate-400 text-sm">Payout</span>
                 <span className="text-white font-semibold">95%</span>
               </div>
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400 text-sm">Demo Trades Left</span>
-                <span
-                  className="text-xs font-bold px-2 py-0.5 rounded"
-                  style={{
-                    background: tradesRemaining > 1 ? 'rgba(124,58,237,0.15)' : 'rgba(220,38,38,0.15)',
-                    color: tradesRemaining > 1 ? '#a78bfa' : '#f87171',
-                    border: `1px solid ${tradesRemaining > 1 ? 'rgba(124,58,237,0.3)' : 'rgba(220,38,38,0.3)'}`,
-                  }}
-                >
-                  {tradesRemaining} / {DEMO_TRADE_LIMIT}
-                </span>
-              </div>
             </div>
-
-            {tradesRemaining === 0 ? (
-              <button
-                onClick={() => setShowSignupModal(true)}
-                className="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all hover:opacity-90"
-                style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
+            <div className="flex items-center gap-2">
+              <span className="text-slate-400 text-sm">Demo Trades Left</span>
+              <span
+                className="text-xs font-bold px-2 py-0.5 rounded"
+                style={{
+                  background: tradesRemaining > 1 ? 'rgba(124,58,237,0.15)' : 'rgba(220,38,38,0.15)',
+                  color: tradesRemaining > 1 ? '#a78bfa' : '#f87171',
+                  border: `1px solid ${tradesRemaining > 1 ? 'rgba(124,58,237,0.3)' : 'rgba(220,38,38,0.3)'}`,
+                }}
               >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
-                  <circle cx="9" cy="7" r="4" />
-                  <line x1="19" y1="8" x2="19" y2="14" />
-                  <line x1="22" y1="11" x2="16" y2="11" />
-                </svg>
-                Sign Up to Continue
-              </button>
-            ) : (
-              <div className="space-y-3">
-                <button
-                  onClick={() => placeTrade('UP')}
-                  disabled={isPlacing}
-                  className="w-full py-3 rounded-xl font-bold text-white text-base flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-95 disabled:opacity-60"
-                  style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)' }}
-                >
-                  <span>▲</span> BUY / UP
-                </button>
-                <button
-                  onClick={() => placeTrade('DOWN')}
-                  disabled={isPlacing}
-                  className="w-full py-3 rounded-xl font-bold text-white text-base flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-95 disabled:opacity-60"
-                  style={{ background: 'linear-gradient(135deg, #dc2626, #b91c1c)' }}
-                >
-                  <span>▼</span> SELL / DOWN
-                </button>
-              </div>
-            )}
+                {tradesRemaining} / {DEMO_TRADE_LIMIT}
+              </span>
+            </div>
           </div>
+
+          {tradesRemaining === 0 ? (
+            <button
+              onClick={() => setShowSignupModal(true)}
+              className="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center gap-2 transition-all hover:opacity-90"
+              style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <line x1="19" y1="8" x2="19" y2="14" />
+                <line x1="22" y1="11" x2="16" y2="11" />
+              </svg>
+              Sign Up to Continue
+            </button>
+          ) : (
+            <div className="flex gap-3">
+              <button
+                onClick={() => placeTrade('UP')}
+                disabled={isPlacing}
+                className="flex-1 py-3 rounded-xl font-bold text-white text-base flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-95 disabled:opacity-60"
+                style={{ background: 'linear-gradient(135deg, #16a34a, #15803d)' }}
+              >
+                <span>▲</span> BUY / UP
+              </button>
+              <button
+                onClick={() => placeTrade('DOWN')}
+                disabled={isPlacing}
+                className="flex-1 py-3 rounded-xl font-bold text-white text-base flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-95 disabled:opacity-60"
+                style={{ background: 'linear-gradient(135deg, #dc2626, #b91c1c)' }}
+              >
+                <span>▼</span> SELL / DOWN
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
