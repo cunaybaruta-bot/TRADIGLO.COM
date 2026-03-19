@@ -409,7 +409,7 @@ function AuthForm() {
       return;
     }
     setSignUpLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: signUpEmail,
       password: signUpPassword,
       options: { data: { full_name: fullName } },
@@ -418,6 +418,21 @@ function AuthForm() {
       setSignUpError(error.message);
       setSignUpLoading(false);
     } else {
+      // Notify admin via email (fire-and-forget, don't block UX)
+      try {
+        fetch('/api/admin/notify-new-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: signUpEmail,
+            full_name: fullName || null,
+            user_id: data?.user?.id || null,
+            created_at: data?.user?.created_at || new Date().toISOString(),
+          }),
+        }).catch(() => {/* silent — email notification is non-critical */});
+      } catch {
+        // silent — email notification is non-critical
+      }
       setSignUpSuccess(true);
       setSignUpLoading(false);
     }
