@@ -20,14 +20,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
+  const clearAuthState = async () => {
+    // Clear all Supabase auth cookies
+    if (typeof document !== 'undefined') {
+      document.cookie.split(';').forEach((cookie) => {
+        const name = cookie.trim().split('=')[0];
+        if (name.startsWith('sb-')) {
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=None; Secure`;
+        }
+      });
+    }
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // ignore signOut errors when session is already invalid
+    }
+    setSession(null);
+    setUser(null);
+  };
+
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
-        // Clear invalid session (e.g. expired refresh token)
-        supabase.auth.signOut();
-        setSession(null);
-        setUser(null);
+        const msg = error.message?.toLowerCase() || '';
+        if (msg.includes('refresh token') || msg.includes('invalid') || msg.includes('not found')) {
+          clearAuthState();
+        } else {
+          setSession(null);
+          setUser(null);
+        }
       } else {
         setSession(session);
         setUser(session?.user ?? null);
@@ -46,10 +68,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setSession(null);
         setUser(null);
       } else if ((event as string) === 'TOKEN_REFRESH_FAILED') {
-        // Invalid/expired refresh token — clear session silently
-        setSession(null);
-        setUser(null);
-        supabase.auth.signOut();
+        // Invalid/expired refresh token — clear session and cookies
+        clearAuthState();
       } else {
         setSession(session);
         setUser(session?.user ?? null);
