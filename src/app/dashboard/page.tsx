@@ -1381,7 +1381,7 @@ export default function DashboardPage() {
       return;
     }
     if (!selectedAsset) {
-      setToast({ message: 'Pilih aset terlebih dahulu', type: 'error' });
+      setToast({ message: 'Please select an asset first', type: 'error' });
       return;
     }
     const setLoading = orderType === 'buy' ? setBuyLoading : setSellLoading;
@@ -1391,7 +1391,7 @@ export default function DashboardPage() {
 
     try {
       if (chartPrice === null || chartPrice <= 0) {
-        setToast({ message: 'Chart belum siap, tunggu sebentar lalu coba lagi', type: 'error' });
+        setToast({ message: 'Chart not ready, please wait a moment and try again', type: 'error' });
         setLoading(false);
         return;
       }
@@ -2029,7 +2029,7 @@ export default function DashboardPage() {
                 className="flex-1 py-3 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-base tracking-widest transition-all flex items-center justify-center gap-2"
               >
                 {sellLoading ? (
-                  <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
                 ) : (
                   <>
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l-8-8h5V4h6v8h5z"/></svg>
@@ -2049,7 +2049,7 @@ export default function DashboardPage() {
                 className="flex-1 py-3 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-base tracking-widest transition-all flex items-center justify-center gap-2"
               >
                 {buyLoading ? (
-                  <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
                 ) : (
                   <>
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l8 8h-5v8H9v-8H4z"/></svg>

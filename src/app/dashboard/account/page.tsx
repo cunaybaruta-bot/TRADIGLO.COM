@@ -124,12 +124,12 @@ type AccountSection = 'profile' | 'security' | 'wallet' | 'stats' | 'level' | 'a
 
 const NAV_ITEMS: { id: AccountSection; label: string; icon: React.ReactNode; accent: string }[] = [
   { id: 'profile', label: 'Profile', icon: <User size={16} />, accent: '#3b82f6' },
-  { id: 'security', label: 'Keamanan', icon: <Shield size={16} />, accent: '#10b981' },
+  { id: 'security', label: 'Security', icon: <Shield size={16} />, accent: '#10b981' },
   { id: 'wallet', label: 'Wallet', icon: <Wallet size = {16} />, accent: '#f59e0b' },
-  { id: 'stats', label: 'Statistik', icon: <BarChart2 size={16} />, accent: '#6366f1' },
+  { id: 'stats', label: 'Stats', icon: <BarChart2 size={16} />, accent: '#6366f1' },
   { id: 'level', label: 'Level & Reward', icon: <Trophy size={16} />, accent: '#a855f7' },
-  { id: 'activity', label: 'Aktivitas', icon: <Clock size={16} />, accent: '#06b6d4' },
-  { id: 'preferences', label: 'Preferensi', icon: <Settings size={16} />, accent: '#64748b' },
+  { id: 'activity', label: 'Activity', icon: <Clock size={16} />, accent: '#06b6d4' },
+  { id: 'preferences', label: 'Preferences', icon: <Settings size={16} />, accent: '#64748b' },
   { id: 'support', label: 'Support', icon: <Headphones size={16} />, accent: '#ec4899' },
 ];
 
@@ -196,14 +196,14 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
   };
 
   const handleSave = async () => {
-    if (!validatePhone(form.phone)) { setToast({ message: 'Format nomor telepon tidak valid', type: 'error' }); return; }
+    if (!validatePhone(form.phone)) { setToast({ message: 'Invalid phone number format', type: 'error' }); return; }
     setSaving(true);
     try {
       await onUpdate(form);
       setEditing(false);
-      setToast({ message: 'Profil berhasil diperbarui', type: 'success' });
+      setToast({ message: 'Profile updated successfully', type: 'success' });
     } catch (e: any) {
-      setToast({ message: e.message || 'Gagal menyimpan profil', type: 'error' });
+      setToast({ message: e.message || 'Failed to save profile', type: 'error' });
     } finally { setSaving(false); }
   };
 
@@ -211,13 +211,13 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !profile) return;
-    if (file.size > 2 * 1024 * 1024) { setToast({ message: 'Ukuran file maksimal 2MB', type: 'error' }); return; }
+    if (file.size > 2 * 1024 * 1024) { setToast({ message: 'Maximum file size is 2MB', type: 'error' }); return; }
     setUploadingAvatar(true);
     try {
       const dataUrl = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (ev) => resolve(ev.target?.result as string);
-        reader.onerror = () => reject(new Error('Gagal membaca file'));
+        reader.onerror = () => reject(new Error('Failed to read file'));
         reader.readAsDataURL(file);
       });
       const { error } = await supabase.from('users').update({
@@ -227,9 +227,9 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
       if (error) throw error;
       setAvatarUrl(dataUrl);
       await onUpdate({ avatar_url: dataUrl });
-      setToast({ message: 'Foto profil berhasil diperbarui', type: 'success' });
+      setToast({ message: 'Profile photo updated successfully', type: 'success' });
     } catch (e: any) {
-      setToast({ message: e.message || 'Gagal mengupload foto', type: 'error' });
+      setToast({ message: e.message || 'Failed to upload photo', type: 'error' });
     } finally {
       setUploadingAvatar(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -326,7 +326,7 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
               style={{ background: editing ? 'rgba(239,68,68,0.1)' : 'rgba(59,130,246,0.1)', color: editing ? '#ef4444' : '#60a5fa', border: `1px solid ${editing ? 'rgba(239,68,68,0.3)' : 'rgba(59,130,246,0.3)'}` }}
             >
               {editing ? <X size={12} /> : <Edit2 size={12} />}
-              {editing ? 'Batal' : 'Edit'}
+              {editing ? 'Cancel' : 'Edit'}
             </button>
           </div>
 
@@ -335,8 +335,8 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
             <div className="mt-4 pt-4 border-t border-white/8 space-y-3" style={{ animation: 'expandDown 0.25s cubic-bezier(0.34,1.56,0.64,1)' }}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
-                  { label: 'Nama Lengkap', key: 'full_name', placeholder: 'Nama lengkap Anda' },
-                  { label: 'Nomor Telepon', key: 'phone', placeholder: '+62 xxx xxxx xxxx' },
+                  { label: 'Full Name', key: 'full_name', placeholder: 'Your full name' },
+                  { label: 'Phone Number', key: 'phone', placeholder: '+1 xxx xxxx xxxx' },
                 ].map(({ label, key, placeholder }) => (
                   <div key={key}>
                     <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">{label}</label>
@@ -481,17 +481,17 @@ function SecuritySection() {
   const [toast, setToast] = useState<ToastState | null>(null);
 
   const handleChangePassword = async () => {
-    if (pwForm.new !== pwForm.confirm) { setToast({ message: 'Password baru tidak cocok', type: 'error' }); return; }
-    if (pwForm.new.length < 8) { setToast({ message: 'Password minimal 8 karakter', type: 'error' }); return; }
+    if (pwForm.new !== pwForm.confirm) { setToast({ message: 'New passwords do not match', type: 'error' }); return; }
+    if (pwForm.new.length < 8) { setToast({ message: 'Password must be at least 8 characters', type: 'error' }); return; }
     setSaving(true);
     try {
       const supabase = createClient();
       const { error } = await supabase.auth.updateUser({ password: pwForm.new });
       if (error) throw error;
-      setToast({ message: 'Password berhasil diubah', type: 'success' });
+      setToast({ message: 'Password changed successfully', type: 'success' });
       setPwForm({ old: '', new: '', confirm: '' });
     } catch (e: any) {
-      setToast({ message: e.message || 'Gagal mengubah password', type: 'error' });
+      setToast({ message: e.message || 'Failed to change password', type: 'error' });
     } finally { setSaving(false); }
   };
 
@@ -508,13 +508,13 @@ function SecuritySection() {
       <GlassCard style={{ borderColor: 'rgba(16,185,129,0.2)', background: 'rgba(16,185,129,0.03)' }}>
         <div className="px-5 py-3.5 border-b border-white/8 flex items-center gap-2">
           <Shield size={13} className="text-emerald-400" />
-          <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Ganti Password</span>
+          <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Change Password</span>
         </div>
         <div className="p-5 space-y-3">
           {[
-            { label: 'Password Lama', key: 'old', show: showOld, toggle: () => setShowOld(v => !v) },
-            { label: 'Password Baru', key: 'new', show: showNew, toggle: () => setShowNew(v => !v) },
-            { label: 'Konfirmasi Password Baru', key: 'confirm', show: showConfirm, toggle: () => setShowConfirm(v => !v) },
+            { label: 'Current Password', key: 'old', show: showOld, toggle: () => setShowOld(v => !v) },
+            { label: 'New Password', key: 'new', show: showNew, toggle: () => setShowNew(v => !v) },
+            { label: 'Confirm New Password', key: 'confirm', show: showConfirm, toggle: () => setShowConfirm(v => !v) },
           ].map(({ label, key, show, toggle }) => (
             <div key={key}>
               <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">{label}</label>
@@ -542,7 +542,7 @@ function SecuritySection() {
             style={{ background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 4px 16px rgba(16,185,129,0.25)' }}
           >
             {saving ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Shield size={14} />}
-            Ubah Password
+            Change Password
           </button>
         </div>
       </GlassCard>
@@ -550,7 +550,7 @@ function SecuritySection() {
       <GlassCard>
         <div className="px-5 py-3.5 border-b border-white/8 flex items-center gap-2">
           <Clock size={13} className="text-slate-400" />
-          <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Riwayat Login</span>
+          <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Login History</span>
         </div>
         <div className="divide-y divide-white/5">
           {loginHistory.map((item, i) => (
@@ -564,7 +564,7 @@ function SecuritySection() {
               </div>
               {item.status === 'current' && (
                 <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-400 px-2 py-1 rounded-full" style={{ background: 'rgba(16,185,129,0.1)', border: '1px solid rgba(16,185,129,0.25)' }}>
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Aktif
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" /> Active
                 </span>
               )}
             </div>
@@ -576,17 +576,17 @@ function SecuritySection() {
         <div className="px-5 py-3.5 border-b border-white/8 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Zap size={13} className="text-red-400" />
-            <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Sesi Aktif</span>
+            <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Active Session</span>
           </div>
-          <button className="text-xs text-red-400 hover:text-red-300 transition-colors font-medium">Akhiri Semua</button>
+          <button className="text-xs text-red-400 hover:text-red-300 transition-colors font-medium">End All</button>
         </div>
         <div className="p-5">
           <div className="flex items-center justify-between p-3 rounded-xl" style={{ background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.2)' }}>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-sm text-white font-medium">Sesi Saat Ini</span>
+              <span className="text-sm text-white font-medium">Current Session</span>
             </div>
-            <span className="text-[10px] text-slate-500">Aktif sekarang</span>
+            <span className="text-[10px] text-slate-500">Active now</span>
           </div>
         </div>
       </GlassCard>
@@ -712,10 +712,10 @@ function WalletSection({
         preferred_payment_method: financialForm.preferred_payment_method,
         preferred_currency: financialForm.preferred_currency,
       });
-      setToast({ message: 'Informasi keuangan berhasil disimpan', type: 'success' });
+      setToast({ message: 'Financial information saved successfully', type: 'success' });
       setEditingFinancial(false);
     } catch (e: any) {
-      setToast({ message: e.message || 'Gagal menyimpan informasi keuangan', type: 'error' });
+      setToast({ message: e.message || 'Failed to save financial information', type: 'error' });
     } finally { setSavingFinancial(false); }
   };
 
@@ -725,8 +725,8 @@ function WalletSection({
 
   const handleSubmitDeposit = async () => {
     const amount = parseFloat(depositForm.amount);
-    if (!amount || amount <= 0) { setToast({ message: 'Masukkan jumlah deposit yang valid', type: 'error' }); return; }
-    if (!depositForm.payment_method) { setToast({ message: 'Pilih metode pembayaran', type: 'error' }); return; }
+    if (!amount || amount <= 0) { setToast({ message: 'Please enter a valid deposit amount', type: 'error' }); return; }
+    if (!depositForm.payment_method) { setToast({ message: 'Please select a payment method', type: 'error' }); return; }
     setSubmittingDeposit(true);
     try {
       const { error } = await supabase.from('deposits').insert({
@@ -736,11 +736,11 @@ function WalletSection({
         status: 'pending',
       });
       if (error) throw error;
-      setToast({ message: 'Permintaan deposit berhasil dikirim. Menunggu konfirmasi admin.', type: 'success' });
+      setToast({ message: 'Deposit request submitted. Awaiting admin confirmation.', type: 'success' });
       setDepositForm({ amount: '', payment_method: '', payment_reference: '' });
       await onRefresh();
     } catch (e: any) {
-      setToast({ message: e.message || 'Gagal mengirim permintaan deposit', type: 'error' });
+      setToast({ message: e.message || 'Failed to submit deposit request', type: 'error' });
     } finally { setSubmittingDeposit(false); }
   };
 
@@ -750,10 +750,10 @@ function WalletSection({
 
   const handleSubmitWithdrawal = async () => {
     const amount = parseFloat(withdrawalForm.amount);
-    if (!amount || amount <= 0) { setToast({ message: 'Masukkan jumlah withdrawal yang valid', type: 'error' }); return; }
-    if (amount > (wallet?.realBalance ?? 0)) { setToast({ message: 'Saldo real tidak mencukupi', type: 'error' }); return; }
-    if (!withdrawalForm.payment_method) { setToast({ message: 'Pilih metode penarikan', type: 'error' }); return; }
-    if (!withdrawalForm.destination_address) { setToast({ message: 'Masukkan rekening tujuan', type: 'error' }); return; }
+    if (!amount || amount <= 0) { setToast({ message: 'Please enter a valid withdrawal amount', type: 'error' }); return; }
+    if (amount > (wallet?.realBalance ?? 0)) { setToast({ message: 'Insufficient real balance', type: 'error' }); return; }
+    if (!withdrawalForm.payment_method) { setToast({ message: 'Please select a withdrawal method', type: 'error' }); return; }
+    if (!withdrawalForm.destination_address) { setToast({ message: 'Please enter a destination account', type: 'error' }); return; }
     setSubmittingWithdrawal(true);
     try {
       const { error } = await supabase.from('withdrawals').insert({
@@ -763,11 +763,11 @@ function WalletSection({
         status: 'pending',
       });
       if (error) throw error;
-      setToast({ message: 'Permintaan withdrawal berhasil dikirim.', type: 'success' });
+      setToast({ message: 'Withdrawal request submitted successfully.', type: 'success' });
       setWithdrawalForm({ amount: '', payment_method: '', destination_address: '' });
       await onRefresh();
     } catch (e: any) {
-      setToast({ message: e.message || 'Gagal mengirim permintaan withdrawal', type: 'error' });
+      setToast({ message: e.message || 'Failed to submit withdrawal request', type: 'error' });
     } finally { setSubmittingWithdrawal(false); }
   };
 
@@ -775,9 +775,9 @@ function WalletSection({
     setResetting(true);
     try {
       await onResetDemo();
-      setToast({ message: 'Demo balance berhasil direset ke $100,000', type: 'success' });
+      setToast({ message: 'Demo balance reset to $100,000', type: 'success' });
     } catch (e: any) {
-      setToast({ message: 'Gagal reset demo balance', type: 'error' });
+      setToast({ message: 'Failed to reset demo balance', type: 'error' });
     } finally { setResetting(false); }
   };
 
@@ -800,7 +800,7 @@ function WalletSection({
             </button>
           </div>
           <div className="text-2xl font-bold text-white">${formatCurrency(wallet?.demoBalance ?? 0)}</div>
-          <div className="text-[10px] text-slate-500 mt-1">Akun Demo</div>
+          <div className="text-[10px] text-slate-500 mt-1">Demo Account</div>
         </GlassCard>
 
         <GlassCard className="p-4" style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(234,88,12,0.08))', borderColor: 'rgba(245,158,11,0.25)' }}>
@@ -809,7 +809,7 @@ function WalletSection({
             <span className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider">Real Balance</span>
           </div>
           <div className="text-2xl font-bold text-white">${formatCurrency(wallet?.realBalance ?? 0)}</div>
-          <div className="text-[10px] text-slate-500 mt-1">Akun Real</div>
+          <div className="text-[10px] text-slate-500 mt-1">Real Account</div>
         </GlassCard>
 
         <GlassCard className="p-4" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}>
@@ -827,7 +827,7 @@ function WalletSection({
         <div className="px-5 py-3.5 border-b border-white/8 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <CreditCard size={13} className="text-amber-400" />
-            <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Informasi Keuangan</span>
+            <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Financial Information</span>
           </div>
           <button
             onClick={() => setEditingFinancial(v => !v)}
@@ -835,7 +835,7 @@ function WalletSection({
             style={{ background: editingFinancial ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)', color: editingFinancial ? '#ef4444' : '#f59e0b', border: `1px solid ${editingFinancial ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.3)'}` }}
           >
             {editingFinancial ? <X size={11} /> : <Edit2 size={11} />}
-            {editingFinancial ? 'Batal' : 'Edit'}
+            {editingFinancial ? 'Cancel' : 'Edit'}
           </button>
         </div>
 
@@ -844,35 +844,35 @@ function WalletSection({
             <div className="space-y-3" style={{ animation: 'expandDown 0.25s cubic-bezier(0.34,1.56,0.64,1)' }}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block flex items-center gap-1"><User size={10} /> Nama Pemilik Rekening</label>
-                  <input value={financialForm.account_holder} onChange={e => setFinancialForm(f => ({ ...f, account_holder: e.target.value }))} placeholder="Nama sesuai rekening bank" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle}
+                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block flex items-center gap-1"><User size={10} /> Account Holder Name</label>
+                  <input value={financialForm.account_holder} onChange={e => setFinancialForm(f => ({ ...f, account_holder: e.target.value }))} placeholder="Name as per bank account" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle}
                     onFocus={e => { e.target.style.borderColor = 'rgba(245,158,11,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.1)'; }}
                     onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }}
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block flex items-center gap-1"><Building2 size={10} /> Nama Bank</label>
-                  <input value={financialForm.bank_name} onChange={e => setFinancialForm(f => ({ ...f, bank_name: e.target.value }))} placeholder="Contoh: BCA, Mandiri, BRI" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle}
+                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block flex items-center gap-1"><Building2 size={10} /> Bank Name</label>
+                  <input value={financialForm.bank_name} onChange={e => setFinancialForm(f => ({ ...f, bank_name: e.target.value }))} placeholder="e.g. BCA, Mandiri, BRI" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle}
                     onFocus={e => { e.target.style.borderColor = 'rgba(245,158,11,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.1)'; }}
                     onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }}
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block flex items-center gap-1"><Hash size={10} /> Nomor Rekening</label>
-                  <input value={financialForm.account_number} onChange={e => setFinancialForm(f => ({ ...f, account_number: e.target.value }))} placeholder="Nomor rekening bank" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle}
+                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block flex items-center gap-1"><Hash size={10} /> Account Number</label>
+                  <input value={financialForm.account_number} onChange={e => setFinancialForm(f => ({ ...f, account_number: e.target.value }))} placeholder="Bank account number" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle}
                     onFocus={e => { e.target.style.borderColor = 'rgba(245,158,11,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.1)'; }}
                     onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }}
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block flex items-center gap-1"><CreditCard size={10} /> Metode Pembayaran</label>
+                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block flex items-center gap-1"><CreditCard size={10} /> Payment Method</label>
                   <select value={financialForm.preferred_payment_method} onChange={e => setFinancialForm(f => ({ ...f, preferred_payment_method: e.target.value }))} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={inputStyle}>
-                    <option value="">Pilih metode</option>
+                    <option value="">Select method</option>
                     {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block flex items-center gap-1"><DollarSign size={10} /> Mata Uang</label>
+                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block flex items-center gap-1"><DollarSign size={10} /> Currency</label>
                   <select value={financialForm.preferred_currency} onChange={e => setFinancialForm(f => ({ ...f, preferred_currency: e.target.value }))} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={inputStyle}>
                     {['USD', 'IDR', 'SGD', 'MYR', 'EUR', 'GBP'].map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
@@ -886,21 +886,21 @@ function WalletSection({
                   style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', boxShadow: '0 4px 16px rgba(245,158,11,0.25)' }}
                 >
                   {savingFinancial ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Check size={14} />}
-                  Simpan Informasi
+                  Save Information
                 </button>
                 <button onClick={() => setEditingFinancial(false)} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                  <X size={13} /> Batal
+                  <X size={13} /> Cancel
                 </button>
               </div>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
-                { label: 'Nama Pemilik Rekening', value: profile?.account_holder || '—' },
-                { label: 'Nama Bank', value: profile?.bank_name || '—' },
-                { label: 'Nomor Rekening', value: profile?.account_number || '—' },
-                { label: 'Metode Pembayaran', value: profile?.preferred_payment_method || '—' },
-                { label: 'Mata Uang', value: profile?.preferred_currency || 'USD' },
+                { label: 'Account Holder Name', value: profile?.account_holder || '—' },
+                { label: 'Bank Name', value: profile?.bank_name || '—' },
+                { label: 'Account Number', value: profile?.account_number || '—' },
+                { label: 'Payment Method', value: profile?.preferred_payment_method || '—' },
+                { label: 'Currency', value: profile?.preferred_currency || 'USD' },
               ].map(({ label, value }) => (
                 <div key={label}>
                   <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">{label}</div>
@@ -918,7 +918,7 @@ function WalletSection({
           {([
             { key: 'deposit', label: 'Deposit', icon: <ArrowDownCircle size={13} />, color: '#10b981' },
             { key: 'withdrawal', label: 'Withdrawal', icon: <ArrowUpCircle size={13} />, color: '#ef4444' },
-            { key: 'history', label: 'Riwayat', icon: <List size={13} />, color: '#6366f1' },
+            { key: 'history', label: 'History', icon: <List size={13} />, color: '#6366f1' },
           ] as const).map(({ key, label, icon, color }) => (
             <button
               key={key}
@@ -938,33 +938,33 @@ function WalletSection({
             <div className="space-y-4" style={{ animation: 'fadeSlideIn 0.2s ease-out' }}>
               <div className="space-y-3">
                 <div>
-                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Jumlah Deposit (USD)</label>
+                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Deposit Amount (USD)</label>
                   <input type="number" value={depositForm.amount} onChange={e => setDepositForm(f => ({ ...f, amount: e.target.value }))} placeholder="Minimum $10" min="10" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle}
                     onFocus={e => { e.target.style.borderColor = 'rgba(16,185,129,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1)'; }}
                     onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }}
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Metode Pembayaran</label>
+                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Payment Method</label>
                   <select value={depositForm.payment_method} onChange={e => setDepositForm(f => ({ ...f, payment_method: e.target.value }))} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={inputStyle}>
-                    <option value="">Pilih metode</option>
+                    <option value="">Select method</option>
                     {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Referensi Pembayaran (opsional)</label>
-                  <input value={depositForm.payment_reference} onChange={e => setDepositForm(f => ({ ...f, payment_reference: e.target.value }))} placeholder="Nomor transaksi / bukti transfer" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle}
+                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Payment Reference (optional)</label>
+                  <input value={depositForm.payment_reference} onChange={e => setDepositForm(f => ({ ...f, payment_reference: e.target.value }))} placeholder="Transaction number / payment reference" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle}
                     onFocus={e => { e.target.style.borderColor = 'rgba(16,185,129,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1)'; }}
                     onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }}
                   />
                 </div>
                 <button onClick={handleSubmitDeposit} disabled={submittingDeposit} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50" style={{ background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 4px 16px rgba(16,185,129,0.25)' }}>
-                  {submittingDeposit ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <ArrowDownCircle size={14} />} Kirim Permintaan Deposit
+                  {submittingDeposit ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <ArrowDownCircle size={14} />} Send Deposit Request
                 </button>
               </div>
               {deposits.length > 0 && (
                 <div>
-                  <h5 className="text-[10px] text-slate-500 uppercase tracking-wider mb-3">Riwayat Deposit</h5>
+                  <h5 className="text-[10px] text-slate-500 uppercase tracking-wider mb-3">Deposit History</h5>
                   <div className="space-y-2 max-h-60 overflow-y-auto">
                     {deposits.map(d => (
                       <div key={d.id} className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-white/3 transition-colors" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -985,38 +985,38 @@ function WalletSection({
           {tab === 'withdrawal' && (
             <div className="space-y-4" style={{ animation: 'fadeSlideIn 0.2s ease-out' }}>
               <div className="p-3 rounded-xl" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
-                <div className="text-[10px] text-amber-400 font-semibold mb-0.5 uppercase tracking-wider">Saldo Real Tersedia</div>
+                <div className="text-[10px] text-amber-400 font-semibold mb-0.5 uppercase tracking-wider">Real Balance Available</div>
                 <div className="text-xl font-bold text-white">${formatCurrency(wallet?.realBalance ?? 0)}</div>
               </div>
               <div className="space-y-3">
                 <div>
-                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Jumlah Withdrawal (USD)</label>
+                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Withdrawal Amount (USD)</label>
                   <input type="number" value={withdrawalForm.amount} onChange={e => setWithdrawalForm(f => ({ ...f, amount: e.target.value }))} placeholder="Minimum $10" min="10" max={wallet?.realBalance ?? 0} className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle}
                     onFocus={e => { e.target.style.borderColor = 'rgba(239,68,68,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.1)'; }}
                     onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }}
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Metode Penarikan</label>
+                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Withdrawal Method</label>
                   <select value={withdrawalForm.payment_method} onChange={e => setWithdrawalForm(f => ({ ...f, payment_method: e.target.value }))} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={inputStyle}>
-                    <option value="">Pilih metode</option>
+                    <option value="">Select method</option>
                     {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Rekening Tujuan</label>
-                  <input value={withdrawalForm.destination_address} onChange={e => setWithdrawalForm(f => ({ ...f, destination_address: e.target.value }))} placeholder="Nomor rekening / wallet address" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle}
+                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Destination Account</label>
+                  <input value={withdrawalForm.destination_address} onChange={e => setWithdrawalForm(f => ({ ...f, destination_address: e.target.value }))} placeholder="Account number / wallet address" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle}
                     onFocus={e => { e.target.style.borderColor = 'rgba(239,68,68,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.1)'; }}
                     onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }}
                   />
                 </div>
                 <button onClick={handleSubmitWithdrawal} disabled={submittingWithdrawal} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50" style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)', boxShadow: '0 4px 16px rgba(239,68,68,0.25)' }}>
-                  {submittingWithdrawal ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <ArrowUpCircle size={14} />} Kirim Permintaan Withdrawal
+                  {submittingWithdrawal ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <ArrowUpCircle size={14} />} Send Withdrawal Request
                 </button>
               </div>
               {withdrawals.length > 0 && (
                 <div>
-                  <h5 className="text-[10px] text-slate-500 uppercase tracking-wider mb-3">Riwayat Withdrawal</h5>
+                  <h5 className="text-[10px] text-slate-500 uppercase tracking-wider mb-3">Withdrawal History</h5>
                   <div className="space-y-2 max-h-60 overflow-y-auto">
                     {withdrawals.map(w => (
                       <div key={w.id} className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-white/3 transition-colors" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
@@ -1037,7 +1037,7 @@ function WalletSection({
           {tab === 'history' && (
             <div style={{ animation: 'fadeSlideIn 0.2s ease-out' }}>
               {transactions.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 text-sm">Belum ada riwayat transaksi</div>
+                <div className="text-center py-12 text-slate-500 text-sm">No transaction history yet</div>
               ) : (
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {transactions.map(tx => (
@@ -1096,17 +1096,17 @@ function StatsSection({ stats }: { stats: TradeStats }) {
 
       <GlassCard className="p-5">
         <div className="flex items-center justify-between mb-4">
-          <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Grafik Performa</h4>
+          <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Performance Chart</h4>
           <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
             {(['daily', 'weekly', 'monthly'] as const).map(p => (
               <button key={p} onClick={() => setChartPeriod(p)} className="px-2.5 py-1 text-[10px] font-medium transition-all" style={{ background: chartPeriod === p ? 'rgba(99,102,241,0.3)' : 'transparent', color: chartPeriod === p ? '#a5b4fc' : '#64748b' }}>
-                {p === 'daily' ? 'Harian' : p === 'weekly' ? 'Mingguan' : 'Bulanan'}
+                {p === 'daily' ? 'Daily' : p === 'weekly' ? 'Weekly' : 'Monthly'}
               </button>
             ))}
           </div>
         </div>
         {stats.dailyPerformance.length === 0 ? (
-          <div className="text-center py-8 text-slate-500 text-sm">Belum ada data performa</div>
+          <div className="text-center py-8 text-slate-500 text-sm">No performance data yet</div>
         ) : (
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={stats.dailyPerformance.slice(-14)}>
@@ -1121,7 +1121,7 @@ function StatsSection({ stats }: { stats: TradeStats }) {
 
       {stats.favoriteAssets.length > 0 && (
         <GlassCard className="p-5">
-          <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Aset Favorit</h4>
+          <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Favorite Assets</h4>
           <div className="space-y-3">
             {stats.favoriteAssets.slice(0, 5).map(({ symbol, count }, i) => (
               <div key={symbol} className="flex items-center gap-3">
@@ -1149,12 +1149,12 @@ function StatsSection({ stats }: { stats: TradeStats }) {
 function LevelSection({ totalTrades }: { totalTrades: number }) {
   const levelInfo = getTraderLevel(totalTrades);
   const badges = [
-    { name: 'First Trade', desc: 'Trade pertama', earned: totalTrades >= 1, icon: <Zap size={18} /> },
-    { name: 'Active Trader', desc: '10 trade selesai', earned: totalTrades >= 10, icon: <TrendingUp size={18} /> },
-    { name: 'Bronze Trader', desc: '50 trade selesai', earned: totalTrades >= 50, icon: <Award size={18} /> },
-    { name: 'Silver Trader', desc: '200 trade selesai', earned: totalTrades >= 200, icon: <Star size={18} /> },
-    { name: 'Gold Trader', desc: '500 trade selesai', earned: totalTrades >= 500, icon: <Trophy size={18} /> },
-    { name: 'VIP Member', desc: 'Capai level VIP', earned: totalTrades >= 500, icon: <Award size={18} /> },
+    { name: 'First Trade', desc: 'First trade', earned: totalTrades >= 1, icon: <Zap size={18} /> },
+    { name: 'Active Trader', desc: '10 trades completed', earned: totalTrades >= 10, icon: <TrendingUp size={18} /> },
+    { name: 'Bronze Trader', desc: '50 trades completed', earned: totalTrades >= 50, icon: <Award size={18} /> },
+    { name: 'Silver Trader', desc: '200 trades completed', earned: totalTrades >= 200, icon: <Star size={18} /> },
+    { name: 'Gold Trader', desc: '500 trades completed', earned: totalTrades >= 500, icon: <Trophy size={18} /> },
+    { name: 'VIP Member', desc: 'Reach VIP level', earned: totalTrades >= 500, icon: <Award size={18} /> },
   ];
 
   return (
@@ -1165,21 +1165,21 @@ function LevelSection({ totalTrades }: { totalTrades: number }) {
             <Trophy size={28} style={{ color: levelInfo.color }} />
           </div>
           <div>
-            <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Level Trader</div>
+            <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Trader Level</div>
             <div className="text-3xl font-bold" style={{ color: levelInfo.color }}>{levelInfo.level}</div>
-            <div className="text-xs text-slate-400 mt-0.5">{totalTrades} total trade</div>
+            <div className="text-xs text-slate-400 mt-0.5">Total trades: {totalTrades}</div>
           </div>
         </div>
         {levelInfo.level !== 'VIP' && (
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-xs text-slate-500">Progress ke {levelInfo.next}</span>
+              <span className="text-xs text-slate-500">Progress to {levelInfo.next}</span>
               <span className="text-xs font-bold" style={{ color: levelInfo.color }}>{levelInfo.progress}%</span>
             </div>
             <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
               <div className="h-full rounded-full transition-all duration-700" style={{ width: `${levelInfo.progress}%`, background: `linear-gradient(90deg, ${levelInfo.color}, ${levelInfo.color}aa)`, boxShadow: `0 0 8px ${levelInfo.color}60` }} />
             </div>
-            <div className="text-[10px] text-slate-600 mt-1.5">{levelInfo.nextAt - totalTrades} trade lagi untuk {levelInfo.next}</div>
+            <div className="text-[10px] text-slate-600 mt-1.5">{levelInfo.nextAt - totalTrades} more trades to reach {levelInfo.next}</div>
           </div>
         )}
       </GlassCard>
@@ -1200,7 +1200,7 @@ function LevelSection({ totalTrades }: { totalTrades: number }) {
       </div>
 
       <GlassCard className="p-5">
-        <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Badge Pencapaian</h4>
+        <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Achievement Badges</h4>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {badges.map(({ name, desc, earned, icon }) => (
             <div key={name} className="rounded-2xl p-3 text-center transition-all" style={{ background: earned ? 'rgba(245,158,11,0.08)' : 'rgba(255,255,255,0.02)', border: `1px solid ${earned ? 'rgba(245,158,11,0.25)' : 'rgba(255,255,255,0.06)'}`, opacity: earned ? 1 : 0.4 }}>
@@ -1237,10 +1237,10 @@ function ActivitySection({ activities }: { activities: ActivityLog[] }) {
     <GlassCard className="overflow-hidden">
       <div className="px-5 py-3.5 border-b border-white/8 flex items-center gap-2">
         <Clock size={13} className="text-cyan-400" />
-        <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Semua Aktivitas</span>
+        <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">All Activity</span>
       </div>
       {activities.length === 0 ? (
-        <div className="text-center py-12 text-slate-500 text-sm">Belum ada aktivitas</div>
+        <div className="text-center py-12 text-slate-500 text-sm">No activity yet</div>
       ) : (
         <div className="divide-y divide-white/5 max-h-[500px] overflow-y-auto">
           {activities.map((a) => (
@@ -1275,12 +1275,12 @@ function PreferencesSection() {
   return (
     <div className="space-y-4">
       <GlassCard className="p-5 space-y-4">
-        <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Bell size={13} /> Notifikasi</h4>
+        <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Bell size={13} /> Notifications</h4>
         {[
-          { key: 'email', label: 'Email Notifikasi', desc: 'Terima notifikasi via email' },
-          { key: 'push', label: 'Push Notifikasi', desc: 'Notifikasi browser' },
-          { key: 'trade', label: 'Trade Alert', desc: 'Notifikasi hasil trade' },
-          { key: 'deposit', label: 'Deposit & Withdrawal', desc: 'Notifikasi transaksi keuangan' },
+          { key: 'email', label: 'Email Notifications', desc: 'Receive email notifications' },
+          { key: 'push', label: 'Push Notifications', desc: 'Browser notifications' },
+          { key: 'trade', label: 'Trade Alerts', desc: 'Trade result notifications' },
+          { key: 'deposit', label: 'Deposit & Withdrawal', desc: 'Financial transaction notifications' },
         ].map(({ key, label, desc }) => (
           <div key={key} className="flex items-center justify-between py-2.5 border-b border-white/5 last:border-0">
             <div>
@@ -1299,16 +1299,16 @@ function PreferencesSection() {
       </GlassCard>
 
       <GlassCard className="p-5 space-y-4">
-        <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Globe size={13} /> Bahasa & Tampilan</h4>
+        <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Globe size={13} /> Language & Display</h4>
         <div>
-          <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Bahasa</label>
+          <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Language</label>
           <select value={language} onChange={e => setLanguage(e.target.value)} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-            <option value="id">Bahasa Indonesia</option>
+            <option value="id">Indonesian</option>
             <option value="en">English</option>
           </select>
         </div>
         <div>
-          <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Mode Default Trading</label>
+          <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Default Trading Mode</label>
           <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
             <button onClick={() => setDefaultMode('demo')} className="flex-1 py-2.5 text-xs font-semibold transition-all" style={{ background: defaultMode === 'demo' ? 'linear-gradient(135deg, #3b82f6, #6366f1)' : 'transparent', color: defaultMode === 'demo' ? 'white' : '#64748b' }}>Demo</button>
             <button onClick={() => setDefaultMode('real')} className="flex-1 py-2.5 text-xs font-semibold transition-all" style={{ background: defaultMode === 'real' ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'transparent', color: defaultMode === 'real' ? 'white' : '#64748b' }}>Real</button>
@@ -1328,11 +1328,11 @@ function SupportSection() {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   const faqs = [
-    { q: 'Bagaimana cara melakukan deposit?', a: 'Pergi ke tab Wallet, pilih Deposit, masukkan jumlah dan metode pembayaran, lalu kirim permintaan. Admin akan memproses dalam 1x24 jam.' },
-    { q: 'Berapa lama proses withdrawal?', a: 'Withdrawal diproses dalam 1-3 hari kerja setelah disetujui admin.' },
-    { q: 'Bagaimana cara reset demo balance?', a: 'Di tab Wallet, klik tombol Reset pada kartu Demo Balance.' },
-    { q: 'Apakah trading demo gratis?', a: 'Ya, akun demo sepenuhnya gratis dan tidak memerlukan deposit.' },
-    { q: 'Bagaimana cara menghubungi support?', a: 'Anda bisa menghubungi kami via Live Chat Telegram atau kirim tiket melalui form di bawah.' },
+    { q: 'How do I make a deposit?', a: 'Go to the Wallet tab, select Deposit, enter the amount and payment method, then submit the request. Admin will process it within 24 hours.' },
+    { q: 'How long does withdrawal take?', a: 'Withdrawals are processed within 1-3 business days after admin approval.' },
+    { q: 'How do I reset my demo balance?', a: 'In the Wallet tab, click the Reset button on the Demo Balance card.' },
+    { q: 'Is demo trading free?', a: 'Yes, the demo account is completely free and requires no deposit.' },
+    { q: 'How do I contact support?', a: 'You can reach us via Live Chat on Telegram or submit a ticket using the form below.' },
   ];
 
   const handleSendTicket = async () => {
@@ -1354,7 +1354,7 @@ function SupportSection() {
           </div>
           <div>
             <div className="text-sm font-semibold text-white">Live Chat</div>
-            <div className="text-xs text-slate-500">Chat langsung dengan support</div>
+            <div className="text-xs text-slate-500">Chat directly with support</div>
           </div>
           <ChevronRight size={16} className="ml-auto text-slate-600 group-hover:text-slate-400 transition-colors" />
         </a>
@@ -1370,23 +1370,23 @@ function SupportSection() {
       </div>
 
       <GlassCard className="p-5 space-y-4">
-        <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Send size={13} /> Kirim Tiket</h4>
+        <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Send size={13} /> Submit Ticket</h4>
         {sent ? (
           <div className="flex items-center gap-2 py-4 text-emerald-400 text-sm">
-            <CheckCircle size={16} /> Tiket berhasil dikirim! Tim kami akan merespons dalam 24 jam.
+            <CheckCircle size={16} /> Ticket submitted successfully! Our team will respond within 24 hours.
           </div>
         ) : (
           <>
             <div>
-              <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Subjek</label>
-              <input value={ticketForm.subject} onChange={e => setTicketForm(f => ({ ...f, subject: e.target.value }))} placeholder="Masukkan subjek tiket" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }} />
+              <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Subject</label>
+              <input value={ticketForm.subject} onChange={e => setTicketForm(f => ({ ...f, subject: e.target.value }))} placeholder="Enter ticket subject" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }} />
             </div>
             <div>
-              <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Pesan</label>
-              <textarea value={ticketForm.message} onChange={e => setTicketForm(f => ({ ...f, message: e.target.value }))} placeholder="Jelaskan masalah Anda..." rows={4} className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all resize-none" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }} />
+              <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Message</label>
+              <textarea value={ticketForm.message} onChange={e => setTicketForm(f => ({ ...f, message: e.target.value }))} placeholder="Describe your issue..." rows={4} className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all resize-none" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }} />
             </div>
             <button onClick={handleSendTicket} disabled={sending || !ticketForm.subject || !ticketForm.message} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" style={{ background: 'linear-gradient(135deg, #ec4899, #db2777)', boxShadow: '0 4px 16px rgba(236,72,153,0.25)' }}>
-              {sending ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Send size={13} />} Kirim Tiket
+              {sending ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Send size={13} />} Submit Ticket
             </button>
           </>
         )}
@@ -1611,7 +1611,7 @@ export default function AccountPage() {
           <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.2), rgba(99,102,241,0.2))', border: '1px solid rgba(59,130,246,0.3)' }}>
             <span className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
           </div>
-          <span className="text-xs text-slate-500 font-medium">Memuat akun...</span>
+          <span className="text-xs text-slate-500 font-medium">Loading account...</span>
         </div>
       </div>
     );

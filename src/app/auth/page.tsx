@@ -401,11 +401,11 @@ function AuthForm() {
     e.preventDefault();
     setSignUpError(null);
     if (signUpPassword !== confirmPassword) {
-      setSignUpError('Password dan konfirmasi password tidak cocok.');
+      setSignUpError('Passwords do not match.');
       return;
     }
     if (signUpPassword.length < 6) {
-      setSignUpError('Password minimal 6 karakter.');
+      setSignUpError('Password must be at least 6 characters.');
       return;
     }
     setSignUpLoading(true);
@@ -530,16 +530,16 @@ function AuthForm() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <h2 className="text-white font-semibold text-lg mb-2">Registrasi Berhasil!</h2>
+                  <h2 className="text-white font-semibold text-lg mb-2">Registration Successful!</h2>
                   <p className="text-gray-400 text-sm leading-relaxed">
-                    Akun kamu berhasil dibuat. Silakan cek email untuk verifikasi.
+                    Your account has been created. Please check your email for verification.
                   </p>
                   <button
                     onClick={() => { setSignUpSuccess(false); setTab('signin'); }}
                     className="inline-block mt-6 px-6 py-2.5 rounded-lg text-sm font-medium text-white transition-all duration-200"
                     style={{ background: 'linear-gradient(to right, #3b82f6, #6366f1)' }}
                   >
-                    Lanjut ke Login
+                    Proceed to Login
                   </button>
                 </div>
               ) : (
