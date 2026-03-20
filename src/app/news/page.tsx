@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import Header from '@/components/Header';
 import TickerTape from '@/components/TickerTape';
 
@@ -23,11 +23,36 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(hrs / 24)}d ago`;
 }
 
+function getPaginationPages(currentPage: number, totalPages: number): (number | '...')[] {
+  if (totalPages <= 7) {
+    return Array.from({ length: totalPages }, (_, i) => i + 1);
+  }
+  const pages: (number | '...')[] = [];
+  // Always show first 5
+  for (let i = 1; i <= 5; i++) pages.push(i);
+  // Ellipsis if needed
+  if (currentPage > 6 && currentPage < totalPages - 1) {
+    pages.push('...');
+    pages.push(currentPage - 1);
+    pages.push(currentPage);
+    pages.push(currentPage + 1);
+    pages.push('...');
+  } else if (totalPages > 7) {
+    pages.push('...');
+  }
+  // Always show last page
+  if (!pages.includes(totalPages)) pages.push(totalPages);
+  return pages;
+}
+
 export default function NewsPage() {
   const [articles, setArticles] = useState<NewsArticle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState<'crypto' | 'bitcoin' | 'ethereum' | 'defi'>('crypto');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalArticles, setTotalArticles] = useState(0);
 
   const categories = [
     { key: 'crypto', label: 'All Crypto' },
@@ -36,23 +61,37 @@ export default function NewsPage() {
     { key: 'defi', label: 'DeFi' },
   ] as const;
 
+  const fetchNews = useCallback(async (cat: string, page: number) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/news?q=${cat}&page=${page}`);
+      if (!res.ok) throw new Error('Failed to fetch news');
+      const data = await res.json();
+      setArticles(data.articles || []);
+      setTotalPages(data.totalPages || 1);
+      setTotalArticles(data.totalArticles || 0);
+      setCurrentPage(data.currentPage || page);
+    } catch (e: any) {
+      setError(e.message || 'Failed to load news');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    const fetchNews = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch(`/api/news?q=${category}`);
-        if (!res.ok) throw new Error('Failed to fetch news');
-        const data = await res.json();
-        setArticles(data.articles || []);
-      } catch (e: any) {
-        setError(e.message || 'Failed to load news');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchNews();
-  }, [category]);
+    setCurrentPage(1);
+    fetchNews(category, 1);
+  }, [category, fetchNews]);
+
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages || page === currentPage) return;
+    setCurrentPage(page);
+    fetchNews(category, page);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const paginationPages = getPaginationPages(currentPage, totalPages);
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -112,64 +151,108 @@ export default function NewsPage() {
 
         {/* Articles Grid */}
         {!loading && !error && articles.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {articles.map((article, idx) => (
-              <a
-                key={idx}
-                href={article.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group bg-white/5 border border-white/10 rounded-xl overflow-hidden hover:border-blue-500/40 hover:bg-white/8 transition-all duration-200 flex flex-col"
-              >
-                {/* Image */}
-                <div className="relative h-48 bg-white/5 overflow-hidden flex-shrink-0">
-                  {article.urlToImage ? (
-                    <img
-                      src={article.urlToImage}
-                      alt={article.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-                      </svg>
-                    </div>
-                  )}
-                  {/* Source badge */}
-                  <div className="absolute top-3 left-3">
-                    <span className="bg-black/70 backdrop-blur-sm text-xs text-slate-300 px-2 py-1 rounded-full">
-                      {article.source.name}
-                    </span>
-                  </div>
-                </div>
+          <>
+            {/* Article count info */}
+            <div className="mb-4 text-slate-400 text-sm">
+              Showing page {currentPage} of {totalPages} &mdash; {totalArticles} unique articles
+            </div>
 
-                {/* Content */}
-                <div className="p-4 flex flex-col flex-1">
-                  <h3 className="text-sm font-semibold text-white leading-snug mb-2 line-clamp-3 group-hover:text-blue-300 transition-colors">
-                    {article.title}
-                  </h3>
-                  {article.description && (
-                    <p className="text-xs text-slate-400 line-clamp-2 mb-3 flex-1">
-                      {article.description}
-                    </p>
-                  )}
-                  <div className="flex items-center justify-between mt-auto pt-2 border-t border-white/10">
-                    <span className="text-xs text-slate-500">{timeAgo(article.publishedAt)}</span>
-                    <span className="text-xs text-blue-400 group-hover:text-blue-300 flex items-center gap-1">
-                      Read more
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                      </svg>
-                    </span>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {articles.map((article, idx) => (
+                <a
+                  key={`${article.url}-${idx}`}
+                  href={article.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group bg-white/5 border border-white/10 rounded-xl overflow-hidden hover:border-blue-500/40 hover:bg-white/8 transition-all duration-200 flex flex-col"
+                >
+                  {/* Image */}
+                  <div className="relative h-48 bg-white/5 overflow-hidden flex-shrink-0">
+                    {article.urlToImage && (
+                      <img
+                        src={article.urlToImage}
+                        alt={article.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                    )}
+                    {/* Source badge */}
+                    <div className="absolute top-3 left-3">
+                      <span className="bg-black/70 backdrop-blur-sm text-xs text-slate-300 px-2 py-1 rounded-full">
+                        {article.source.name}
+                      </span>
+                    </div>
                   </div>
-                </div>
-              </a>
-            ))}
-          </div>
+
+                  {/* Content */}
+                  <div className="p-4 flex flex-col flex-1">
+                    <h3 className="text-sm font-semibold text-white leading-snug mb-2 line-clamp-3 group-hover:text-blue-300 transition-colors">
+                      {article.title}
+                    </h3>
+                    {article.description && (
+                      <p className="text-xs text-slate-400 line-clamp-2 mb-3 flex-1">
+                        {article.description}
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between mt-auto pt-2 border-t border-white/10">
+                      <span className="text-xs text-slate-500">{timeAgo(article.publishedAt)}</span>
+                      <span className="text-xs text-blue-400 group-hover:text-blue-300 flex items-center gap-1">
+                        Read more
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                      </span>
+                    </div>
+                  </div>
+                </a>
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="mt-10 flex items-center justify-center gap-1 flex-wrap">
+                {/* Prev */}
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="px-3 py-2 rounded-lg text-sm font-medium bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  ‹ Prev
+                </button>
+
+                {/* Page numbers */}
+                {paginationPages.map((p, i) =>
+                  p === '...' ? (
+                    <span key={`ellipsis-${i}`} className="px-2 py-2 text-slate-500 text-sm select-none">
+                      ...
+                    </span>
+                  ) : (
+                    <button
+                      key={p}
+                      onClick={() => handlePageChange(p as number)}
+                      className={`min-w-[36px] px-3 py-2 rounded-lg text-sm font-medium border transition-all ${
+                        currentPage === p
+                          ? 'bg-blue-600 border-blue-500 text-white' :'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:text-white'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  )
+                )}
+
+                {/* Next */}
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-2 rounded-lg text-sm font-medium bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                >
+                  Next ›
+                </button>
+              </div>
+            )}
+          </>
         )}
 
         {/* Empty */}
