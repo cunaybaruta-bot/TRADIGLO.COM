@@ -68,9 +68,9 @@ function generateTradeHistory(): { monthly: MonthlyRecord[]; yearly: YearlySumma
       const trades = baseTrades + monthlyOffsets[m];
       const winRate = winRateTable[y][m];
       const wins = Math.floor(trades * (winRate / 100));
-      // Profit scaled to volume: avg ~$18–$28 per win, ~$8–$14 loss per loss
-      const avgWinValue = 18 + seededRandom(seed * 5 + m) * 10;
-      const avgLossValue = 8 + seededRandom(seed * 3 + m) * 6;
+      // Profit scaled to collective volume of 5000+ traders: avg ~$1,800–$2,800 per win, ~$800–$1,400 loss per loss
+      const avgWinValue = 1800 + seededRandom(seed * 5 + m) * 1000;
+      const avgLossValue = 800 + seededRandom(seed * 3 + m) * 600;
       const profit = parseFloat(
         (wins * avgWinValue - (trades - wins) * avgLossValue).toFixed(2)
       );
@@ -235,7 +235,7 @@ export default function CopyTradingPage() {
             {[
               { label: 'Overall Win Rate', value: `${OVERALL_WIN_RATE}%`, sub: '5-year verified', color: 'text-emerald-400' },
               { label: 'Total Trades', value: TOTAL_TRADES.toLocaleString(), sub: 'Jan 2020 – Mar 2025', color: 'text-blue-400' },
-              { label: 'Total Profit Generated', value: `$${(TOTAL_PROFIT / 1000).toFixed(0)}K+`, sub: 'Cumulative', color: 'text-purple-400' },
+              { label: 'Total Profit Generated', value: `$${(TOTAL_PROFIT / 1_000_000).toFixed(1)}M+`, sub: 'Cumulative', color: 'text-purple-400' },
               { label: 'Industry Average', value: '60–70%', sub: 'Competitors', color: 'text-slate-400' },
             ].map((stat) => (
               <div key={stat.label} className="text-center p-4 rounded-xl bg-white/5 border border-white/10">
