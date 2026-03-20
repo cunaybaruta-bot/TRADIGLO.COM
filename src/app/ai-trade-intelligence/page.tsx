@@ -194,7 +194,7 @@ export default function AITradeIntelligencePage() {
   const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null);
   const [activeTab, setActiveTab] = useState<'signals' | 'technical' | 'sentiment'>('signals');
 
-  const { response, isLoading: aiLoading, error: aiError, sendMessage } = useChat('OPEN_AI', 'gpt-4o', false);
+  const { response, isLoading: aiLoading, error: aiError, sendMessage } = useChat('OPEN_AI', 'gpt-5', false);
 
   useEffect(() => {
     if (aiError) toast.error(aiError.message);
