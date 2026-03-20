@@ -84,12 +84,6 @@ export default function Header() {
               Dashboard
             </Link>
           )}
-          <Link
-            href="#"
-            className="px-3 xl:px-4 min-h-[44px] rounded-md hover:text-white hover:bg-white/10 transition-colors whitespace-nowrap text-xs xl:text-sm inline-flex items-center font-semibold text-blue-400"
-          >
-            Trade
-          </Link>
         </nav>
 
         {/* Search */}
@@ -168,13 +162,11 @@ export default function Header() {
       {mobileMenuOpen && (
         <div className="md:hidden fixed top-[56px] left-0 right-0 z-40 border-t border-white/10 bg-black px-4 py-3 shadow-lg">
           <nav className="flex flex-col gap-1">
-            {[...navItems, ...(mounted && !loading && user ? [{ label: 'Dashboard', href: '/dashboard' }] : []), { label: 'Trade', href: '#' }]?.map((item) => (
+            {[...navItems, ...(mounted && !loading && user ? [{ label: 'Dashboard', href: '/dashboard' }] : [])]?.map((item) => (
               <Link
                 key={item?.label}
                 href={item?.href}
-                className={`text-left px-3 py-2.5 rounded-md text-sm transition-colors ${
-                  item?.label === 'Trade' ? 'text-blue-400 font-semibold' : 'text-slate-300 hover:text-white hover:bg-white/10'
-                }`}
+                className="text-left px-3 py-2.5 rounded-md text-sm transition-colors text-slate-300 hover:text-white hover:bg-white/10"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {item?.label}
