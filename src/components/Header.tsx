@@ -26,6 +26,8 @@ export default function Header() {
 
   const navItems = [
     { label: 'Markets', href: '/markets' },
+    { label: 'Copy Trading', href: '/copy-trading' },
+    { label: 'AI Trade Intelligence', href: '/ai-trade-intelligence' },
     { label: 'Screener', href: '/screener' },
     { label: 'News', href: '/news' },
   ];
