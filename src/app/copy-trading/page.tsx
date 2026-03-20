@@ -93,7 +93,6 @@ export default function CopyTradingPage() {
   const [realBalance, setRealBalance] = useState<number | null>(null);
   const [balanceLoading, setBalanceLoading] = useState(false);
   const [selectedYear, setSelectedYear] = useState<number>(2025);
-  const [showAllMonths, setShowAllMonths] = useState(false);
 
   const fetchBalance = useCallback(async () => {
     if (!user) return;
@@ -119,7 +118,6 @@ export default function CopyTradingPage() {
 
   const meetsRequirement = realBalance !== null && realBalance >= MIN_BALANCE;
   const filteredMonthly = MONTHLY_DATA.filter(r => r.year === selectedYear);
-  const displayMonthly = showAllMonths ? filteredMonthly : filteredMonthly.slice(0, 6);
 
   return (
     <div className="min-h-screen bg-black text-white flex flex-col">
@@ -298,7 +296,7 @@ export default function CopyTradingPage() {
                 </tr>
               </thead>
               <tbody>
-                {displayMonthly.map((row, i) => (
+                {filteredMonthly.map((row, i) => (
                   <tr key={i} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                     <td className="px-4 py-3 text-white font-medium">{row.month} {row.year}</td>
                     <td className="px-4 py-3 text-right text-slate-300">{row.trades}</td>
@@ -316,17 +314,6 @@ export default function CopyTradingPage() {
               </tbody>
             </table>
           </div>
-
-          {filteredMonthly.length > 6 && (
-            <div className="text-center mt-4">
-              <button
-                onClick={() => setShowAllMonths(!showAllMonths)}
-                className="px-5 py-2 rounded-lg bg-white/10 hover:bg-white/15 text-slate-300 text-sm transition-all border border-white/10"
-              >
-                {showAllMonths ? 'Show Less' : `Show All ${filteredMonthly.length} Months`}
-              </button>
-            </div>
-          )}
         </div>
       </section>
 
