@@ -194,7 +194,7 @@ export default function AITradeIntelligencePage() {
   const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null);
   const [activeTab, setActiveTab] = useState<'signals' | 'technical' | 'sentiment'>('signals');
 
-  const { response, isLoading: aiLoading, error: aiError, sendMessage } = useChat('OPEN_AI', 'gpt-4o', false);
+  const { response, isLoading: aiLoading, error: aiError, sendMessage } = useChat('OPEN_AI', 'gpt-4.1', false);
 
   useEffect(() => {
     if (aiError) toast.error(aiError.message);
@@ -331,7 +331,7 @@ Rules:
         <div className="container mx-auto px-4 md:px-6 py-12 md:py-16 relative">
           <div className="max-w-3xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-semibold mb-5">
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707M21 12a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
               AI-Powered — Exclusive Premium Feature
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-4 leading-tight">
@@ -341,7 +341,7 @@ Rules:
               </span>
             </h1>
             <p className="text-slate-400 text-lg mb-5 max-w-2xl mx-auto">
-              Real-time market sentiment, Fear &amp; Greed Index, technical analysis, and AI-generated trading signals with entry, target &amp; stop loss — powered by GPT-4o.
+              Real-time market sentiment, Fear &amp; Greed Index, technical analysis, and AI-generated trading signals with entry, target &amp; stop loss — powered by GPT-4.1.
             </p>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-sm font-semibold">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
@@ -421,7 +421,7 @@ Rules:
               <div>
                 <h2 className="text-xl font-bold text-white">Market Intelligence Dashboard</h2>
                 {lastUpdated && (
-                  <p className="text-slate-500 text-xs mt-0.5">Last updated: {lastUpdated.toLocaleTimeString()} · Powered by GPT-4o</p>
+                  <p className="text-slate-500 text-xs mt-0.5">Last updated: {lastUpdated.toLocaleTimeString()} · Powered by GPT-4.1</p>
                 )}
               </div>
               <button
@@ -448,7 +448,7 @@ Rules:
               <div className="text-center py-20">
                 <div className="w-14 h-14 border-2 border-purple-400 border-t-transparent rounded-full animate-spin mx-auto mb-5" />
                 <p className="text-white font-semibold text-lg mb-2">AI is analyzing markets...</p>
-                <p className="text-slate-400 text-sm">Processing sentiment, technicals, and signals with GPT-4o</p>
+                <p className="text-slate-400 text-sm">Processing sentiment, technicals, and signals with GPT-4.1</p>
                 <div className="flex items-center justify-center gap-6 mt-6">
                   {['Market Sentiment', 'Technical Analysis', 'Trading Signals'].map((step, i) => (
                     <div key={i} className="flex items-center gap-2 text-xs text-slate-500">
@@ -650,7 +650,7 @@ Rules:
                           {/* AI Reasoning */}
                           <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                             <div className="flex items-center gap-2 mb-2">
-                              <svg className="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
+                              <svg className="w-4 h-4 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707M21 12a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" /></svg>
                               <span className="text-slate-400 text-xs font-semibold uppercase tracking-wider">AI Reasoning</span>
                             </div>
                             <p className="text-slate-300 text-sm leading-relaxed">{selectedSignal.reasoning}</p>
@@ -760,7 +760,7 @@ Rules:
                                 {selectedSignal.sentiment}
                               </div>
                               <div className="text-slate-400 text-sm mb-3">Score: <span className="text-white font-bold">{selectedSignal.sentimentScore}/100</span></div>
-                              <div className="h-3 bg-white/10 rounded-full overflow-hidden">
+                              <div className="h-2 bg-white/10 rounded-full overflow-hidden">
                                 <div
                                   className={`h-full rounded-full ${selectedSignal.sentiment === 'Bullish' ? 'bg-emerald-500' : selectedSignal.sentiment === 'Bearish' ? 'bg-red-500' : 'bg-yellow-500'}`}
                                   style={{ width: `${selectedSignal.sentimentScore}%` }}
