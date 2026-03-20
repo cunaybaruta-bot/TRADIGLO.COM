@@ -194,7 +194,7 @@ export default function AITradeIntelligencePage() {
   const [selectedSignal, setSelectedSignal] = useState<Signal | null>(null);
   const [activeTab, setActiveTab] = useState<'signals' | 'technical' | 'sentiment'>('signals');
 
-  const { response, isLoading: aiLoading, error: aiError, sendMessage } = useChat('OPEN_AI', 'gpt-4.1', false);
+  const { response, isLoading: aiLoading, error: aiError, sendMessage } = useChat('OPEN_AI', 'gpt-4o', false);
 
   useEffect(() => {
     if (aiError) toast.error(aiError.message);
@@ -341,7 +341,7 @@ Rules:
               </span>
             </h1>
             <p className="text-slate-400 text-lg mb-5 max-w-2xl mx-auto">
-              Real-time market sentiment, Fear &amp; Greed Index, technical analysis, and AI-generated trading signals with entry, target &amp; stop loss — powered by GPT-4.1.
+              Real-time market sentiment, Fear &amp; Greed Index, technical analysis, and AI-generated trading signals with entry, target &amp; stop loss — powered by GPT-4o.
             </p>
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-yellow-500/10 border border-yellow-500/30 text-yellow-400 text-sm font-semibold">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
@@ -421,7 +421,7 @@ Rules:
               <div>
                 <h2 className="text-xl font-bold text-white">Market Intelligence Dashboard</h2>
                 {lastUpdated && (
-                  <p className="text-slate-500 text-xs mt-0.5">Last updated: {lastUpdated.toLocaleTimeString()} · Powered by GPT-4.1</p>
+                  <p className="text-slate-500 text-xs mt-0.5">Last updated: {lastUpdated.toLocaleTimeString()} · Powered by GPT-4o</p>
                 )}
               </div>
               <button
@@ -448,7 +448,7 @@ Rules:
               <div className="text-center py-20">
                 <div className="w-14 h-14 border-2 border-purple-400 border-t-transparent rounded-full animate-spin mx-auto mb-5" />
                 <p className="text-white font-semibold text-lg mb-2">AI is analyzing markets...</p>
-                <p className="text-slate-400 text-sm">Processing sentiment, technicals, and signals with GPT-4.1</p>
+                <p className="text-slate-400 text-sm">Processing sentiment, technicals, and signals with GPT-4o</p>
                 <div className="flex items-center justify-center gap-6 mt-6">
                   {['Market Sentiment', 'Technical Analysis', 'Trading Signals'].map((step, i) => (
                     <div key={i} className="flex items-center gap-2 text-xs text-slate-500">
