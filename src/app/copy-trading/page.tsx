@@ -38,16 +38,50 @@ function generateTradeHistory(): { monthly: MonthlyRecord[]; yearly: YearlySumma
   const startYear = currentYear - 4;
   const monthly: MonthlyRecord[] = [];
 
+  // Base trades per year — slowly growing, non-round, small month-to-month variation
+  const baseTradesByYear: Record<number, number> = {
+    2021: 5408,
+    2022: 5671,
+    2023: 5893,
+    2024: 6124,
+    2025: 6329,
+  };
+
+  // Monthly offsets (small, non-round, consistent) — keeps variation realistic
+  const monthlyOffsets = [+47, -31, +83, -19, +62, -44, +91, -27, +55, -38, +74, -12];
+
+  // Win rates per month per year — range 83%–92%, avg ~90%, never 93%+
+  const winRateTable: Record<number, number[]> = {
+    2021: [88.3, 89.7, 90.2, 91.4, 92.1, 88.6, 91.0, 90.8, 88.9, 92.0, 90.5, 89.2],
+    2022: [89.1, 91.3, 83.7, 90.6, 88.4, 91.8, 89.9, 92.0, 90.3, 83.5, 91.1, 88.7],
+    2023: [90.4, 88.2, 91.7, 83.9, 89.5, 92.0, 90.1, 88.8, 91.3, 89.6, 83.4, 90.9],
+    2024: [91.2, 89.8, 88.5, 91.9, 90.7, 83.6, 92.0, 89.3, 91.5, 88.1, 90.4, 91.8],
+    2025: [89.4, 91.6, 90.2, 0, 0, 0, 0, 0, 0, 0, 0, 0], // only Jan–Mar 2025
+  };
+
   let seed = 42;
   for (let y = startYear; y <= currentYear; y++) {
     const monthCount = y === currentYear ? 3 : 12;
     for (let m = 0; m < monthCount; m++) {
       seed++;
-      const winRate = 88 + seededRandom(seed * 7 + m * 3 + y) * 5.7;
-      const trades = Math.floor(80 + seededRandom(seed * 13 + m) * 60);
+      const baseTrades = baseTradesByYear[y] ?? 5800;
+      const trades = baseTrades + monthlyOffsets[m];
+      const winRate = winRateTable[y][m];
       const wins = Math.floor(trades * (winRate / 100));
-      const profit = parseFloat((wins * (120 + seededRandom(seed * 5) * 80) - (trades - wins) * (60 + seededRandom(seed * 3) * 40)).toFixed(2));
-      monthly.push({ month: months[m], year: y, trades, wins, winRate: parseFloat(winRate.toFixed(1)), profit });
+      // Profit scaled to volume: avg ~$18–$28 per win, ~$8–$14 loss per loss
+      const avgWinValue = 18 + seededRandom(seed * 5 + m) * 10;
+      const avgLossValue = 8 + seededRandom(seed * 3 + m) * 6;
+      const profit = parseFloat(
+        (wins * avgWinValue - (trades - wins) * avgLossValue).toFixed(2)
+      );
+      monthly.push({
+        month: months[m],
+        year: y,
+        trades,
+        wins,
+        winRate: parseFloat(winRate.toFixed(1)),
+        profit,
+      });
     }
   }
 
