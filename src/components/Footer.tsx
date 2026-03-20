@@ -8,7 +8,7 @@ export default function Footer() {
   const footerLinks = {
     Resources: ['Crypto News', 'Crypto Treasuries', 'Crypto Heatmap', 'Crypto API'],
     Support: ['Request Form', 'Advertising', 'Candy Rewards Listing', 'Help Center', 'Bug Bounty', 'FAQ'],
-    'About Investoft': [
+    'About Tradiglo': [
     'About Us',
     'Careers',
     'Branding Guide',
@@ -61,11 +61,11 @@ export default function Footer() {
               <span
                 style={{ fontFamily: "'Satoshi', 'Inter', sans-serif", fontWeight: 700, letterSpacing: '0.04em' }}
                 className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-500 to-purple-500 text-base tracking-wide select-none">
-                INVESTOFT
+                TRADIGLO
               </span>
             </div>
             <p className="text-xs sm:text-sm leading-relaxed mb-4">
-              Investoft provides a fundamental analysis of the crypto market. In addition to tracking price, volume and market capitalisation, Investoft tracks community growth, open-source code development, major events and on-chain metrics.
+              Tradiglo provides a fundamental analysis of the crypto market. In addition to tracking price, volume and market capitalisation, Tradiglo tracks community growth, open-source code development, major events and on-chain metrics.
             </p>
             {/* Trust Badge */}
             <div className="mt-2 flex flex-row items-center gap-2 flex-wrap">
@@ -129,7 +129,7 @@ export default function Footer() {
 
         {/* BOTTOM SECTION */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 py-6">
-          <p className="text-gray-400 text-xs">© 2026 Investoft. All Rights Reserved.</p>
+          <p className="text-gray-400 text-xs">© 2026 Tradiglo. All Rights Reserved.</p>
           <div className="flex gap-2 flex-wrap">
             {/* Google Play Badge */}
             <a

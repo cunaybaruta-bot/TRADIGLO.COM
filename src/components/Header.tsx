@@ -56,7 +56,7 @@ export default function Header() {
             style={{ fontFamily: "'Satoshi', 'Inter', sans-serif", fontWeight: 700, letterSpacing: '0.04em' }}
             className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-500 to-purple-500 text-base tracking-wide select-none"
           >
-            INVESTOFT
+            TRADIGLO
           </span>
         </Link>
 
