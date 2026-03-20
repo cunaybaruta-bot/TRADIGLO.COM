@@ -26,7 +26,6 @@ export default function Header() {
 
   const navItems = [
     { label: 'Markets', href: '/markets' },
-    { label: 'Cryptocurrency', href: '/cryptocurrency' },
     { label: 'Screener', href: '/screener' },
     { label: 'News', href: '/news' },
   ];
