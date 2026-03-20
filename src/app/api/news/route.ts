@@ -53,6 +53,10 @@ export async function GET(req: NextRequest) {
       .filter((a: any) => a.urlToImage && a.urlToImage.startsWith('http'))
       // Only articles relevant to crypto/trading/financial markets
       .filter((a: any) => isRelevant(a))
+      // Deduplicate by URL and title
+      .filter((a: any, index: number, self: any[]) =>
+        index === self.findIndex((b: any) => b.url === a.url || b.title === a.title)
+      )
       // Limit to 30 after filtering
       .slice(0, 30);
 
