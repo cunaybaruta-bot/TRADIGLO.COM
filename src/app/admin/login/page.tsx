@@ -100,7 +100,7 @@ export default function AdminLoginPage() {
           <div className="w-12 h-12 rounded-xl bg-[#22c55e] flex items-center justify-center mb-4 shadow-lg shadow-green-500/20">
             <span className="text-black font-bold text-xl">I</span>
           </div>
-          <h1 className="text-white text-2xl font-bold tracking-tight">Investoft</h1>
+          <h1 className="text-white text-2xl font-bold tracking-tight">Tradiglo</h1>
           <p className="text-slate-400 text-sm mt-1">Admin Panel</p>
         </div>
 
@@ -120,7 +120,7 @@ export default function AdminLoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                placeholder="admin@investoft.com"
+                placeholder="admin@tradiglo.com"
                 className="w-full bg-[#0f172a] border border-slate-600 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#22c55e] focus:ring-1 focus:ring-[#22c55e] transition-colors"
               />
             </div>
@@ -176,7 +176,7 @@ export default function AdminLoginPage() {
         </div>
 
         <p className="text-center text-slate-600 text-xs mt-6">
-          © {new Date().getFullYear()} Investoft. All rights reserved.
+          © {new Date().getFullYear()} Tradiglo. All rights reserved.
         </p>
       </div>
     </div>

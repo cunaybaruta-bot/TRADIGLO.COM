@@ -292,7 +292,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <span className="text-black font-bold text-sm">I</span>
             </div>
             <div className="min-w-0">
-              <div className="text-white font-bold text-base leading-tight">Investoft</div>
+              <div className="text-white font-bold text-base leading-tight">Tradiglo</div>
               <div className="text-slate-400 text-xs">Admin Panel</div>
             </div>
             <button className="ml-auto lg:hidden text-slate-400 hover:text-white" onClick={() => setSidebarOpen(false)}>
@@ -388,7 +388,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <Bars3Icon className="w-6 h-6" />
             </button>
             <div className="flex-1">
-              <h1 className="text-white font-semibold text-base">Investoft Admin Panel</h1>
+              <h1 className="text-white font-semibold text-base">Tradiglo Admin Panel</h1>
             </div>
             <NotificationBell />
             <div className="flex items-center gap-2">

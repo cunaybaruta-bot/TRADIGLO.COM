@@ -115,7 +115,7 @@ const COMPARISON_DATA = [
   { platform: 'Industry Average', winRate: '60–70%', highlight: false },
   { platform: 'Typical Copy Trading', winRate: '~65%', highlight: false },
   { platform: 'Best Competitors', winRate: '~72%', highlight: false },
-  { platform: 'Investoft Copy Trade', winRate: `${OVERALL_WIN_RATE}%`, highlight: true },
+  { platform: 'Tradiglo Copy Trade', winRate: `${OVERALL_WIN_RATE}%`, highlight: true },
 ];
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -164,7 +164,7 @@ export default function CopyTradingPage() {
           <div className="max-w-3xl mx-auto text-center">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-semibold mb-6">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              Live Copy Trading — Powered by Investoft
+              Live Copy Trading — Powered by Tradiglo
             </div>
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold mb-5 leading-tight">
               Copy Our{' '}
@@ -174,7 +174,7 @@ export default function CopyTradingPage() {
               Strategy
             </h1>
             <p className="text-slate-400 text-lg md:text-xl mb-8 max-w-2xl mx-auto">
-              Follow Investoft's proprietary trading strategy — the highest verified win rate in the industry. Available exclusively for members with a minimum balance of ${MIN_BALANCE.toLocaleString()}.
+              Follow Tradiglo's proprietary trading strategy — the highest verified win rate in the industry. Available exclusively for members with a minimum balance of ${MIN_BALANCE.toLocaleString()}.
             </p>
 
             {/* CTA */}
@@ -263,7 +263,7 @@ export default function CopyTradingPage() {
             </div>
             <div className="flex-1 text-center md:text-right">
               <p className="text-slate-300 text-sm">
-                Investoft guarantees a minimum <strong className="text-white">90% win rate</strong> on all copy trading signals — the highest in the industry. Our proprietary algorithm has consistently outperformed the industry average of 60–70% for 5 consecutive years.
+                Tradiglo guarantees a minimum <strong className="text-white">90% win rate</strong> on all copy trading signals — the highest in the industry. Our proprietary algorithm has consistently outperformed the industry average of 60–70% for 5 consecutive years.
               </p>
             </div>
           </div>
@@ -381,7 +381,7 @@ export default function CopyTradingPage() {
           </span>
         </h2>
         <p className="text-slate-400 text-lg mb-8 max-w-xl mx-auto">
-          Join thousands of members already benefiting from Investoft's {OVERALL_WIN_RATE}% win rate copy trading system.
+          Join thousands of members already benefiting from Tradiglo's {OVERALL_WIN_RATE}% win rate copy trading system.
         </p>
         {!user ? (
           <Link href="/auth" className="inline-flex items-center justify-center gap-2 px-10 py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all text-lg">

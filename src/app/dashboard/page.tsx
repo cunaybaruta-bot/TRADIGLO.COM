@@ -625,7 +625,7 @@ function CopyTradeTab({ userId, wallet }: { userId: string; wallet: Wallet | nul
           .insert({ provider_id: provider.id, user_id: userId, is_active: true, allocated_balance: realBalance });
         if (error) throw error;
       }
-      setToast({ message: 'Successfully following Investoft Copy Trade!', type: 'success' });
+      setToast({ message: 'Successfully following Tradiglo Copy Trade!', type: 'success' });
       await fetchData();
     } catch (err: any) {
       setToast({ message: err?.message ?? 'Failed to follow', type: 'error' });
@@ -696,7 +696,7 @@ function CopyTradeTab({ userId, wallet }: { userId: string; wallet: Wallet | nul
                     </span>
                   )}
                 </div>
-                <div className="text-slate-500 text-xs mt-0.5">{provider.description ?? 'Official Investoft Copy Trade'}</div>
+                <div className="text-slate-500 text-xs mt-0.5">{provider.description ?? 'Official Tradiglo Copy Trade'}</div>
               </div>
             </div>
             <div className="text-right">
@@ -749,7 +749,7 @@ function CopyTradeTab({ userId, wallet }: { userId: string; wallet: Wallet | nul
             <div className="space-y-2">
               <div className="flex items-center gap-2 px-3 py-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                 <svg className="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <span className="text-blue-400 text-xs">You are currently copying Investoft trades</span>
+                <span className="text-blue-400 text-xs">You are currently copying Tradiglo trades</span>
               </div>
               <button
                 onClick={handleStopFollow}
@@ -782,7 +782,7 @@ function CopyTradeTab({ userId, wallet }: { userId: string; wallet: Wallet | nul
               >
                 {actionLoading ? (
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
-                ) : 'Follow Investoft'}
+                ) : 'Follow Tradiglo'}
               </button>
             </div>
           )}
@@ -1377,7 +1377,7 @@ export default function DashboardPage() {
 
   const handleTrade = async (orderType: 'buy' | 'sell') => {
     if (isFollowingCopyTrade) {
-      setToast({ message: 'You are currently copying Investoft trades. Stop following to trade manually.', type: 'info' });
+      setToast({ message: 'You are currently copying Tradiglo trades. Stop following to trade manually.', type: 'info' });
       return;
     }
     if (!selectedAsset) {
@@ -2011,7 +2011,7 @@ export default function DashboardPage() {
             {isFollowingCopyTrade && (
               <div className="px-3 py-1.5 bg-blue-500/10 border-b border-blue-500/20 flex items-center gap-2">
                 <svg className="w-3 h-3 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <span className="text-blue-400 text-[10px] font-medium">You are currently copying Investoft trades</span>
+                <span className="text-blue-400 text-[10px] font-medium">You are currently copying Tradiglo trades</span>
               </div>
             )}
 
@@ -2020,7 +2020,7 @@ export default function DashboardPage() {
               <button
                 onClick={() => handleTrade('sell')}
                 disabled={buyLoading || sellLoading || !selectedAsset || isFollowingCopyTrade}
-                title={isFollowingCopyTrade ? 'You are currently copying Investoft trades' : undefined}
+                title={isFollowingCopyTrade ? 'You are currently copying Tradiglo trades' : undefined}
                 style={{
                   background: '#e53935',
                   transition: 'all 0.2s ease',
@@ -2040,7 +2040,7 @@ export default function DashboardPage() {
               <button
                 onClick={() => handleTrade('buy')}
                 disabled={buyLoading || sellLoading || !selectedAsset || isFollowingCopyTrade}
-                title={isFollowingCopyTrade ? 'You are currently copying Investoft trades' : undefined}
+                title={isFollowingCopyTrade ? 'You are currently copying Tradiglo trades' : undefined}
                 style={{
                   background: '#2e7d32',
                   transition: 'all 0.2s ease',

@@ -16,7 +16,7 @@ serve(async (req) => {
     const { email, full_name, user_id, created_at } = await req.json();
 
     const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
-    const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") || "admin@investoft.com";
+    const ADMIN_EMAIL = Deno.env.get("ADMIN_EMAIL") || "admin@tradiglo.com";
 
     if (!RESEND_API_KEY) {
       throw new Error("RESEND_API_KEY is not set");
@@ -52,7 +52,7 @@ serve(async (req) => {
               <table width="100%" cellpadding="0" cellspacing="0">
                 <tr>
                   <td>
-                    <span style="font-size:22px;font-weight:700;color:#60a5fa;letter-spacing:0.05em;">INVESTOFT</span>
+                    <span style="font-size:22px;font-weight:700;color:#60a5fa;letter-spacing:0.05em;">TRADIGLO</span>
                     <p style="margin:6px 0 0;font-size:13px;color:#64748b;">Admin Notification System</p>
                   </td>
                   <td align="right">
@@ -123,7 +123,7 @@ serve(async (req) => {
           <tr>
             <td style="padding:20px 40px;border-top:1px solid #334155;background:#0f172a;">
               <p style="margin:0;font-size:12px;color:#475569;text-align:center;">
-                This is an automated notification from INVESTOFT Admin System.<br/>
+                This is an automated notification from TRADIGLO Admin System.<br/>
                 You are receiving this because you are registered as an administrator.
               </p>
             </td>

@@ -71,7 +71,7 @@ BEGIN
     VALUES (
       'copy_trade',
       'New Copy Trade Follower',
-      'A user has started following Investoft Copy Trade',
+      'A user has started following Tradiglo Copy Trade',
       NEW.user_id,
       false
     );
@@ -80,7 +80,7 @@ BEGIN
     VALUES (
       'copy_trade',
       'User Stopped Copy Trade',
-      'A user has stopped following Investoft Copy Trade',
+      'A user has stopped following Tradiglo Copy Trade',
       NEW.user_id,
       false
     );

@@ -20,7 +20,7 @@ DECLARE
   support_uuid UUID := gen_random_uuid();
   admin_uuid   UUID := gen_random_uuid();
 BEGIN
-  -- support@investoft.com
+  -- support@tradiglo.com
   INSERT INTO auth.users (
     id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
     created_at, updated_at, raw_user_meta_data, raw_app_meta_data,
@@ -31,13 +31,13 @@ BEGIN
     phone_change_token, phone_change_sent_at
   ) VALUES (
     support_uuid, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
-    'support@investoft.com', crypt('Admintest99!', gen_salt('bf', 10)), now(), now(), now(),
+    'support@tradiglo.com', crypt('Admintest99!', gen_salt('bf', 10)), now(), now(), now(),
     jsonb_build_object('full_name', 'Support Admin'),
     jsonb_build_object('provider', 'email', 'providers', ARRAY['email']::TEXT[]),
     false, false, '', null, '', null, '', '', null, '', 0, '', null, null, '', '', null
   ) ON CONFLICT (email) DO NOTHING;
 
-  -- admin@investoft.com
+  -- admin@tradiglo.com
   INSERT INTO auth.users (
     id, instance_id, aud, role, email, encrypted_password, email_confirmed_at,
     created_at, updated_at, raw_user_meta_data, raw_app_meta_data,
@@ -48,19 +48,19 @@ BEGIN
     phone_change_token, phone_change_sent_at
   ) VALUES (
     admin_uuid, '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated',
-    'admin@investoft.com', crypt('Admintest99!', gen_salt('bf', 10)), now(), now(), now(),
-    jsonb_build_object('full_name', 'Investoft Admin'),
+    'admin@tradiglo.com', crypt('Admintest99!', gen_salt('bf', 10)), now(), now(), now(),
+    jsonb_build_object('full_name', 'Tradiglo Admin'),
     jsonb_build_object('provider', 'email', 'providers', ARRAY['email']::TEXT[]),
     false, false, '', null, '', null, '', '', null, '', 0, '', null, null, '', '', null
   ) ON CONFLICT (email) DO NOTHING;
 
   -- Register both emails in admin_users table
   INSERT INTO public.admin_users (email)
-  VALUES ('support@investoft.com')
+  VALUES ('support@tradiglo.com')
   ON CONFLICT (email) DO NOTHING;
 
   INSERT INTO public.admin_users (email)
-  VALUES ('admin@investoft.com')
+  VALUES ('admin@tradiglo.com')
   ON CONFLICT (email) DO NOTHING;
 
 EXCEPTION

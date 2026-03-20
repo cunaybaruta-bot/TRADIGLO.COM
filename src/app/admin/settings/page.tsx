@@ -18,7 +18,7 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h2 className="text-white text-xl font-bold">Platform Settings</h2>
-        <p className="text-slate-400 text-sm mt-1">Investoft Platform Configuration</p>
+        <p className="text-slate-400 text-sm mt-1">Tradiglo Platform Configuration</p>
       </div>
       {/* Payout Configuration */}
       <div className="bg-[#1e293b] rounded-xl border border-slate-700 p-5">
@@ -118,7 +118,7 @@ export default function SettingsPage() {
         </div>
         <div className="space-y-2">
           {[
-            { label: 'Platform Name', value: 'Investoft Trading Platform' },
+            { label: 'Platform Name', value: 'Tradiglo Trading Platform' },
             { label: 'Admin Panel Version', value: '2.0.0' },
             { label: 'Database', value: 'Supabase PostgreSQL' },
             { label: 'Framework', value: 'Next.js 15' },

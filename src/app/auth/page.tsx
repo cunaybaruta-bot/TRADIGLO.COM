@@ -484,7 +484,7 @@ function AuthForm() {
                 style={{ fontFamily: "'Satoshi', 'Inter', sans-serif", fontWeight: 700, letterSpacing: '0.04em' }}
                 className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-500 to-purple-500 text-base tracking-wide select-none"
               >
-                INVESTOFT
+                TRADIGLO
               </span>
             </a>
           </div>
@@ -734,7 +734,7 @@ function AuthForm() {
           </div>
 
           <p className="text-center text-gray-600 text-xs mt-8">
-            © 2026 INVESTOFT. All rights reserved.
+            © 2026 TRADIGLO. All rights reserved.
           </p>
         </div>
       </div>

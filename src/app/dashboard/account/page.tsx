@@ -1348,7 +1348,7 @@ function SupportSection() {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <a href="https://t.me/investoft_support" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-2xl hover:scale-105 transition-all group" style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.2)' }}>
+        <a href="https://t.me/tradiglo_support" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 rounded-2xl hover:scale-105 transition-all group" style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.2)' }}>
           <div className="w-10 h-10 rounded-xl flex items-center justify-center text-blue-400 transition-all group-hover:scale-110" style={{ background: 'rgba(59,130,246,0.15)' }}>
             <MessageCircle size={20} />
           </div>
@@ -1364,7 +1364,7 @@ function SupportSection() {
           </div>
           <div>
             <div className="text-sm font-semibold text-white">Email Support</div>
-            <div className="text-xs text-slate-500">support@investoft.com</div>
+            <div className="text-xs text-slate-500">support@tradiglo.com</div>
           </div>
         </div>
       </div>
@@ -1385,9 +1385,11 @@ function SupportSection() {
               <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Message</label>
               <textarea value={ticketForm.message} onChange={e => setTicketForm(f => ({ ...f, message: e.target.value }))} placeholder="Describe your issue..." rows={4} className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all resize-none" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }} />
             </div>
-            <button onClick={handleSendTicket} disabled={sending || !ticketForm.subject || !ticketForm.message} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" style={{ background: 'linear-gradient(135deg, #ec4899, #db2777)', boxShadow: '0 4px 16px rgba(236,72,153,0.25)' }}>
-              {sending ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Send size={13} />} Submit Ticket
-            </button>
+            <button onClick={handleSendTicket} disabled={sending || !ticketForm.subject || !ticketForm.message} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+            style={{ background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 4px 16px rgba(16,185,129,0.25)' }}
+          >
+            {sending ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Send size={13} />} Submit Ticket
+          </button>
           </>
         )}
       </GlassCard>
@@ -1641,7 +1643,7 @@ export default function AccountPage() {
             <span className="text-xs font-medium hidden sm:block">Dashboard</span>
           </button>
           <div className="w-px h-5" style={{ background: 'rgba(255,255,255,0.08)' }} />
-          <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: '0.06em', fontSize: 14 }} className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 select-none">INVESTOFT</span>
+          <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: '0.06em', fontSize: 14 }} className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 select-none">TRADIGLO</span>
         </div>
         <div className="flex items-center gap-2">
           {/* Notification bell placeholder */}

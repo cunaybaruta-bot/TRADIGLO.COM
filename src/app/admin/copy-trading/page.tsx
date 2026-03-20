@@ -607,7 +607,7 @@ function TradeResultsTab() {
 function SettingsTab({ provider, onSaved }: { provider: Provider | null; onSaved: () => void }) {
   const supabase = createClient();
   const [form, setForm] = useState({
-    name: provider?.name ?? 'Investoft',
+    name: provider?.name ?? 'Tradiglo',
     description: provider?.description ?? '',
     win_rate: String(provider?.win_rate ?? 90),
     activity_score: String(provider?.activity_score ?? 10),
@@ -756,7 +756,7 @@ export default function AdminCopyTradingPage() {
     <div className="space-y-6">
       <div>
         <h2 className="text-white text-xl font-bold">Copy Trade</h2>
-        <p className="text-slate-400 text-sm mt-1">Manage Investoft copy trading system</p>
+        <p className="text-slate-400 text-sm mt-1">Manage Tradiglo copy trading system</p>
       </div>
 
       {/* Provider Info Banner */}
@@ -767,7 +767,7 @@ export default function AdminCopyTradingPage() {
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-white font-semibold">{provider.name}</div>
-            <div className="text-slate-400 text-xs">{provider.description ?? 'Official Investoft Copy Trade'}</div>
+            <div className="text-slate-400 text-xs">{provider.description ?? 'Official Tradiglo Copy Trade'}</div>
           </div>
           <div className="flex items-center gap-4 flex-shrink-0">
             <div className="text-center">
