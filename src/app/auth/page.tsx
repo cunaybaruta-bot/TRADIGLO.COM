@@ -509,20 +509,10 @@ function AuthForm() {
             </button>
           </div>
 
-          {/* Fixed-height form container */}
-          <div style={{ minHeight: 320, position: 'relative' }}>
-
+          {/* Dynamic form container */}
+          <div>
             {/* SIGN UP Form */}
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                opacity: tab === 'signup' ? 1 : 0,
-                visibility: tab === 'signup' ? 'visible' : 'hidden',
-                transition: 'opacity 0.2s ease',
-                pointerEvents: tab === 'signup' ? 'auto' : 'none',
-              }}
-            >
+            <div style={{ display: tab === 'signup' ? 'block' : 'none' }}>
               {signUpSuccess ? (
                 <div className="text-center py-6">
                   <div className="w-14 h-14 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center mx-auto mb-4">
@@ -659,16 +649,7 @@ function AuthForm() {
             </div>
 
             {/* SIGN IN Form */}
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                opacity: tab === 'signin' ? 1 : 0,
-                visibility: tab === 'signin' ? 'visible' : 'hidden',
-                transition: 'opacity 0.2s ease',
-                pointerEvents: tab === 'signin' ? 'auto' : 'none',
-              }}
-            >
+            <div style={{ display: tab === 'signin' ? 'block' : 'none' }}>
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-400 mb-1.5">Email Address</label>
@@ -732,10 +713,6 @@ function AuthForm() {
               </form>
             </div>
           </div>
-
-          <p className="text-center text-gray-600 text-xs mt-8">
-            © 2026 TRADIGLO. All rights reserved.
-          </p>
         </div>
       </div>
 
