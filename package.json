@@ -1,5 +1,5 @@
 {
-  "name": "investoft-1-crypto-trading-platform",
+  "name": "tradiglo",
   "version": "0.1.0",
   "private": true,
   "rocketCritical": {
@@ -51,6 +51,7 @@
   "dependencies": {
     "@dhiwise/component-tagger": "^1.0.14",
     "@heroicons/react": "^2.2.0",
+    "@rocketnew/llm-sdk": "^1.0.3",
     "@supabase/ssr": "^0.6.1",
     "@supabase/supabase-js": "^2.49.4",
     "@tailwindcss/forms": "^0.5.10",
@@ -60,6 +61,7 @@
     "next": "15.1.11",
     "react": "19.0.3",
     "react-dom": "19.0.3",
+    "react-hot-toast": "^2.6.0",
     "recharts": "^2.15.2"
   },
   "devDependencies": {

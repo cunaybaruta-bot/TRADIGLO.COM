@@ -106,9 +106,9 @@ function useRandomFollowers(min: number, max: number, intervalMs: number) {
   return count;
 }
 
-// ─── Investoft Brand Logo ─────────────────────────────────────────────────────
+// ─── Tradiglo Brand Logo ─────────────────────────────────────────────────────
 
-function InvestoftLogo() {
+function TradigloLogo() {
   return (
     <div
       style={{
@@ -199,7 +199,7 @@ export default function CopyTradePage() {
           .insert({ provider_id: provider.id, user_id: userId, is_active: true, allocated_balance: realBalance });
         if (error) throw error;
       }
-      setToast({ message: 'Successfully following Investoft Copy Trade!', type: 'success' });
+      setToast({ message: 'Successfully following Tradiglo Copy Trade!', type: 'success' });
       await fetchData(userId);
     } catch (err: any) {
       setToast({ message: err?.message ?? 'Failed to follow', type: 'error' });
@@ -262,7 +262,7 @@ export default function CopyTradePage() {
         </button>
         <div>
           <h1 className="font-semibold text-sm tracking-wide" style={{ color: 'rgba(255,255,255,0.95)', letterSpacing: '0.02em' }}>Copy Trade</h1>
-          <p className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.3)' }}>Follow Investoft's trades automatically</p>
+          <p className="text-[11px] mt-0.5" style={{ color: 'rgba(255,255,255,0.3)' }}>Follow Tradiglo's trades automatically</p>
         </div>
       </div>
 
@@ -293,7 +293,7 @@ export default function CopyTradePage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2.5">
                     {/* Icon-only logo */}
-                    <InvestoftLogo />
+                    <TradigloLogo />
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-semibold text-sm" style={{ color: 'rgba(255,255,255,0.92)', letterSpacing: '0.01em' }}>{provider.name}</span>
@@ -311,7 +311,7 @@ export default function CopyTradePage() {
                           </span>
                         )}
                       </div>
-                      <div className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.25)' }}>{provider.description ?? 'Official Investoft Copy Trade'}</div>
+                      <div className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.25)' }}>{provider.description ?? 'Official Tradiglo Copy Trade'}</div>
                     </div>
                   </div>
                   {/* Win Rate */}
@@ -414,7 +414,7 @@ export default function CopyTradePage() {
                     <svg className="w-3.5 h-3.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="#818cf8" strokeWidth={2}>
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <span className="text-[11px]" style={{ color: '#818cf8' }}>You are currently copying Investoft trades</span>
+                    <span className="text-[11px]" style={{ color: '#818cf8' }}>You are currently copying Tradiglo trades</span>
                   </div>
                   <button
                     onClick={handleStopFollow}
@@ -483,7 +483,7 @@ export default function CopyTradePage() {
                     />
                     {actionLoading ? (
                       <span className="w-4 h-4 border border-white/30 border-t-white rounded-full animate-spin inline-block" />
-                    ) : 'Follow Investoft'}
+                    ) : 'Follow Tradiglo'}
                   </button>
                 </div>
               )}

@@ -193,7 +193,7 @@ export default function AdminDashboard() {
     <div className="space-y-6">
       <div>
         <h2 className="text-white text-xl font-bold">Dashboard</h2>
-        <p className="text-slate-400 text-sm mt-1">Investoft Trading Platform Overview</p>
+        <p className="text-slate-400 text-sm mt-1">Tradiglo Trading Platform Overview</p>
       </div>
 
       {/* Stats Cards */}

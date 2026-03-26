@@ -129,7 +129,7 @@ export default function ReportsPage() {
     <div className="space-y-6">
       <div>
         <h2 className="text-white text-xl font-bold">Reports & Analytics</h2>
-        <p className="text-slate-400 text-sm mt-1">Investoft Platform Analytics</p>
+        <p className="text-slate-400 text-sm mt-1">Tradiglo Platform Analytics</p>
       </div>
 
       {/* Date Filter */}

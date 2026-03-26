@@ -445,7 +445,7 @@ function TradeResultModal({ trade, onClose }: { trade: TradeResult; onClose: () 
             )}
           </div>
           <div style={{ color: accentColor, fontSize: 11, fontWeight: 800, letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 6, opacity: 0.9 }}>
-            {isWin ? 'PROFIT' : 'LOSS'}
+            {isWin ? 'WIN' : 'LOSS'}
           </div>
           <div style={{ color: accentColor, fontSize: 48, fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1, marginBottom: 22 }}>
             {profitDisplay}
@@ -519,8 +519,11 @@ function BottomNav({ active, onChange }: { active: NavSection; onChange: (s: Nav
     ) },
     { id: 'history', label: 'History', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3.5 3.5" /></svg> },
     { id: 'copytrade', label: 'Copy Trade', icon: (
-      <svg className="w-6 h-6" viewBox="0 0 100 50" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-        <path d="M75,5 C60,5 51,16 50,25 C49,16 40,5 25,5 C11.2,5 0,16.2 0,30 C0,43.8 11.2,55 25,55 C40,55 49,44 44.5,30 C41,23.5 33.5,16 25,16 C11,16 0,18.7 0,25 C0,31.3 11,34 25,34 C40,34 49,31.3 49,25 C49,18.7 38,16 25,16 C17,16 11,18.7 11,25 C11,31.3 20,34 25,34 C39,34 50,36.5 55.5,30 C59,23.5 66.5,16 75,16 C88.8,16 100,18.7 100,25 C100,31.3 89,34 75,34 C66.5,34 59,36.5 55.5,30 C50,25 41,23.5 33.5,16 C25,16 17,16 11,18.7 C11,25 C11,31.3 20,34 25,34 C39,34 50,36.5 55.5,30 C59,23.5 66.5,16 75,16 C82.7,16 89,18.7 89,25 C89,31.3 82.7,34 75,34 Z M25,44 C17.3,44 11,37.7 11,30 C11,22.3 17.3,16 25,16 C33.5,16 41,23.5 44.5,30 C41,36.5 33.5,44 25,44 Z M75,44 C66.5,44 59,36.5 55.5,30 C59,23.5 66.5,16 75,16 C82.7,16 89,18.7 89,25 C89,31.3 82.7,34 75,34 Z" />
+      <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M1.5 4v5h5" />
+        <path d="M22.5 20v-5h-5" />
+        <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1.5 9" />
+        <path d="M3.51 15a9 9 0 0 0 14.85 3.36L22.5 15" />
       </svg>
     ) },
     { id: 'account', label: 'Account', icon: (
@@ -528,7 +531,7 @@ function BottomNav({ active, onChange }: { active: NavSection; onChange: (s: Nav
         {/* Innermost loop - core of fingerprint */}
         <path d="M44 62 C44 55 56 55 56 62 C56 69 44 69 44 62" />
         {/* Ridge 2 */}
-        <path d="M38 65 C37 52 44 44 50 44 C56 44 63 52 62 65 C61 74 56 78 50 79 C44 78 39 74 38 65" />
+        <path d="M38 65 C37 52 44 44 50 44 C56 44 49 52 49 65 C49 74 41 78 33.5 79 C25 78 18 74 17 64" />
         {/* Ridge 3 */}
         <path d="M31 67 C30 48 38 36 50 36 C62 36 70 48 69 67 C68 80 61 88 50 90 C29 88 18 85 17 64" />
         {/* Ridge 4 */}
@@ -622,7 +625,7 @@ function CopyTradeTab({ userId, wallet }: { userId: string; wallet: Wallet | nul
           .insert({ provider_id: provider.id, user_id: userId, is_active: true, allocated_balance: realBalance });
         if (error) throw error;
       }
-      setToast({ message: 'Successfully following Investoft Copy Trade!', type: 'success' });
+      setToast({ message: 'Successfully following Tradiglo Copy Trade!', type: 'success' });
       await fetchData();
     } catch (err: any) {
       setToast({ message: err?.message ?? 'Failed to follow', type: 'error' });
@@ -693,7 +696,7 @@ function CopyTradeTab({ userId, wallet }: { userId: string; wallet: Wallet | nul
                     </span>
                   )}
                 </div>
-                <div className="text-slate-500 text-xs mt-0.5">{provider.description ?? 'Official Investoft Copy Trade'}</div>
+                <div className="text-slate-500 text-xs mt-0.5">{provider.description ?? 'Official Tradiglo Copy Trade'}</div>
               </div>
             </div>
             <div className="text-right">
@@ -746,7 +749,7 @@ function CopyTradeTab({ userId, wallet }: { userId: string; wallet: Wallet | nul
             <div className="space-y-2">
               <div className="flex items-center gap-2 px-3 py-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                 <svg className="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <span className="text-blue-400 text-xs">You are currently copying Investoft trades</span>
+                <span className="text-blue-400 text-xs">You are currently copying Tradiglo trades</span>
               </div>
               <button
                 onClick={handleStopFollow}
@@ -768,7 +771,7 @@ function CopyTradeTab({ userId, wallet }: { userId: string; wallet: Wallet | nul
               </div>
               {(wallet?.realBalance ?? 0) < provider.min_balance_usd && (
                 <div className="flex items-center gap-2 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded-lg">
-                  <svg className="w-3.5 h-3.5 text-red-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>
+                  <svg className="w-3.5 h-3.5 text-red-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                   <span className="text-red-400 text-xs">Insufficient balance. Need ${provider.min_balance_usd.toLocaleString()} USD minimum</span>
                 </div>
               )}
@@ -779,7 +782,7 @@ function CopyTradeTab({ userId, wallet }: { userId: string; wallet: Wallet | nul
               >
                 {actionLoading ? (
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
-                ) : 'Follow Investoft'}
+                ) : 'Follow Tradiglo'}
               </button>
             </div>
           )}
@@ -1374,11 +1377,11 @@ export default function DashboardPage() {
 
   const handleTrade = async (orderType: 'buy' | 'sell') => {
     if (isFollowingCopyTrade) {
-      setToast({ message: 'You are currently copying Investoft trades. Stop following to trade manually.', type: 'info' });
+      setToast({ message: 'You are currently copying Tradiglo trades. Stop following to trade manually.', type: 'info' });
       return;
     }
     if (!selectedAsset) {
-      setToast({ message: 'Pilih aset terlebih dahulu', type: 'error' });
+      setToast({ message: 'Please select an asset first', type: 'error' });
       return;
     }
     const setLoading = orderType === 'buy' ? setBuyLoading : setSellLoading;
@@ -1388,7 +1391,7 @@ export default function DashboardPage() {
 
     try {
       if (chartPrice === null || chartPrice <= 0) {
-        setToast({ message: 'Chart belum siap, tunggu sebentar lalu coba lagi', type: 'error' });
+        setToast({ message: 'Chart not ready, please wait a moment and try again', type: 'error' });
         setLoading(false);
         return;
       }
@@ -1514,22 +1517,22 @@ export default function DashboardPage() {
           </div>
 
           {/* SCROLLABLE CONTENT */}
-          <div className="flex-1 overflow-y-auto" style={{ paddingBottom: 180 }}>
+          <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ paddingBottom: 160 }}>
 
             {/* CHART AREA */}
             <div className="bg-[#0d0d0d] border-b border-white/10">
 
               {/* ── Chart Top Bar: Asset Selector Button + Price ── */}
-              <div className="flex items-center gap-3 px-3 sm:px-4 py-2 border-b border-white/10">
+              <div className="flex items-center gap-1.5 px-2 sm:px-4 py-2 border-b border-white/10 overflow-hidden">
 
-                {/* ── Quotex-style Asset Selector Button ── */}
+                {/* ── Asset Selector Button ── */}
                 <button
                   onClick={() => setAssetModalOpen(true)}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
-                    gap: 8,
-                    padding: '6px 10px',
+                    gap: 6,
+                    padding: '5px 8px',
                     background: 'rgba(255,255,255,0.07)',
                     border: '1px solid rgba(255,255,255,0.15)',
                     borderRadius: 8,
@@ -1551,44 +1554,87 @@ export default function DashboardPage() {
                   ) : (
                     <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#334155' }} />
                   )}
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
-                    <span className="text-base font-bold text-white tabular-nums" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1 }}>
+                    <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
                       {activeSymbolDisplay}
                     </span>
-                    <span className="text-slate-500 text-xs mt-0.5">95%</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#10b981', letterSpacing: '0.02em', lineHeight: 1 }}>
+                      95% <span style={{ fontWeight: 400, color: 'rgba(255,255,255,0.35)', fontSize: 9 }}>payout</span>
+                    </span>
                   </div>
+                  {/* Thin elegant chevron */}
                   <svg
                     width="12" height="12" viewBox="0 0 24 24" fill="none"
-                    stroke="rgba(255,255,255,0.5)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    stroke="rgba(255,255,255,0.45)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"
                     style={{ flexShrink: 0 }}
                   >
-                    <polyline points="6 9 19 15 19 9" />
+                    <polyline points="6 9 12 15 18 9" />
                   </svg>
                 </button>
 
                 {/* ── Live Price ── */}
                 {selectedAsset && (
-                  <div className="flex flex-col">
-                    <span className="text-base font-bold text-white tabular-nums" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", letterSpacing: '-0.03em', fontVariantNumeric: 'tabular-nums' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', flexShrink: 0 }}>
+                    <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 13, fontWeight: 700, color: '#fff', letterSpacing: '-0.03em', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>
                       {livePrice !== null ? formatPrice(livePrice) : '—'}
                     </span>
+                    {livePrice !== null && (
+                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 10, fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1, fontVariantNumeric: 'tabular-nums', color: priceChange >= 0 ? '#10b981' : '#f87171' }}>
+                        {priceChange >= 0 ? '+' : ''}{priceChangePct.toFixed(2)}%
+                      </span>
+                    )}
                   </div>
                 )}
 
+                {/* ── Center: High / Low / Vol — hidden on very small screens ── */}
                 {livePrice !== null && (
-                  <div className={`flex flex-col items-end ml-auto ${priceChange >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
-                    <span className="text-xs font-semibold tabular-nums" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
-                      {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(priceChange > 100 ? 2 : 4)}
-                    </span>
-                    <span className="text-xs font-bold tabular-nums" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", letterSpacing: '-0.02em', fontVariantNumeric: 'tabular-nums' }}>
-                      {priceChangePct >= 0 ? '+' : ''}{priceChangePct.toFixed(2)}%
-                    </span>
+                  <div className="hidden sm:flex items-center gap-3 flex-1 justify-center px-2">
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                      <span style={{ fontSize: 9, fontWeight: 500, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: 1 }}>High</span>
+                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 10, fontWeight: 600, color: '#10b981', letterSpacing: '-0.01em', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>
+                        {formatPrice(livePrice * (1 + Math.abs(priceChangePct) / 100 * 0.6 + 0.0008))}
+                      </span>
+                    </div>
+                    <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.08)' }} />
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                      <span style={{ fontSize: 9, fontWeight: 500, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: 1 }}>Low</span>
+                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 10, fontWeight: 600, color: '#f87171', letterSpacing: '-0.01em', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>
+                        {formatPrice(livePrice * (1 - Math.abs(priceChangePct) / 100 * 0.6 - 0.0008))}
+                      </span>
+                    </div>
+                    <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.08)' }} />
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
+                      <span style={{ fontSize: 9, fontWeight: 500, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: 1 }}>Vol</span>
+                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.6)', letterSpacing: '-0.01em', lineHeight: 1.2 }}>
+                        {livePrice > 1000 ? `${(livePrice * 0.00024).toFixed(2)}K` : `${(livePrice * 0.12).toFixed(0)}`}
+                      </span>
+                    </div>
                   </div>
                 )}
 
-                <div className="flex items-center gap-1 ml-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span className="text-xs text-slate-500">LIVE</span>
+                {/* ── Change + LIVE ── */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 'auto', flexShrink: 0 }}>
+                  {livePrice !== null && (
+                    <div className="hidden xs:flex flex-col items-end gap-0.5">
+                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 10, fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums', color: priceChange >= 0 ? '#10b981' : '#f87171' }}>
+                        {priceChange >= 0 ? '+' : ''}{priceChange.toFixed(priceChange > 100 ? 2 : 4)}
+                      </span>
+                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 9, fontWeight: 500, letterSpacing: '-0.01em', lineHeight: 1, fontVariantNumeric: 'tabular-nums', color: 'rgba(255,255,255,0.3)' }}>
+                        24h
+                      </span>
+                    </div>
+                  )}
+                  {/* LIVE indicator with pulse */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 6px', background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)', borderRadius: 6, flexShrink: 0 }}>
+                    <span style={{ position: 'relative', display: 'inline-flex', width: 6, height: 6 }}>
+                      <span style={{
+                        position: 'absolute', inset: 0, borderRadius: '50%', background: '#10b981',
+                        animation: 'ping 1.4s cubic-bezier(0,0,0.2,1) infinite', opacity: 0.6,
+                      }} />
+                      <span style={{ position: 'relative', width: 6, height: 6, borderRadius: '50%', background: '#10b981', display: 'block' }} />
+                    </span>
+                    <span style={{ fontSize: 9, fontWeight: 700, color: '#10b981', letterSpacing: '0.06em' }}>LIVE</span>
+                  </div>
                 </div>
               </div>
 
@@ -1613,7 +1659,7 @@ export default function DashboardPage() {
                     }}
                   />
                 ) : (
-                  <div className="flex flex-col items-center justify-center gap-3" style={{ height: 280 }}>
+                  <div className="flex flex-col items-center justify-center gap-3" style={{ height: 240 }}>
                     <span className="text-slate-500 text-sm">Select an asset to view chart</span>
                     <button
                       onClick={() => setAssetModalOpen(true)}
@@ -1628,9 +1674,9 @@ export default function DashboardPage() {
 
             {/* OPEN TRADES TABLE */}
             {activeNav === 'trade' && (
-              <div className="px-3 pt-3 pb-2">
+              <div className="px-2 sm:px-3 pt-3 pb-2">
                 <div className="bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden">
-                  <div className="px-4 py-2.5 border-b border-white/10 flex items-center justify-between">
+                  <div className="px-3 py-2.5 border-b border-white/10 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
                       <h3 className="text-xs font-semibold text-white uppercase tracking-wider">Open Trades</h3>
@@ -1658,7 +1704,7 @@ export default function DashboardPage() {
                       <span className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                     </div>
                   ) : openTrades.length === 0 ? (
-                    <div className="text-center py-6 text-slate-500 text-sm">No open trades</div>
+                    <div className="text-center py-5 text-slate-500 text-sm">No open trades</div>
                   ) : (
                     <>
                       {/* Desktop table */}
@@ -1713,11 +1759,11 @@ export default function DashboardPage() {
                       {/* Mobile cards */}
                       <div className="sm:hidden flex flex-col divide-y divide-white/5">
                         {openTrades.map((trade) => (
-                          <div key={trade.id} className={`px-3 py-3 flex flex-col gap-2 transition-all duration-300 ${fadingTradeIds.has(trade.id) ? 'opacity-0' : 'opacity-100'}`}>
+                          <div key={trade.id} className={`px-3 py-2.5 flex flex-col gap-1.5 transition-all duration-300 ${fadingTradeIds.has(trade.id) ? 'opacity-0' : 'opacity-100'}`}>
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <span className="text-sm font-bold text-white">{trade.asset_symbol}</span>
-                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${trade.order_type === 'buy' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${trade.order_type === 'buy' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
                                   {trade.order_type.toUpperCase()}
                                 </span>
                               </div>
@@ -1734,14 +1780,14 @@ export default function DashboardPage() {
                                 )}
                               </button>
                             </div>
-                            <div className="grid grid-cols-3 gap-2 text-xs">
+                            <div className="grid grid-cols-3 gap-1.5 text-xs">
                               <div>
                                 <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Amount</div>
-                                <div className="text-slate-300 font-medium" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.amount)}</div>
+                                <div className="text-slate-300 font-medium text-[11px]" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.amount)}</div>
                               </div>
                               <div>
                                 <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Entry</div>
-                                <div className="text-slate-300 font-medium" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.entry_price)}</div>
+                                <div className="text-slate-300 font-medium text-[11px]" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.entry_price)}</div>
                               </div>
                               <div>
                                 <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Remaining</div>
@@ -1759,9 +1805,9 @@ export default function DashboardPage() {
 
             {/* TRADE HISTORY */}
             {activeNav === 'history' && (
-              <div className="px-3 py-3">
+              <div className="px-2 sm:px-3 py-3">
                 <div className="bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden">
-                  <div className="px-4 py-3 border-b border-white/10 flex items-center justify-between">
+                  <div className="px-3 py-3 border-b border-white/10 flex items-center justify-between">
                     <h3 className="text-xs font-semibold text-white uppercase tracking-wider">Trade History</h3>
                     <span className="text-xs text-slate-500">{tradeHistory.length} trades</span>
                   </div>
@@ -1814,9 +1860,9 @@ export default function DashboardPage() {
                         </table>
                       </div>
 
-                      <div className="sm:hidden flex flex-col divide-y divide-white/5 max-h-[400px] overflow-y-auto">
+                      <div className="sm:hidden flex flex-col divide-y divide-white/5">
                         {tradeHistory.map((trade) => (
-                          <div key={trade.id} className="px-3 py-3 flex flex-col gap-2">
+                          <div key={trade.id} className="px-3 py-2.5 flex flex-col gap-1.5">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-2">
                                 <span className="text-sm font-bold text-white">{trade.asset_symbol}</span>
@@ -1835,18 +1881,18 @@ export default function DashboardPage() {
                                 </span>
                               </div>
                             </div>
-                            <div className="grid grid-cols-3 gap-2 text-xs">
+                            <div className="grid grid-cols-3 gap-1.5 text-xs">
                               <div>
                                 <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Amount</div>
-                                <div className="text-slate-300">${formatCurrency(trade.amount)}</div>
+                                <div className="text-slate-300 text-[11px]">${formatCurrency(trade.amount)}</div>
                               </div>
                               <div>
                                 <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Entry</div>
-                                <div className="text-slate-400">${formatCurrency(trade.entry_price)}</div>
+                                <div className="text-slate-300 text-[11px]">${formatCurrency(trade.entry_price)}</div>
                               </div>
                               <div>
                                 <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Exit</div>
-                                <div className="text-slate-400">{trade.exit_price != null ? `$${formatCurrency(trade.exit_price)}` : '—'}</div>
+                                <div className="text-slate-300 text-[11px]">{trade.exit_price != null ? `$${formatCurrency(trade.exit_price)}` : '—'}</div>
                               </div>
                             </div>
                             {trade.closed_at && (
@@ -1887,7 +1933,7 @@ export default function DashboardPage() {
             )}
 
             {activeNav === 'account' && (
-              <div className="px-3 py-3">
+              <div className="px-2 sm:px-3 py-3">
                 <div className="bg-[#0d0d0d] border border-white/10 rounded-xl p-4">
                   <h3 className="text-xs font-semibold text-white uppercase tracking-wider mb-4">Account</h3>
                   <div className="flex flex-col gap-3">
@@ -1918,30 +1964,30 @@ export default function DashboardPage() {
             {/* Duration + Amount row */}
             <div className="flex items-center gap-0 border-b border-white/10">
               {/* Duration */}
-              <div className="flex-1 flex items-center gap-2 px-3 py-2 border-r border-white/10">
+              <div className="flex-1 flex items-center gap-1.5 px-2 py-1.5 border-r border-white/10">
                 <span className="text-[9px] text-slate-500 uppercase tracking-wider flex-shrink-0">Dur</span>
                 <button
                   onClick={decrementDuration}
                   disabled={durationIndex <= 0 || isFollowingCopyTrade}
-                  className="w-7 h-7 rounded bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-base flex items-center justify-center flex-shrink-0"
+                  className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm flex items-center justify-center flex-shrink-0"
                 >−</button>
-                <div className="flex-1 text-center bg-white/5 border border-white/20 rounded py-1 text-xs font-semibold text-white min-w-[40px]">
+                <div className="flex-1 text-center bg-white/5 border border-white/20 rounded py-0.5 text-xs font-semibold text-white min-w-[36px]">
                   {currentDurationLabel}
                 </div>
                 <button
                   onClick={incrementDuration}
                   disabled={durationIndex >= DURATION_STEPS.length - 1 || isFollowingCopyTrade}
-                  className="w-7 h-7 rounded bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-base flex items-center justify-center flex-shrink-0"
+                  className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm flex items-center justify-center flex-shrink-0"
                 >+</button>
               </div>
 
               {/* Amount */}
-              <div className="flex-1 flex items-center gap-2 px-3 py-2">
+              <div className="flex-1 flex items-center gap-1.5 px-2 py-1.5">
                 <span className="text-[9px] text-slate-500 uppercase tracking-wider flex-shrink-0">Amt</span>
                 <button
                   onClick={handleAmountDecrement}
                   disabled={amount <= 1 || isFollowingCopyTrade}
-                  className="w-7 h-7 rounded bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-base flex items-center justify-center flex-shrink-0"
+                  className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm flex items-center justify-center flex-shrink-0"
                 >−</button>
                 <input
                   type="text"
@@ -1950,22 +1996,22 @@ export default function DashboardPage() {
                   onChange={handleAmountInputChange}
                   onBlur={handleAmountInputBlur}
                   disabled={isFollowingCopyTrade}
-                  className="flex-1 text-center bg-white/5 border border-white/20 rounded py-1 text-xs font-semibold text-white min-w-[40px] focus:outline-none focus:border-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 text-center bg-white/5 border border-white/20 rounded py-0.5 text-xs font-semibold text-white min-w-[36px] focus:outline-none focus:border-blue-500/50 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}
                 />
                 <button
                   onClick={handleAmountIncrement}
                   disabled={amount >= 10000 || isFollowingCopyTrade}
-                  className="w-7 h-7 rounded bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-base flex items-center justify-center flex-shrink-0"
+                  className="w-6 h-6 rounded bg-white/10 hover:bg-white/20 disabled:opacity-40 disabled:cursor-not-allowed text-white font-bold text-sm flex items-center justify-center flex-shrink-0"
                 >+</button>
               </div>
             </div>
 
             {/* Copy Trade Active Banner */}
             {isFollowingCopyTrade && (
-              <div className="px-3 py-2 bg-blue-500/10 border-b border-blue-500/20 flex items-center gap-2">
-                <svg className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <span className="text-blue-400 text-[10px] font-medium">You are currently copying Investoft trades</span>
+              <div className="px-3 py-1.5 bg-blue-500/10 border-b border-blue-500/20 flex items-center gap-2">
+                <svg className="w-3 h-3 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span className="text-blue-400 text-[10px] font-medium">You are currently copying Tradiglo trades</span>
               </div>
             )}
 
@@ -1974,14 +2020,19 @@ export default function DashboardPage() {
               <button
                 onClick={() => handleTrade('sell')}
                 disabled={buyLoading || sellLoading || !selectedAsset || isFollowingCopyTrade}
-                title={isFollowingCopyTrade ? 'You are currently copying Investoft trades' : undefined}
-                className="flex-1 py-3.5 bg-red-600 hover:bg-red-500 active:bg-red-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-lg tracking-widest transition-all flex items-center justify-center gap-2"
+                title={isFollowingCopyTrade ? 'You are currently copying Tradiglo trades' : undefined}
+                style={{
+                  background: '#e53935',
+                  transition: 'all 0.2s ease',
+                  borderRadius: 8,
+                }}
+                className="flex-1 py-3 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-base tracking-widest transition-all flex items-center justify-center gap-2"
               >
                 {sellLoading ? (
-                  <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
                 ) : (
                   <>
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l-8-8h5V4h6v8h5z"/></svg>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l-8-8h5V4h6v8h5z"/></svg>
                     SELL
                   </>
                 )}
@@ -1989,14 +2040,19 @@ export default function DashboardPage() {
               <button
                 onClick={() => handleTrade('buy')}
                 disabled={buyLoading || sellLoading || !selectedAsset || isFollowingCopyTrade}
-                title={isFollowingCopyTrade ? 'You are currently copying Investoft trades' : undefined}
-                className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-lg tracking-widest transition-all flex items-center justify-center gap-2"
+                title={isFollowingCopyTrade ? 'You are currently copying Tradiglo trades' : undefined}
+                style={{
+                  background: '#2e7d32',
+                  transition: 'all 0.2s ease',
+                  borderRadius: 8,
+                }}
+                className="flex-1 py-3 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-base tracking-widest transition-all flex items-center justify-center gap-2"
               >
                 {buyLoading ? (
-                  <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
                 ) : (
                   <>
-                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l8 8h-5v8H9v-8H4z"/></svg>
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l8 8h-5v8H9v-8H4z"/></svg>
                     BUY
                   </>
                 )}
@@ -2065,7 +2121,7 @@ export default function DashboardPage() {
             style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.8)' }}
           >
             <div className="w-12 h-12 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center mx-auto mb-4">
-              <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10 17.5a2 2 0 01-2-2v-3.5a4 4 0 018 0v3.5a2 2 0 01-2 2" /></svg>
+              <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </div>
             <h3 className="text-sm font-bold text-white mb-2">Close all open trades?</h3>
             <p className="text-xs text-slate-400 mb-5">All {openTrades.length} open trade{openTrades.length !== 1 ? 's' : ''} will be closed at the current chart price.</p>

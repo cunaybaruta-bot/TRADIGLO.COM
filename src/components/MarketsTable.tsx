@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import AppImage from '@/components/ui/AppImage';
 
 interface SparklineData {
@@ -26,6 +26,33 @@ const TOTAL_RESULTS = 16845;
 const ROWS_OPTIONS = [10, 25, 50, 100];
 
 const BUY_COINS = new Set(['bitcoin', 'ethereum', 'bnb', 'ripple', 'solana', 'tron', 'dogecoin', 'cardano', 'avalanche-2', 'polkadot', 'chainlink', 'litecoin', 'uniswap', 'stellar', 'monero']);
+
+// Filter sets per category tab
+const HIGHLIGHTS_COINS = new Set([
+  'bitcoin', 'ethereum', 'solana', 'bnb', 'ripple', 'dogecoin', 'cardano', 'tron', 'avalanche-2', 'polkadot',
+]);
+
+const CATEGORIES_COINS = new Set([
+  'chainlink', 'uniswap', 'aave', 'compound-governance-token', 'maker', 'curve-dao-token',
+  'the-sandbox', 'decentraland', 'axie-infinity', 'enjincoin',
+  'filecoin', 'arweave', 'storj', 'siacoin',
+]);
+
+const MOBILE_MINING_COINS = new Set([
+  'pi-network', 'electroneum', 'phoneum', 'bee-network', 'time-new-bank',
+  'helium', 'iotex', 'iota', 'fetch-ai', 'ocean-protocol',
+]);
+
+const QUANTUM_RESISTANT_COINS = new Set([
+  'quantum-resistant-ledger', 'iota', 'algorand', 'cardano', 'ethereum',
+  'nervos-network', 'mochimo', 'nexus', 'hcash', 'lattice-token',
+]);
+
+const SPORTS_COINS = new Set([
+  'chiliz', 'socios', 'santos-fc-fan-token', 'paris-saint-germain-fan-token', 'manchester-city-fan-token',
+  'alpine-f1-team-fan-token', 'ac-milan-fan-token', 'atletico-de-madrid-fan-token',
+  'galatasaray-fan-token', 'lazio-fan-token',
+]);
 
 const CATEGORY_TABS = [
   { id: 'all', label: 'All', icon: null, fire: false },
@@ -151,6 +178,24 @@ export default function MarketsTable() {
     fetchCoins(currentPage, rowsPerPage);
   }, [fetchCoins, currentPage, rowsPerPage]);
 
+  // Filter coins based on active tab
+  const filteredCoins = React.useMemo(() => {
+    switch (activeTab) {
+      case 'highlights':
+        return coins.filter(c => HIGHLIGHTS_COINS.has(c.id));
+      case 'categories':
+        return coins.filter(c => CATEGORIES_COINS.has(c.id));
+      case 'mobile-mining':
+        return coins.filter(c => MOBILE_MINING_COINS.has(c.id));
+      case 'quantum-resistant':
+        return coins.filter(c => QUANTUM_RESISTANT_COINS.has(c.id));
+      case 'sports':
+        return coins.filter(c => SPORTS_COINS.has(c.id));
+      default:
+        return coins;
+    }
+  }, [coins, activeTab]);
+
   const totalPages = Math.ceil(TOTAL_RESULTS / rowsPerPage);
   const startResult = (currentPage - 1) * rowsPerPage + 1;
   const endResult = Math.min(currentPage * rowsPerPage, TOTAL_RESULTS);
@@ -179,51 +224,58 @@ export default function MarketsTable() {
 
   return (
     <section className="bg-black w-full" style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif" }}>
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4">
 
         {/* Category Tab Bar */}
-        <div className="flex items-center justify-between border-b border-[#1e2a4a] overflow-x-auto">
-          <div className="flex items-center gap-1 flex-shrink-0">
+        <div className="flex items-center justify-between border-b border-[#1e2a4a] overflow-x-auto scrollbar-none" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div className="flex items-center gap-0.5 flex-shrink-0">
             {CATEGORY_TABS.map(tab => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-1.5 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2 ${
+                className={`flex items-center gap-1 px-2 sm:px-3 py-2 sm:py-2.5 text-[10px] sm:text-xs font-medium whitespace-nowrap transition-colors border-b-2 ${
                   activeTab === tab.id
                     ? 'border-green-500 text-green-400 bg-green-500/10' :'border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]'
                 }`}
               >
-                {tab.fire && <span className="text-base leading-none">🔥</span>}
+                {tab.fire && <span className="text-xs sm:text-sm leading-none">🔥</span>}
                 {tab.icon && !tab.fire && (
-                  <span className="text-slate-500 text-sm">{tab.icon}</span>
+                  <span className="text-slate-500 text-[10px] sm:text-xs">{tab.icon}</span>
                 )}
                 {tab.id === 'all' && activeTab === 'all' && (
-                  <span className="w-2 h-2 rounded-full bg-green-400 inline-block" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
                 )}
                 {tab.label}
               </button>
             ))}
           </div>
-          <button className="flex items-center gap-1.5 px-4 py-2.5 ml-2 rounded-lg border border-[#2a3a5c] text-slate-400 hover:text-slate-200 hover:border-slate-500 text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0">
-            <span className="text-base">✦</span>
-            Customize
+          <button className="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 ml-1 rounded-lg border border-[#2a3a5c] text-slate-400 hover:text-slate-200 hover:border-slate-500 text-[10px] sm:text-xs font-medium transition-colors whitespace-nowrap flex-shrink-0">
+            <span className="text-xs sm:text-sm">✦</span>
+            <span className="hidden sm:inline">Customize</span>
           </button>
         </div>
 
         {/* Table Header Bar */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-[#1e2a4a]">
-          <div className="flex items-center gap-3">
-            <span className="text-white font-semibold text-sm tracking-tight">All Markets</span>
-            <span className="px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-400 text-xs font-medium">
-              {loading ? '...' : `${TOTAL_RESULTS.toLocaleString()}+ Coins`}
+        <div className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-2.5 border-b border-[#1e2a4a]">
+          <div className="flex items-center gap-2">
+            <span className="text-white font-semibold text-[10px] sm:text-xs tracking-tight">
+              {activeTab === 'all' ? 'All Markets' :
+               activeTab === 'highlights' ? 'Highlights' :
+               activeTab === 'categories' ? 'Categories' :
+               activeTab === 'mobile-mining' ? 'Mobile Mining' :
+               activeTab === 'quantum-resistant' ? 'Quantum-Resistant' :
+               activeTab === 'sports' ? 'Sports' : 'All Markets'}
+            </span>
+            <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-[9px] sm:text-[10px] font-medium">
+              {loading ? '...' : activeTab === 'all' ? `${TOTAL_RESULTS.toLocaleString()}+ Coins` : `${filteredCoins.length} Coins`}
             </span>
           </div>
           <button
             onClick={() => fetchCoins(currentPage, rowsPerPage)}
             disabled={loading}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white text-xs font-medium transition-colors disabled:opacity-50"
+            className="flex items-center gap-1 px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-full bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white text-[9px] sm:text-[10px] font-medium transition-colors disabled:opacity-50"
           >
-            <svg className={`w-3 h-3 ${loading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${loading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
             Refresh
@@ -259,6 +311,18 @@ export default function MarketsTable() {
         {/* Table */}
         {!loading && !error && (
           <>
+            {/* Empty state for filtered tabs */}
+            {filteredCoins.length === 0 && activeTab !== 'all' && (
+              <div className="flex flex-col items-center justify-center py-16 gap-3">
+                <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center">
+                  <span className="text-2xl">🔍</span>
+                </div>
+                <p className="text-slate-400 text-sm">No coins found in this category from current page data.</p>
+                <p className="text-slate-600 text-xs">Try refreshing or browsing a different page.</p>
+              </div>
+            )}
+
+            {filteredCoins.length > 0 && (
             <div className="overflow-x-auto">
               <table className="w-full" style={{ minWidth: '900px' }}>
                 <thead>
@@ -297,7 +361,7 @@ export default function MarketsTable() {
                   </tr>
                 </thead>
                 <tbody>
-                  {coins.map((coin, index) => {
+                  {filteredCoins.map((coin, index) => {
                     const rank = (currentPage - 1) * rowsPerPage + index + 1;
                     const isFav = favorites.has(coin.id);
                     const hasBuy = BUY_COINS.has(coin.id);
@@ -315,13 +379,13 @@ export default function MarketsTable() {
                       <tr
                         key={coin.id}
                         className="border-b border-[#1e2a4a] hover:bg-white/[0.03] transition-colors"
-                        style={{ height: '64px' }}
+                        style={{ height: '52px' }}
                       >
                         {/* Star */}
-                        <td className="px-3 text-center">
+                        <td className="px-2 sm:px-3 text-center">
                           <button
                             onClick={() => toggleFavorite(coin.id)}
-                            className={`text-lg transition-colors ${isFav ? 'text-yellow-400' : 'text-slate-600 hover:text-slate-400'}`}
+                            className={`text-base sm:text-lg transition-colors ${isFav ? 'text-yellow-400' : 'text-slate-600 hover:text-slate-400'}`}
                             aria-label={isFav ? 'Remove from favorites' : 'Add to favorites'}
                           >
                             {isFav ? '★' : '☆'}
@@ -329,14 +393,14 @@ export default function MarketsTable() {
                         </td>
 
                         {/* Rank */}
-                        <td className="px-2">
-                          <span className="text-slate-400 text-sm tabular-nums">{rank}</span>
+                        <td className="px-1 sm:px-2">
+                          <span className="text-slate-400 text-[11px] sm:text-sm tabular-nums">{rank}</span>
                         </td>
 
                         {/* Coin */}
-                        <td className="px-3">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-white/5">
+                        <td className="px-2 sm:px-3">
+                          <div className="flex items-center gap-2 sm:gap-3">
+                            <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full overflow-hidden flex-shrink-0 bg-white/5">
                               <AppImage
                                 src={coin.image}
                                 alt={`${coin.name} logo`}
@@ -345,65 +409,65 @@ export default function MarketsTable() {
                                 className="w-full h-full object-contain"
                               />
                             </div>
-                            <div className="flex items-baseline gap-1.5">
-                              <span className="text-white text-sm font-bold tracking-tight">{coin.name}</span>
-                              <span className="text-slate-500 text-[11px] font-medium uppercase tracking-wide">{coin.symbol}</span>
+                            <div className="flex items-baseline gap-1 sm:gap-1.5">
+                              <span className="text-white text-[11px] sm:text-sm font-bold tracking-tight">{coin.name}</span>
+                              <span className="text-slate-500 text-[9px] sm:text-[11px] font-medium uppercase tracking-wide">{coin.symbol}</span>
                             </div>
                           </div>
                         </td>
 
                         {/* Buy Button */}
-                        <td className="px-2">
+                        <td className="px-1 sm:px-2">
                           {hasBuy && (
-                            <button className="px-2.5 py-1 rounded border border-green-500 text-green-400 text-xs font-semibold hover:bg-green-500/10 transition-colors whitespace-nowrap tracking-wide">
+                            <button className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded border border-green-500 text-green-400 text-[9px] sm:text-xs font-semibold hover:bg-green-500/10 transition-colors whitespace-nowrap tracking-wide">
                               Buy
                             </button>
                           )}
                         </td>
 
                         {/* Price */}
-                        <td className="px-3 text-right">
-                          <span className="text-white text-sm font-semibold tabular-nums" style={{ fontVariantNumeric: 'tabular-nums' }}>
+                        <td className="px-2 sm:px-3 text-right">
+                          <span className="text-white text-[11px] sm:text-sm font-semibold tabular-nums" style={{ fontVariantNumeric: 'tabular-nums' }}>
                             {formatPrice(coin.current_price)}
                           </span>
                         </td>
 
                         {/* 1h % */}
-                        <td className="px-3 text-right">
-                          <span className={`text-sm font-semibold tabular-nums flex items-center justify-end gap-0.5 ${change1h.positive ? 'text-green-400' : 'text-red-400'}`}>
-                            <span className="text-[10px]">{change1h.positive ? '▲' : '▼'}</span>
+                        <td className="px-2 sm:px-3 text-right">
+                          <span className={`text-[11px] sm:text-sm font-semibold tabular-nums flex items-center justify-end gap-0.5 ${change1h.positive ? 'text-green-400' : 'text-red-400'}`}>
+                            <span className="text-[9px] sm:text-[10px]">{change1h.positive ? '▲' : '▼'}</span>
                             {change1h.text}
                           </span>
                         </td>
 
                         {/* 24h % */}
-                        <td className="px-3 text-right">
-                          <span className={`text-sm font-semibold tabular-nums flex items-center justify-end gap-0.5 ${change24h.positive ? 'text-green-400' : 'text-red-400'}`}>
-                            <span className="text-[10px]">{change24h.positive ? '▲' : '▼'}</span>
+                        <td className="px-2 sm:px-3 text-right">
+                          <span className={`text-[11px] sm:text-sm font-semibold tabular-nums flex items-center justify-end gap-0.5 ${change24h.positive ? 'text-green-400' : 'text-red-400'}`}>
+                            <span className="text-[9px] sm:text-[10px]">{change24h.positive ? '▲' : '▼'}</span>
                             {change24h.text}
                           </span>
                         </td>
 
                         {/* 7d % */}
-                        <td className="px-3 text-right">
-                          <span className={`text-sm font-semibold tabular-nums flex items-center justify-end gap-0.5 ${change7d.positive ? 'text-green-400' : 'text-red-400'}`}>
-                            <span className="text-[10px]">{change7d.positive ? '▲' : '▼'}</span>
+                        <td className="px-2 sm:px-3 text-right">
+                          <span className={`text-[11px] sm:text-sm font-semibold tabular-nums flex items-center justify-end gap-0.5 ${change7d.positive ? 'text-green-400' : 'text-red-400'}`}>
+                            <span className="text-[9px] sm:text-[10px]">{change7d.positive ? '▲' : '▼'}</span>
                             {change7d.text}
                           </span>
                         </td>
 
                         {/* 24h Volume */}
-                        <td className="px-3 text-right hidden lg:table-cell">
-                          <span className="text-slate-300 text-sm tabular-nums font-medium">{formatLargeNumber(coin.total_volume)}</span>
+                        <td className="px-2 sm:px-3 text-right hidden lg:table-cell">
+                          <span className="text-slate-300 text-[11px] sm:text-sm tabular-nums font-medium">{formatLargeNumber(coin.total_volume)}</span>
                         </td>
 
                         {/* Market Cap */}
-                        <td className="px-3 text-right hidden md:table-cell">
-                          <span className="text-slate-300 text-sm tabular-nums font-medium">{formatLargeNumber(coin.market_cap)}</span>
+                        <td className="px-2 sm:px-3 text-right hidden md:table-cell">
+                          <span className="text-slate-300 text-[11px] sm:text-sm tabular-nums font-medium">{formatLargeNumber(coin.market_cap)}</span>
                         </td>
 
                         {/* Sparkline */}
-                        <td className="px-3 text-right hidden xl:table-cell">
+                        <td className="px-2 sm:px-3 text-right hidden xl:table-cell">
                           <div className="flex justify-end">
                             <Sparkline data={sampledSparkline} positive={change7d.positive} />
                           </div>
@@ -414,8 +478,10 @@ export default function MarketsTable() {
                 </tbody>
               </table>
             </div>
+            )}
 
-            {/* Pagination Bar - CoinGecko style */}
+            {/* Pagination Bar - only show for 'all' tab */}
+            {activeTab === 'all' && (
             <div className="flex items-center justify-between px-4 py-4 border-t border-[#1e2a4a] flex-wrap gap-3">
               {/* Left: Showing X to Y of Z results */}
               <span className="text-slate-500 text-xs tabular-nums whitespace-nowrap">
@@ -492,11 +558,12 @@ export default function MarketsTable() {
                   aria-label="Scroll to top"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                   </svg>
                 </button>
               </div>
             </div>
+            )}
           </>
         )}
       </div>

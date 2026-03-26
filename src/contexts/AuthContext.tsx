@@ -20,20 +20,60 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
 
+  const clearAuthState = async () => {
+    // Clear all Supabase auth cookies
+    if (typeof document !== 'undefined') {
+      document.cookie.split(';').forEach((cookie) => {
+        const name = cookie.trim().split('=')[0];
+        if (name.startsWith('sb-')) {
+          document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/; SameSite=None; Secure`;
+        }
+      });
+    }
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // ignore signOut errors when session is already invalid
+    }
+    setSession(null);
+    setUser(null);
+  };
+
   useEffect(() => {
     // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        const msg = error.message?.toLowerCase() || '';
+        if (msg.includes('refresh token') || msg.includes('invalid') || msg.includes('not found')) {
+          clearAuthState();
+        } else {
+          setSession(null);
+          setUser(null);
+        }
+      } else {
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
       setLoading(false);
     });
 
     // Listen for auth changes
     const {
       data: { subscription }
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'TOKEN_REFRESHED') {
+        setSession(session);
+        setUser(session?.user ?? null);
+      } else if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        setSession(null);
+        setUser(null);
+      } else if ((event as string) === 'TOKEN_REFRESH_FAILED') {
+        // Invalid/expired refresh token — clear session and cookies
+        clearAuthState();
+      } else {
+        setSession(session);
+        setUser(session?.user ?? null);
+      }
       setLoading(false);
     });
 

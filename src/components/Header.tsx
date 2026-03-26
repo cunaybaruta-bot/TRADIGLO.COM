@@ -26,9 +26,9 @@ export default function Header() {
 
   const navItems = [
     { label: 'Markets', href: '/markets' },
-    { label: 'Cryptocurrency', href: '#' },
-    { label: 'Screener', href: '#' },
-    { label: 'Deposit', href: '#' },
+    { label: 'Copy Trading', href: '/copy-trading' },
+    { label: 'Screener', href: '/screener' },
+    { label: 'News', href: '/news' },
   ];
 
   return (
@@ -56,7 +56,7 @@ export default function Header() {
             style={{ fontFamily: "'Satoshi', 'Inter', sans-serif", fontWeight: 700, letterSpacing: '0.04em' }}
             className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-500 to-purple-500 text-base tracking-wide select-none"
           >
-            INVESTOFT
+            TRADIGLO
           </span>
         </Link>
 
@@ -84,12 +84,6 @@ export default function Header() {
               Dashboard
             </Link>
           )}
-          <Link
-            href="#"
-            className="px-3 xl:px-4 min-h-[44px] rounded-md hover:text-white hover:bg-white/10 transition-colors whitespace-nowrap text-xs xl:text-sm inline-flex items-center font-semibold text-blue-400"
-          >
-            Trade
-          </Link>
         </nav>
 
         {/* Search */}
@@ -166,15 +160,13 @@ export default function Header() {
       </div>
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-white/10 bg-black px-4 py-3">
+        <div className="md:hidden fixed top-[56px] left-0 right-0 z-40 border-t border-white/10 bg-black px-4 py-3 shadow-lg">
           <nav className="flex flex-col gap-1">
-            {[...navItems, ...(mounted && !loading && user ? [{ label: 'Dashboard', href: '/dashboard' }] : []), { label: 'Trade', href: '#' }]?.map((item) => (
+            {[...navItems, ...(mounted && !loading && user ? [{ label: 'Dashboard', href: '/dashboard' }] : [])]?.map((item) => (
               <Link
                 key={item?.label}
                 href={item?.href}
-                className={`text-left px-3 py-2.5 rounded-md text-sm transition-colors ${
-                  item?.label === 'Trade' ? 'text-blue-400 font-semibold' : 'text-slate-300 hover:text-white hover:bg-white/10'
-                }`}
+                className="text-left px-3 py-2.5 rounded-md text-sm transition-colors text-slate-300 hover:text-white hover:bg-white/10"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 {item?.label}

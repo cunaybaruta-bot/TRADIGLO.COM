@@ -401,15 +401,15 @@ function AuthForm() {
     e.preventDefault();
     setSignUpError(null);
     if (signUpPassword !== confirmPassword) {
-      setSignUpError('Password dan konfirmasi password tidak cocok.');
+      setSignUpError('Passwords do not match.');
       return;
     }
     if (signUpPassword.length < 6) {
-      setSignUpError('Password minimal 6 karakter.');
+      setSignUpError('Password must be at least 6 characters.');
       return;
     }
     setSignUpLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email: signUpEmail,
       password: signUpPassword,
       options: { data: { full_name: fullName } },
@@ -418,6 +418,21 @@ function AuthForm() {
       setSignUpError(error.message);
       setSignUpLoading(false);
     } else {
+      // Notify admin via email (fire-and-forget, don't block UX)
+      try {
+        fetch('/api/admin/notify-new-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: signUpEmail,
+            full_name: fullName || null,
+            user_id: data?.user?.id || null,
+            created_at: data?.user?.created_at || new Date().toISOString(),
+          }),
+        }).catch(() => {/* silent — email notification is non-critical */});
+      } catch {
+        // silent — email notification is non-critical
+      }
       setSignUpSuccess(true);
       setSignUpLoading(false);
     }
@@ -435,10 +450,10 @@ function AuthForm() {
       <FloatingBackground />
 
       {/* Page wrapper */}
-      <div className="relative min-h-screen flex flex-col items-center justify-center px-4 pb-12" style={{ zIndex: 10 }}>
+      <div className="relative min-h-screen flex flex-col items-center justify-center px-4 py-8 pb-16" style={{ zIndex: 10 }}>
         {/* Form card — pure black */}
         <div
-          className="w-full max-w-md rounded-2xl px-8 py-8 shadow-2xl"
+          className="w-full max-w-md rounded-2xl px-5 sm:px-8 py-6 sm:py-8 shadow-2xl"
           style={{
             background: '#0a0a0a',
             border: '1px solid rgba(255,255,255,0.1)',
@@ -447,12 +462,35 @@ function AuthForm() {
           }}
         >
           {/* Heading */}
-          <h1 className="text-2xl sm:text-3xl font-bold text-white mb-6 text-center">
-            Welcome to Investoft!
-          </h1>
+          <div className="flex justify-center mb-5">
+            <a href="/" className="cursor-pointer flex items-center gap-1">
+              <div
+                style={{
+                  width: 28,
+                  height: 28,
+                  background: 'linear-gradient(to right, #60a5fa, #6366f1, #a855f7)',
+                  WebkitMaskImage: 'url(/assets/images/chart-646_1024-1773102864640.png)',
+                  WebkitMaskSize: 'contain',
+                  WebkitMaskRepeat: 'no-repeat',
+                  WebkitMaskPosition: 'center',
+                  maskImage: 'url(/assets/images/chart-646_1024-1773102864640.png)',
+                  maskSize: 'contain',
+                  maskRepeat: 'no-repeat',
+                  maskPosition: 'center',
+                }}
+                className="h-7 w-7 flex-shrink-0"
+              />
+              <span
+                style={{ fontFamily: "'Satoshi', 'Inter', sans-serif", fontWeight: 700, letterSpacing: '0.04em' }}
+                className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-500 to-purple-500 text-base tracking-wide select-none"
+              >
+                TRADIGLO
+              </span>
+            </a>
+          </div>
 
           {/* Tab Toggle */}
-          <div className="flex rounded-lg bg-[#111111] border border-white/10 p-1 mb-7">
+          <div className="flex rounded-lg bg-[#111111] border border-white/10 p-1 mb-5">
             <button
               onClick={() => { setTab('signup'); setSignUpError(null); setSignUpSuccess(false); }}
               className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all duration-200 ${
@@ -472,7 +510,7 @@ function AuthForm() {
           </div>
 
           {/* Fixed-height form container */}
-          <div style={{ minHeight: 340, position: 'relative' }}>
+          <div style={{ minHeight: 320, position: 'relative' }}>
 
             {/* SIGN UP Form */}
             <div
@@ -492,16 +530,16 @@ function AuthForm() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   </div>
-                  <h2 className="text-white font-semibold text-lg mb-2">Registrasi Berhasil!</h2>
+                  <h2 className="text-white font-semibold text-lg mb-2">Registration Successful!</h2>
                   <p className="text-gray-400 text-sm leading-relaxed">
-                    Akun kamu berhasil dibuat. Silakan cek email untuk verifikasi.
+                    Your account has been created. Please check your email for verification.
                   </p>
                   <button
                     onClick={() => { setSignUpSuccess(false); setTab('signin'); }}
                     className="inline-block mt-6 px-6 py-2.5 rounded-lg text-sm font-medium text-white transition-all duration-200"
                     style={{ background: 'linear-gradient(to right, #3b82f6, #6366f1)' }}
                   >
-                    Lanjut ke Login
+                    Proceed to Login
                   </button>
                 </div>
               ) : (
@@ -696,7 +734,7 @@ function AuthForm() {
           </div>
 
           <p className="text-center text-gray-600 text-xs mt-8">
-            © 2026 INVESTOFT. All rights reserved.
+            © 2026 TRADIGLO. All rights reserved.
           </p>
         </div>
       </div>

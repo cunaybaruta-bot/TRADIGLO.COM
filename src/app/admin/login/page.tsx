@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
+import Link from 'next/link';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -97,11 +98,33 @@ export default function AdminLoginPage() {
       <div className="w-full max-w-md">
         {/* Logo / Brand */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 rounded-xl bg-[#22c55e] flex items-center justify-center mb-4 shadow-lg shadow-green-500/20">
-            <span className="text-black font-bold text-xl">I</span>
-          </div>
-          <h1 className="text-white text-2xl font-bold tracking-tight">Investoft</h1>
-          <p className="text-slate-400 text-sm mt-1">Admin Panel</p>
+          <Link href="/" className="flex flex-col items-center gap-2 group">
+            <div className="flex items-center gap-2">
+              <div
+                style={{
+                  width: 36,
+                  height: 36,
+                  background: 'linear-gradient(to right, #60a5fa, #6366f1, #a855f7)',
+                  WebkitMaskImage: 'url(/assets/images/chart-646_1024-1773102864640.png)',
+                  WebkitMaskSize: 'contain',
+                  WebkitMaskRepeat: 'no-repeat',
+                  WebkitMaskPosition: 'center',
+                  maskImage: 'url(/assets/images/chart-646_1024-1773102864640.png)',
+                  maskSize: 'contain',
+                  maskRepeat: 'no-repeat',
+                  maskPosition: 'center',
+                }}
+                className="flex-shrink-0"
+              />
+              <span
+                style={{ fontFamily: "'Satoshi', 'Inter', sans-serif", fontWeight: 700, letterSpacing: '0.04em' }}
+                className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-500 to-purple-500 text-2xl tracking-wide select-none group-hover:opacity-80 transition-opacity"
+              >
+                TRADIGLO
+              </span>
+            </div>
+          </Link>
+          <p className="text-slate-400 text-sm mt-2">Admin Panel</p>
         </div>
 
         {/* Card */}
@@ -120,7 +143,7 @@ export default function AdminLoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoComplete="email"
-                placeholder="admin@investoft.com"
+                placeholder="admin@tradiglo.com"
                 className="w-full bg-[#0f172a] border border-slate-600 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#22c55e] focus:ring-1 focus:ring-[#22c55e] transition-colors"
               />
             </div>
@@ -176,7 +199,7 @@ export default function AdminLoginPage() {
         </div>
 
         <p className="text-center text-slate-600 text-xs mt-6">
-          © {new Date().getFullYear()} Investoft. All rights reserved.
+          © {new Date().getFullYear()} Tradiglo. All rights reserved.
         </p>
       </div>
     </div>
