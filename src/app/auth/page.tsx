@@ -370,6 +370,9 @@ function AuthForm() {
   const [signUpError, setSignUpError] = useState<string | null>(null);
   const [signUpSuccess, setSignUpSuccess] = useState(false);
 
+  // Referral code from URL
+  const refCode = searchParams.get('ref') ?? null;
+
   const getPasswordStrength = (pwd: string): { level: 0 | 1 | 2 | 3; label: string; color: string; bars: string } => {
     if (!pwd) return { level: 0, label: '', color: '', bars: '' };
     let score = 0;
@@ -418,6 +421,29 @@ function AuthForm() {
       setSignUpError(error.message);
       setSignUpLoading(false);
     } else {
+      // Save referral record if ?ref= was present
+      if (refCode && data?.user?.id) {
+        try {
+          // Look up the referrer by their referral_code in the users table
+          const { data: referrerData } = await supabase
+            .from('users')
+            .select('id')
+            .eq('referral_code', refCode)
+            .single();
+
+          if (referrerData?.id && referrerData.id !== data.user.id) {
+            await supabase.from('referrals').insert({
+              referrer_id: referrerData.id,
+              referred_id: data.user.id,
+              referral_code: refCode,
+              status: 'pending',
+            });
+          }
+        } catch {
+          // silent — referral insert is non-critical
+        }
+      }
+
       // Notify admin via email (fire-and-forget, don't block UX)
       try {
         fetch('/api/admin/notify-new-user', {
