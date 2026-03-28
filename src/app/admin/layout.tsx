@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { HomeIcon, UsersIcon, WalletIcon, ArrowDownTrayIcon, ArrowUpTrayIcon, ChartBarIcon, UserGroupIcon, CpuChipIcon, CubeIcon, DocumentChartBarIcon, ShieldExclamationIcon, CommandLineIcon, ServerIcon, Cog6ToothIcon, BellIcon, ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon, ChevronDownIcon, ChevronRightIcon,  } from '@heroicons/react/24/outline';
+import { HomeIcon, UsersIcon, WalletIcon, ArrowDownTrayIcon, ArrowUpTrayIcon, ChartBarIcon, UserGroupIcon, CpuChipIcon, CubeIcon, DocumentChartBarIcon, ShieldExclamationIcon, CommandLineIcon, ServerIcon, Cog6ToothIcon, BellIcon, ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon, ChevronDownIcon, ChevronRightIcon, GiftIcon } from '@heroicons/react/24/outline';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import NotificationBell from '@/components/admin/NotificationBell';
 
@@ -81,6 +81,11 @@ const navItems: NavItem[] = [
     href: '/admin/copy-trading',
     label: 'Copy Trading',
     icon: UserGroupIcon,
+  },
+  {
+    href: '/admin/referrals',
+    label: 'Referrals',
+    icon: GiftIcon,
   },
   {
     href: '/admin/ai-intelligence',
