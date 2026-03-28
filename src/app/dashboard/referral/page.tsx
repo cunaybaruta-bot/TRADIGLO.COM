@@ -4,6 +4,12 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import DashboardTopBar from '@/components/dashboard/DashboardTopBar';
+import DepositModal from '@/components/dashboard/DepositModal';
+
+interface Wallet {
+  demoBalance: number;
+  realBalance: number;
+}
 
 interface ReferralStats {
   referralCode: string;
@@ -23,6 +29,11 @@ export default function ReferralDashboardPage() {
   const [authChecked, setAuthChecked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
+
+  const [wallet, setWallet] = useState<Wallet | null>(null);
+  const [walletLoading, setWalletLoading] = useState(true);
+  const [isDemo, setIsDemo] = useState(true);
+  const [showDepositModal, setShowDepositModal] = useState(false);
 
   const [stats, setStats] = useState<ReferralStats>({
     referralCode: '',
@@ -55,6 +66,26 @@ export default function ReferralDashboardPage() {
     checkAuth();
   }, []);
 
+  const fetchWallet = useCallback(async () => {
+    setWalletLoading(true);
+    try {
+      const currentUser = (await supabase.auth.getUser()).data.user;
+      if (!currentUser) return;
+      const { data: wallets } = await supabase.from('wallets').select('*').eq('user_id', currentUser.id);
+      if (wallets && wallets.length > 0) {
+        const demoWallet = wallets.find((w: any) => w.is_demo === true);
+        const realWallet = wallets.find((w: any) => w.is_demo === false);
+        setWallet({ demoBalance: demoWallet?.balance ?? 0, realBalance: realWallet?.balance ?? 0 });
+      } else {
+        setWallet({ demoBalance: 0, realBalance: 0 });
+      }
+    } catch {
+      setWallet({ demoBalance: 0, realBalance: 0 });
+    } finally {
+      setWalletLoading(false);
+    }
+  }, []);
+
   const fetchReferralData = useCallback(async () => {
     if (!userId) return;
     setLoading(true);
@@ -74,8 +105,11 @@ export default function ReferralDashboardPage() {
   }, [userId]);
 
   useEffect(() => {
-    if (authChecked && userId) fetchReferralData();
-  }, [authChecked, userId, fetchReferralData]);
+    if (authChecked && userId) {
+      fetchReferralData();
+      fetchWallet();
+    }
+  }, [authChecked, userId, fetchReferralData, fetchWallet]);
 
   const referralLink = stats.referralCode
     ? `https://tradiglo.com/register?ref=${stats.referralCode}`
@@ -97,11 +131,20 @@ export default function ReferralDashboardPage() {
         <DashboardTopBar
           userEmail={userEmail}
           avatarUrl={avatarUrl}
-          wallet={null}
-          walletLoading={false}
-          isDemo={false}
-          onToggleDemo={() => {}}
-          onDepositClick={() => {}}
+          wallet={wallet}
+          walletLoading={walletLoading}
+          isDemo={isDemo}
+          onToggleDemo={(val: boolean) => setIsDemo(val)}
+          onDepositClick={() => setShowDepositModal(true)}
+        />
+      )}
+
+      {showDepositModal && userId && (
+        <DepositModal
+          isOpen={showDepositModal}
+          onClose={() => setShowDepositModal(false)}
+          userId={userId}
+          isDemo={isDemo}
         />
       )}
 
@@ -115,7 +158,7 @@ export default function ReferralDashboardPage() {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
-            Back to Dashboard
+            Back to Trade
           </button>
           <h1 className="text-lg font-bold text-white">Referral Program</h1>
           <p className="text-xs text-slate-400 mt-0.5">Earn 25% of every new member's initial deposit</p>
