@@ -95,9 +95,13 @@ export default function ReferralDashboardPage() {
     <div className="min-h-screen bg-[#050505] text-white flex flex-col">
       {authChecked && (
         <DashboardTopBar
-          userId={userId ?? ''}
           userEmail={userEmail}
           avatarUrl={avatarUrl}
+          wallet={null}
+          walletLoading={false}
+          isDemo={false}
+          onToggleDemo={() => {}}
+          onDepositClick={() => {}}
         />
       )}
 
