@@ -78,7 +78,7 @@ export default function ReferralDashboardPage() {
   }, [authChecked, userId, fetchReferralData]);
 
   const referralLink = stats.referralCode
-    ? `${typeof window !== 'undefined' ? window.location.origin : 'https://canonsite4265.builtwithrocket.new'}/register?ref=${stats.referralCode}`
+    ? `${typeof window !== 'undefined' ? window.location.origin : 'https://tradiglo.com'}/register?ref=${stats.referralCode}`
     : '';
 
   const handleCopy = () => {
