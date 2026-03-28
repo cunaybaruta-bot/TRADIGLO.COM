@@ -496,7 +496,7 @@ function TradeResultModal({ trade, onClose }: { trade: TradeResult; onClose: () 
 
 // ─── Bottom Navigation ────────────────────────────────────────────────────────
 
-type NavSection = 'trade' | 'history' | 'copytrade' | 'account';
+type NavSection = 'trade' | 'history' | 'copytrade' | 'account' | 'referral';
 
 function BottomNav({ active, onChange }: { active: NavSection; onChange: (s: NavSection) => void }) {
   const router = useRouter();
@@ -524,6 +524,14 @@ function BottomNav({ active, onChange }: { active: NavSection; onChange: (s: Nav
         <path d="M22.5 20v-5h-5" />
         <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1.5 9" />
         <path d="M3.51 15a9 9 0 0 0 14.85 3.36L22.5 15" />
+      </svg>
+    ) },
+    { id: 'referral', label: 'Referral', icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <circle cx="9" cy="7" r="4" />
+        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
     ) },
     { id: 'account', label: 'Account', icon: (
@@ -554,6 +562,8 @@ function BottomNav({ active, onChange }: { active: NavSection; onChange: (s: Nav
       router.push('/dashboard/history');
     } else if (id === 'copytrade') {
       router.push('/dashboard/copytrade');
+    } else if (id === 'referral') {
+      router.push('/dashboard/referral');
     } else {
       onChange(id);
     }
@@ -763,18 +773,10 @@ function CopyTradeTab({ userId, wallet }: { userId: string; wallet: Wallet | nul
             </div>
           ) : (
             <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs text-slate-500">
-                <span>Your Real Balance</span>
-                <span className={`font-semibold ${(wallet?.realBalance ?? 0) >= provider.min_balance_usd ? 'text-emerald-400' : 'text-red-400'}`}>
-                  ${formatCurrency(wallet?.realBalance ?? 0)}
-                </span>
+              <div className="flex items-center gap-2 px-3 py-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
+                <svg className="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                <span className="text-blue-400 text-xs">Ready to copy Tradiglo trades?</span>
               </div>
-              {(wallet?.realBalance ?? 0) < provider.min_balance_usd && (
-                <div className="flex items-center gap-2 px-3 py-2 bg-red-500/10 border border-red-500/20 rounded-lg">
-                  <svg className="w-3.5 h-3.5 text-red-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                  <span className="text-red-400 text-xs">Insufficient balance. Need ${provider.min_balance_usd.toLocaleString()} USD minimum</span>
-                </div>
-              )}
               <button
                 onClick={handleFollow}
                 disabled={actionLoading || (wallet?.realBalance ?? 0) < provider.min_balance_usd}
@@ -1277,25 +1279,16 @@ export default function DashboardPage() {
       // Calculate WIN/LOSS and show modal
       if (lastPopupTradeIdRef.current !== trade.id) {
         lastPopupTradeIdRef.current = trade.id;
-        const entryPrice = trade.entry_price;
-        const exitPrice = chartPrice;
-        let result: 'win' | 'loss';
-        if (trade.order_type === 'buy') {
-          result = exitPrice > entryPrice ? 'win' : 'loss';
-        } else {
-          result = exitPrice < entryPrice ? 'win' : 'loss';
-        }
-        const priceDiff = Math.abs(exitPrice - entryPrice);
-        const pctMove = entryPrice > 0 ? priceDiff / entryPrice : 0;
-        const profitLoss = result === 'win' ? trade.amount * (1 + pctMove) - trade.amount : trade.amount;
+        const profitVal = trade.profit ?? trade.profit_loss ?? 0;
+        const knownTrade = openTrades.find((t) => t.id === trade.id);
         setTradeResultPopup({
-          asset_symbol: trade.asset_symbol,
+          asset_symbol: knownTrade?.asset_symbol ?? trade.asset_symbol ?? '',
           order_type: trade.order_type,
           amount: trade.amount,
-          result,
-          profit_loss: profitLoss,
-          entry_price: entryPrice,
-          exit_price: exitPrice,
+          result: trade.result as 'win' | 'loss',
+          profit_loss: Math.abs(profitVal),
+          entry_price: trade.entry_price ?? undefined,
+          exit_price: trade.exit_price ?? undefined,
         });
       }
 
@@ -1691,7 +1684,7 @@ export default function DashboardPage() {
                           {closeAllLoading ? (
                             <span className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
                           ) : (
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7 7 7" /></svg>
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7 7 7" /></svg>
                           )}
                           Close All
                         </button>
