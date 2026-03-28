@@ -91,7 +91,7 @@ export default function ReferralDashboardPage() {
     setLoading(true);
     try {
       // Fetch existing referral_code from users table
-      const { data: userData, error: fetchError } = await supabase
+      const { data: userData } = await supabase
         .from('users')
         .select('referral_code')
         .eq('id', userId)
@@ -108,12 +108,27 @@ export default function ReferralDashboardPage() {
           .eq('id', userId);
       }
 
+      // Fetch real referral stats from referrals table
+      const { data: referrals } = await supabase
+        .from('referrals')
+        .select('reward_amount, status')
+        .eq('referrer_id', userId);
+
+      const totalReferred = referrals?.length ?? 0;
+      const totalEarned = referrals?.reduce((sum, r) => sum + Number(r.reward_amount ?? 0), 0) ?? 0;
+      const pendingReward = referrals
+        ?.filter((r) => r.status === 'pending' || r.status === 'completed')
+        .reduce((sum, r) => sum + Number(r.reward_amount ?? 0), 0) ?? 0;
+      const paidReward = referrals
+        ?.filter((r) => r.status === 'paid')
+        .reduce((sum, r) => sum + Number(r.reward_amount ?? 0), 0) ?? 0;
+
       setStats({
         referralCode: code,
-        totalReferred: 0,
-        totalEarned: 0,
-        pendingReward: 0,
-        paidReward: 0,
+        totalReferred,
+        totalEarned,
+        pendingReward,
+        paidReward,
       });
     } finally {
       setLoading(false);
