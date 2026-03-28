@@ -90,8 +90,24 @@ export default function ReferralDashboardPage() {
     if (!userId) return;
     setLoading(true);
     try {
-      // Generate referral code from user id (first 8 chars)
-      const code = `TRD-${userId.replace(/-/g, '').substring(0, 8).toUpperCase()}`;
+      // Fetch existing referral_code from users table
+      const { data: userData, error: fetchError } = await supabase
+        .from('users')
+        .select('referral_code')
+        .eq('id', userId)
+        .maybeSingle();
+
+      let code = userData?.referral_code ?? null;
+
+      // If no code stored yet, generate one and persist it
+      if (!code) {
+        code = `TRD-${userId.replace(/-/g, '').substring(0, 8).toUpperCase()}`;
+        await supabase
+          .from('users')
+          .update({ referral_code: code })
+          .eq('id', userId);
+      }
+
       setStats({
         referralCode: code,
         totalReferred: 0,
