@@ -191,7 +191,7 @@ export default function ReferralDashboardPage() {
             </svg>
             Back to Trade
           </button>
-          <h1 className="text-lg font-bold text-white">Referral Program</h1>
+          <h1 className="text-lg font-bold text-white">Affiliate Program</h1>
           <p className="text-xs text-slate-400 mt-0.5">Earn 25% of every new member's initial deposit</p>
         </div>
 
@@ -203,7 +203,7 @@ export default function ReferralDashboardPage() {
           <div className="flex flex-col gap-4">
             {/* Referral Link Card */}
             <div className="bg-[#0d0d0d] border border-white/10 rounded-xl p-4">
-              <h2 className="text-xs font-semibold text-white uppercase tracking-wider mb-3">Your Referral Link</h2>
+              <h2 className="text-xs font-semibold text-white uppercase tracking-wider mb-3">Your Affiliate Link</h2>
               <div className="flex items-center gap-2">
                 <div className="flex-1 bg-[#0a0a0a] border border-white/10 rounded-lg px-3 py-2.5 text-xs text-slate-300 truncate font-mono">
                   {referralLink}
@@ -293,8 +293,8 @@ export default function ReferralDashboardPage() {
               <h2 className="text-xs font-semibold text-white uppercase tracking-wider mb-3">How It Works</h2>
               <div className="flex flex-col gap-3">
                 {[
-                  { step: '1', title: 'Share Your Link', desc: 'Copy your unique referral link and share it with anyone' },
-                  { step: '2', title: 'They Sign Up & Deposit', desc: 'Your referral registers and makes their first deposit' },
+                  { step: '1', title: 'Share Your Link', desc: 'Copy your unique affiliate link and share it with anyone' },
+                  { step: '2', title: 'They Sign Up & Deposit', desc: 'Your affiliate registers and makes their first deposit' },
                   { step: '3', title: 'Earn 25%', desc: 'You receive 25% of their initial deposit as a reward' },
                   { step: '4', title: 'Get Paid at $500', desc: 'Once your pending reward reaches $500, request a payout' },
                 ].map((item) => (
@@ -315,7 +315,7 @@ export default function ReferralDashboardPage() {
             <div className="bg-blue-500/5 border border-blue-500/20 rounded-xl p-4">
               <p className="text-[10px] text-slate-400 leading-relaxed">
                 <span className="text-blue-400 font-medium">Program Terms: </span>
-                Referral rewards are valid for the lifetime of the referred member's account. Rewards are calculated based on the referred member's initial deposit only. Payout is processed once the accumulated reward reaches the $500 threshold. Contact support to initiate a payout.
+                Affiliate rewards are valid for the lifetime of the referred member's account. Rewards are calculated based on the referred member's initial deposit only. Payout is processed once the accumulated reward reaches the $500 threshold. Contact support to initiate a payout.
               </p>
             </div>
           </div>

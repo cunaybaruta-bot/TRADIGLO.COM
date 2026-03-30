@@ -84,7 +84,7 @@ const navItems: NavItem[] = [
   },
   {
     href: '/admin/referrals',
-    label: 'Referrals',
+    label: 'Affiliates',
     icon: GiftIcon,
   },
   {

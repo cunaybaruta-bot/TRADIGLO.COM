@@ -526,7 +526,7 @@ function BottomNav({ active, onChange }: { active: NavSection; onChange: (s: Nav
         <path d="M3.51 15a9 9 0 0 0 14.85 3.36L22.5 15" />
       </svg>
     ) },
-    { id: 'referral', label: 'Referral', icon: (
+    { id: 'referral', label: 'Affiliate', icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
         <circle cx="9" cy="7" r="4" />

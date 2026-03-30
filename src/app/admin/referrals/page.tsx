@@ -223,7 +223,7 @@ export default function AdminReferralsPage() {
   // Export CSV
   const exportCSV = () => {
     const rows = filtered;
-    const headers = ['Referrer Email', 'Referred Email', 'Referral Code', 'Deposit Amount', 'Reward Amount', 'Reward Rate (%)', 'Status', 'Date'];
+    const headers = ['Referrer Email', 'Referred Email', 'Affiliate Code', 'Deposit Amount', 'Reward Amount', 'Reward Rate (%)', 'Status', 'Date'];
     const csvRows = rows.map((r) => {
       const rate = r.deposit_amount > 0 ? ((r.reward_amount / r.deposit_amount) * 100).toFixed(2) : '0.00';
       return [
@@ -242,7 +242,7 @@ export default function AdminReferralsPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `referrals_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `affiliates_${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -255,7 +255,7 @@ export default function AdminReferralsPage() {
 
   const statCards = [
     {
-      label: 'Total Referrals',
+      label: 'Total Affiliates',
       value: stats.totalReferrals.toLocaleString(),
       icon: UsersIcon,
       color: 'text-blue-400',
@@ -293,8 +293,8 @@ export default function AdminReferralsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-white text-xl font-bold">Referral Management</h2>
-          <p className="text-slate-400 text-sm mt-1">View and manage member referrals, rewards, and payment status</p>
+          <h2 className="text-white text-xl font-bold">Affiliate Management</h2>
+          <p className="text-slate-400 text-sm mt-1">View and manage member affiliates, rewards, and payment status</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -336,7 +336,7 @@ export default function AdminReferralsPage() {
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Search by email or referral code..."
+              placeholder="Search by email or affiliate code..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-4 py-2 bg-[#0f172a] border border-slate-600 rounded-lg text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
@@ -410,11 +410,11 @@ export default function AdminReferralsPage() {
         </div>
       )}
 
-      {/* Referrals Table */}
+      {/* Affiliates Table */}
       <div className="bg-[#1e293b] rounded-xl border border-slate-700 overflow-hidden">
         <div className="p-4 border-b border-slate-700 flex items-center justify-between flex-wrap gap-2">
           <h3 className="text-white font-semibold text-sm">
-            Referral List{' '}
+            Affiliate List{' '}
             <span className="text-slate-400 font-normal">({filtered.length} records)</span>
           </h3>
           <div className="flex items-center gap-2">
@@ -433,12 +433,12 @@ export default function AdminReferralsPage() {
 
         {loading ? (
           <div className="flex items-center justify-center py-16">
-            <div className="text-slate-400 text-sm">Loading referrals...</div>
+            <div className="text-slate-400 text-sm">Loading affiliates...</div>
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-slate-500">
             <UsersIcon className="w-10 h-10 mb-3 opacity-40" />
-            <p className="text-sm">No referrals found</p>
+            <p className="text-sm">No affiliates found</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -455,7 +455,7 @@ export default function AdminReferralsPage() {
                   </th>
                   <th className="text-left px-4 py-3">Referrer</th>
                   <th className="text-left px-4 py-3">Referred Member</th>
-                  <th className="text-left px-4 py-3">Referral Code</th>
+                  <th className="text-left px-4 py-3">Affiliate Code</th>
                   <th className="text-right px-4 py-3">Deposit</th>
                   <th className="text-right px-4 py-3">Reward</th>
                   <th className="text-right px-4 py-3">Rate</th>
@@ -619,8 +619,8 @@ export default function AdminReferralsPage() {
           <div className="bg-[#1e293b] rounded-2xl border border-slate-700 w-full max-w-3xl max-h-[80vh] flex flex-col shadow-2xl">
             <div className="flex items-center justify-between p-5 border-b border-slate-700">
               <div>
-                <h3 className="text-white font-semibold">Referrals by {drillDown.email}</h3>
-                <p className="text-slate-400 text-xs mt-0.5">{drillDown.rows.length} referral(s) total</p>
+                <h3 className="text-white font-semibold">Affiliates by {drillDown.email}</h3>
+                <p className="text-slate-400 text-xs mt-0.5">{drillDown.rows.length} affiliate(s) total</p>
               </div>
               <button
                 onClick={() => setDrillDown(null)}
@@ -708,8 +708,8 @@ export default function AdminReferralsPage() {
                 <h3 className="text-white font-semibold">Confirm Status Change</h3>
                 <p className="text-slate-400 text-sm mt-1">
                   {confirmModal.isBulk
-                    ? `Change status of ${confirmModal.ids.length} selected referral(s) to `
-                    : 'Change status of this referral to '}
+                    ? `Change status of ${confirmModal.ids.length} selected affiliate(s) to `
+                    : 'Change status of this affiliate to '}
                   <span className="text-white font-medium uppercase">{confirmModal.newStatus}</span>?
                 </p>
                 <p className="text-slate-500 text-xs mt-1">This action will be saved immediately to the database.</p>

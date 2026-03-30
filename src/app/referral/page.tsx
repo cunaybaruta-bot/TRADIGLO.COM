@@ -9,17 +9,17 @@ export default function ReferralPage() {
     {
       number: '01',
       title: 'Sign Up & Get Your Link',
-      description: 'Create your Tradiglo account and receive a unique referral link from your dashboard.',
+      description: 'Create your Tradiglo account and receive a unique affiliate link from your dashboard.',
     },
     {
       number: '02',
       title: 'Invite Your Network',
-      description: 'Share your referral link with friends, family, or your community through any channel.',
+      description: 'Share your affiliate link with friends, family, or your community through any channel.',
     },
     {
       number: '03',
       title: 'They Join & Deposit',
-      description: 'When someone registers via your link and makes their first deposit, the referral is recorded.',
+      description: 'When someone registers via your link and makes their first deposit, the affiliate is recorded.',
     },
     {
       number: '04',
@@ -30,24 +30,24 @@ export default function ReferralPage() {
 
   const faqs = [
     {
-      q: 'How much do I earn per referral?',
+      q: 'How much do I earn per affiliate?',
       a: 'You earn 25% of the total initial deposit made by each new member you successfully refer to Tradiglo.',
     },
     {
       q: 'When is the reward paid out?',
-      a: 'Rewards are paid out once your accumulated referral earnings reach $500. This threshold ensures efficient processing.',
+      a: 'Rewards are paid out once your accumulated affiliate earnings reach $500. This threshold ensures efficient processing.',
     },
     {
-      q: 'How long does the referral program last?',
-      a: 'Your referral rewards are valid for as long as both you and the referred member remain active Tradiglo members — there is no expiry.',
+      q: 'How long does the affiliate program last?',
+      a: 'Your affiliate rewards are valid for as long as both you and the referred member remain active Tradiglo members — there is no expiry.',
     },
     {
       q: 'Is there a limit to how many people I can refer?',
       a: 'No limit. You can refer as many people as you like and earn 25% from each of their initial deposits.',
     },
     {
-      q: 'How do I track my referrals?',
-      a: 'Once you are a member, your dashboard will display your referral link, the number of referred members, and your accumulated reward balance.',
+      q: 'How do I track my affiliates?',
+      a: 'Once you are a member, your dashboard will display your affiliate link, the number of referred members, and your accumulated reward balance.',
     },
     {
       q: 'Does the referred member get any benefit?',
@@ -67,7 +67,7 @@ export default function ReferralPage() {
           </div>
           <div className="container mx-auto px-4 sm:px-6 relative z-10 text-center">
             <span className="inline-block px-4 py-1.5 rounded-full text-xs font-semibold bg-blue-500/15 text-blue-400 border border-blue-500/30 mb-6 tracking-widest uppercase">
-              Referral Program
+              Affiliate Program
             </span>
             <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold mb-6 leading-tight">
               Earn{' '}
@@ -121,7 +121,7 @@ export default function ReferralPage() {
           <div className="container mx-auto px-4 sm:px-6">
             <div className="text-center mb-14">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
-              <p className="text-slate-400 max-w-xl mx-auto">Four simple steps to start earning with the Tradiglo Referral Program.</p>
+              <p className="text-slate-400 max-w-xl mx-auto">Four simple steps to start earning with the Tradiglo Affiliate Program.</p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {steps?.map((step) => (
@@ -149,7 +149,7 @@ export default function ReferralPage() {
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-14">
                 <h2 className="text-3xl md:text-4xl font-bold mb-4">Program Details</h2>
-                <p className="text-slate-400 max-w-xl mx-auto">Everything you need to know about the Tradiglo Referral Program.</p>
+                <p className="text-slate-400 max-w-xl mx-auto">Everything you need to know about the Tradiglo Affiliate Program.</p>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {[
@@ -171,7 +171,7 @@ export default function ReferralPage() {
                     ),
                     title: 'Payout Threshold',
                     value: '$500 Minimum',
-                    desc: 'Rewards are released once your total accumulated referral earnings reach $500.',
+                    desc: 'Rewards are released once your total accumulated affiliate earnings reach $500.',
                   },
                   {
                     icon: (
@@ -181,7 +181,7 @@ export default function ReferralPage() {
                     ),
                     title: 'Validity',
                     value: 'Lifetime — No Expiry',
-                    desc: 'Your referral relationship is permanent for as long as both you and the referred member stay active.',
+                    desc: 'Your affiliate relationship is permanent for as long as both you and the referred member stay active.',
                   },
                   {
                     icon: (
@@ -189,8 +189,8 @@ export default function ReferralPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
                       </svg>
                     ),
-                    title: 'Referral Limit',
-                    value: 'Unlimited Referrals',
+                    title: 'Affiliate Limit',
+                    value: 'Unlimited Affiliates',
                     desc: 'There is no cap on the number of people you can refer. The more you invite, the more you earn.',
                   },
                 ]?.map((item) => (
@@ -234,7 +234,7 @@ export default function ReferralPage() {
             <div className="max-w-2xl mx-auto">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">Ready to Start Earning?</h2>
               <p className="text-slate-400 mb-8 leading-relaxed">
-                Join Tradiglo today, get your unique referral link, and start earning 25% from every member you bring in — for life.
+                Join Tradiglo today, get your unique affiliate link, and start earning 25% from every member you bring in — for life.
               </p>
               <Link
                 href="/auth"

@@ -72,7 +72,7 @@ export default function SettingsPage() {
           {[
             { label: 'Welcome Bonus', value: 'Disabled', sub: 'New user registration bonus' },
             { label: 'Deposit Bonus', value: 'Disabled', sub: 'Bonus on first deposit' },
-            { label: 'Referral Bonus', value: 'Disabled', sub: 'Bonus for referring users' },
+            { label: 'Affiliate Bonus', value: 'Disabled', sub: 'Bonus for referring users' },
             { label: 'Demo Balance', value: '$10,000', sub: 'Default demo account balance' },
           ]?.map(({ label, value, sub }) => (
             <div key={label} className="bg-[#0f172a] rounded-lg p-4 border border-slate-700">
