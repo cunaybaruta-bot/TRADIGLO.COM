@@ -83,7 +83,7 @@ export default function DashboardTopBar({
           }}
           className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-500 to-purple-500 text-sm tracking-wide select-none hidden xs:block"
         >
-          INVESTOFT
+          TRADIGLO
         </span>
       </div>
 

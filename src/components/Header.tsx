@@ -29,6 +29,7 @@ export default function Header() {
     { label: 'Copy Trading', href: '/copy-trading' },
     { label: 'Screener', href: '/screener' },
     { label: 'News', href: '/news' },
+    { label: 'Affiliate', href: '/referral' },
   ];
 
   return (

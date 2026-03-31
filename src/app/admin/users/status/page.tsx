@@ -40,6 +40,14 @@ export default function AccountStatusPage() {
     setTimeout(() => setMessage(''), 3000);
   };
 
+  const changeRole = async (userId: string, newRole: string) => {
+    const supabase = createClient();
+    await supabase.from('users').update({ role: newRole }).eq('id', userId);
+    setMessage(`Role updated to "${newRole}" successfully`);
+    fetchUsers();
+    setTimeout(() => setMessage(''), 3000);
+  };
+
   const filtered = users.filter((u) => {
     const matchSearch = u.email.toLowerCase().includes(search.toLowerCase()) || (u.full_name || '').toLowerCase().includes(search.toLowerCase());
     const matchFilter = filter === 'all' || (filter === 'active' && u.is_verified) || (filter === 'suspended' && !u.is_verified);
@@ -100,7 +108,17 @@ export default function AccountStatusPage() {
                       <div className="text-white">{u.email}</div>
                       <div className="text-gray-500 text-xs">{u.full_name || '—'}</div>
                     </td>
-                    <td className="py-3 text-gray-300 capitalize">{u.role}</td>
+                    <td className="py-3 text-gray-300 capitalize">
+                      <select
+                        value={u.role}
+                        onChange={(e) => changeRole(u.id, e.target.value)}
+                        className="bg-white/5 border border-white/10 rounded-lg text-xs text-white px-2 py-1 focus:outline-none focus:border-blue-500 cursor-pointer appearance-none"
+                        style={{ backgroundColor: '#1a2235' }}
+                      >
+                        <option value="user" style={{ backgroundColor: '#1a2235' }}>User</option>
+                        <option value="admin" style={{ backgroundColor: '#1a2235' }}>Admin</option>
+                      </select>
+                    </td>
                     <td className="py-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${u.is_verified ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
                         {u.is_verified ? 'Active' : 'Suspended'}

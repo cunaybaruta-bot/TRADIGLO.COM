@@ -370,6 +370,9 @@ function AuthForm() {
   const [signUpError, setSignUpError] = useState<string | null>(null);
   const [signUpSuccess, setSignUpSuccess] = useState(false);
 
+  // Referral code from URL
+  const refCode = searchParams.get('ref') ?? null;
+
   const getPasswordStrength = (pwd: string): { level: 0 | 1 | 2 | 3; label: string; color: string; bars: string } => {
     if (!pwd) return { level: 0, label: '', color: '', bars: '' };
     let score = 0;
@@ -418,6 +421,29 @@ function AuthForm() {
       setSignUpError(error.message);
       setSignUpLoading(false);
     } else {
+      // Save referral record if ?ref= was present
+      if (refCode && data?.user?.id) {
+        try {
+          // Look up the referrer by their referral_code in the users table
+          const { data: referrerData } = await supabase
+            .from('users')
+            .select('id')
+            .eq('referral_code', refCode)
+            .single();
+
+          if (referrerData?.id && referrerData.id !== data.user.id) {
+            await supabase.from('referrals').insert({
+              referrer_id: referrerData.id,
+              referred_id: data.user.id,
+              referral_code: refCode,
+              status: 'pending',
+            });
+          }
+        } catch {
+          // silent — referral insert is non-critical
+        }
+      }
+
       // Notify admin via email (fire-and-forget, don't block UX)
       try {
         fetch('/api/admin/notify-new-user', {
@@ -509,20 +535,10 @@ function AuthForm() {
             </button>
           </div>
 
-          {/* Fixed-height form container */}
-          <div style={{ minHeight: 320, position: 'relative' }}>
-
+          {/* Dynamic form container */}
+          <div>
             {/* SIGN UP Form */}
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                opacity: tab === 'signup' ? 1 : 0,
-                visibility: tab === 'signup' ? 'visible' : 'hidden',
-                transition: 'opacity 0.2s ease',
-                pointerEvents: tab === 'signup' ? 'auto' : 'none',
-              }}
-            >
+            <div style={{ display: tab === 'signup' ? 'block' : 'none' }}>
               {signUpSuccess ? (
                 <div className="text-center py-6">
                   <div className="w-14 h-14 rounded-full bg-green-500/10 border border-green-500/30 flex items-center justify-center mx-auto mb-4">
@@ -659,16 +675,7 @@ function AuthForm() {
             </div>
 
             {/* SIGN IN Form */}
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                opacity: tab === 'signin' ? 1 : 0,
-                visibility: tab === 'signin' ? 'visible' : 'hidden',
-                transition: 'opacity 0.2s ease',
-                pointerEvents: tab === 'signin' ? 'auto' : 'none',
-              }}
-            >
+            <div style={{ display: tab === 'signin' ? 'block' : 'none' }}>
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div>
                   <label className="block text-xs font-medium text-gray-400 mb-1.5">Email Address</label>
@@ -732,10 +739,6 @@ function AuthForm() {
               </form>
             </div>
           </div>
-
-          <p className="text-center text-gray-600 text-xs mt-8">
-            © 2026 TRADIGLO. All rights reserved.
-          </p>
         </div>
       </div>
 

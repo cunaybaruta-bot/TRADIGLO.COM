@@ -1,36 +1,48 @@
 'use client';
 import React, { useState } from 'react';
-
+import Link from 'next/link';
 
 export default function Footer() {
   const [email, setEmail] = useState('');
 
-  const footerLinks = {
-    Resources: ['Crypto News', 'Crypto Treasuries', 'Crypto Heatmap', 'Crypto API'],
-    Support: ['Request Form', 'Advertising', 'Candy Rewards Listing', 'Help Center', 'Bug Bounty', 'FAQ'],
+  const footerLinks: Record<string, { label: string; href: string; external?: boolean }[]> = {
+    Resources: [
+      { label: 'Crypto News', href: '/resources/crypto-news' },
+      { label: 'Crypto Treasuries', href: '/resources/crypto-treasuries' },
+      { label: 'Crypto Heatmap', href: '/resources/crypto-heatmap' },
+      { label: 'Crypto API', href: '/resources/crypto-api' },
+    ],
+    Support: [
+      { label: 'Request Form', href: '/support/request-form' },
+      { label: 'Advertising', href: '/support/advertising' },
+      { label: 'Candy Rewards Listing', href: '/support/candy-rewards-listing' },
+      { label: 'Help Center', href: '/support/help-center' },
+      { label: 'Bug Bounty', href: '/support/bug-bounty' },
+      { label: 'FAQ', href: '/support/faq' },
+    ],
     'About Tradiglo': [
-    'About Us',
-    'Careers',
-    'Branding Guide',
-    'Methodology',
-    'Disclaimer',
-    'Terms of Service',
-    'Privacy Policy',
-    'Ad Policy',
-    'Cookie Preferences',
-    'Trust Center'],
-
+      { label: 'About Us', href: '/about/about-us' },
+      { label: 'Careers', href: '/about/careers' },
+      { label: 'Branding Guide', href: '/about/branding-guide' },
+      { label: 'Methodology', href: '/about/methodology' },
+      { label: 'Disclaimer', href: '/about/disclaimer' },
+      { label: 'Terms of Service', href: '/about/terms-of-service' },
+      { label: 'Privacy Policy', href: '/about/privacy-policy' },
+      { label: 'Ad Policy', href: '/about/ad-policy' },
+      { label: 'Cookie Preferences', href: '/about/cookie-preferences' },
+      { label: 'Trust Center', href: '/about/trust-center' },
+    ],
     Community: [
-    'X/Twitter',
-    'Telegram Chat',
-    'Telegram News',
-    'Instagram',
-    'Reddit',
-    'Discord',
-    'Facebook',
-    'Youtube',
-    'TikTok']
-
+      { label: 'X/Twitter', href: 'https://twitter.com/tradiglo', external: true },
+      { label: 'Telegram Chat', href: 'https://t.me/tradiglo', external: true },
+      { label: 'Telegram News', href: 'https://t.me/tradiglo_news', external: true },
+      { label: 'Instagram', href: 'https://instagram.com/tradiglo', external: true },
+      { label: 'Reddit', href: 'https://reddit.com/r/tradiglo', external: true },
+      { label: 'Discord', href: 'https://discord.gg/tradiglo', external: true },
+      { label: 'Facebook', href: 'https://facebook.com/tradiglo', external: true },
+      { label: 'Youtube', href: 'https://youtube.com/@tradiglo', external: true },
+      { label: 'TikTok', href: 'https://tiktok.com/@tradiglo', external: true },
+    ],
   };
 
   return (
@@ -92,10 +104,24 @@ export default function Footer() {
               <h4 className="text-white font-semibold text-xs sm:text-sm mb-3">{category}</h4>
               <ul className="space-y-2">
                 {links?.map((link) =>
-              <li key={link}>
-                    <button className="text-gray-400 hover:text-white text-xs sm:text-sm transition-colors text-left">
-                      {link}
-                    </button>
+              <li key={link.label}>
+                    {link.external ? (
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-gray-400 hover:text-white text-xs sm:text-sm transition-colors text-left block"
+                      >
+                        {link.label}
+                      </a>
+                    ) : (
+                      <Link
+                        href={link.href}
+                        className="text-gray-400 hover:text-white text-xs sm:text-sm transition-colors text-left block"
+                      >
+                        {link.label}
+                      </Link>
+                    )}
                   </li>
               )}
               </ul>
