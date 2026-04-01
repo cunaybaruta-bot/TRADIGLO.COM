@@ -905,6 +905,7 @@ export default function DashboardPage() {
 
   const chartRef = useRef<LightweightChartHandle>(null);
   const [isChartReady, setIsChartReady] = useState(false);
+  const handleCloseTradeRef = useRef<(trade: Trade) => Promise<void>>(async () => {});
 
   // ── Auth Check ──────────────────────────────────────────────────────────────
 
@@ -1202,16 +1203,21 @@ export default function DashboardPage() {
   }, [authChecked, fetchOpenTrades]);
 
   const handleTradeRowExpired = useCallback((tradeId: string) => {
-    setFadingTradeIds((prev) => new Set([...prev, tradeId]));
-    setTimeout(() => {
-      handleTradeExpired();
-      setFadingTradeIds((prev) => {
-        const next = new Set(prev);
-        next.delete(tradeId);
-        return next;
-      });
-    }, 300);
-  }, [handleTradeExpired]);
+    const trade = openTrades.find((t) => t.id === tradeId);
+    if (trade) {
+      handleCloseTradeRef.current(trade);
+    } else {
+      setFadingTradeIds((prev) => new Set([...prev, tradeId]));
+      setTimeout(() => {
+        handleTradeExpired();
+        setFadingTradeIds((prev) => {
+          const next = new Set(prev);
+          next.delete(tradeId);
+          return next;
+        });
+      }, 300);
+    }
+  }, [openTrades, handleTradeExpired]);
 
   // ── Amount handlers ─────────────────────────────────────────────────────────
 
@@ -1314,6 +1320,8 @@ export default function DashboardPage() {
       });
     }
   }, [closingTradeIds, fetchOpenTrades, fetchWallet]);
+
+  handleCloseTradeRef.current = handleCloseTrade;
 
   // ── Close all trades ────────────────────────────────────────────────────────
 
