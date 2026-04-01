@@ -4,18 +4,18 @@ import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { MagnifyingGlassIcon } from '@heroicons/react/24/outline';
 
-interface WalletEntry {
-  id: string;
+interface WalletPair {
   user_id: string;
+  email: string;
+  full_name: string | null;
   real_balance: number;
   demo_balance: number;
   currency: string;
   updated_at: string;
-  users?: { email: string; full_name: string | null };
 }
 
 export default function WalletBalancesPage() {
-  const [wallets, setWallets] = useState<WalletEntry[]>([]);
+  const [wallets, setWallets] = useState<WalletPair[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
@@ -23,21 +23,44 @@ export default function WalletBalancesPage() {
     const supabase = createClient();
     const { data } = await supabase
       .from('wallets')
-      .select('id, user_id, real_balance, demo_balance, currency, updated_at, users(email, full_name)')
-      .order('real_balance', { ascending: false });
-    setWallets((data as any) || []);
+      .select('id, user_id, balance, is_demo, currency, updated_at, users(email, full_name)')
+      .order('updated_at', { ascending: false });
+
+    if (data) {
+      const userMap: Record<string, WalletPair> = {};
+      data.forEach((w: any) => {
+        const uid = w.user_id;
+        if (!userMap[uid]) {
+          userMap[uid] = {
+            user_id: uid,
+            email: w.users?.email || uid.slice(0, 8),
+            full_name: w.users?.full_name || null,
+            real_balance: 0,
+            demo_balance: 0,
+            currency: w.currency || 'USD',
+            updated_at: w.updated_at,
+          };
+        }
+        if (w.is_demo) {
+          userMap[uid].demo_balance = Number(w.balance);
+        } else {
+          userMap[uid].real_balance = Number(w.balance);
+        }
+        if (w.updated_at > userMap[uid].updated_at) {
+          userMap[uid].updated_at = w.updated_at;
+        }
+      });
+      setWallets(Object.values(userMap).sort((a, b) => b.real_balance - a.real_balance));
+    }
     setLoading(false);
   }, []);
 
   useEffect(() => { fetchWallets(); }, [fetchWallets]);
 
-  const filtered = wallets.filter((w) => {
-    const email = (w.users as any)?.email || '';
-    return email.toLowerCase().includes(search.toLowerCase());
-  });
+  const filtered = wallets.filter((w) => w.email.toLowerCase().includes(search.toLowerCase()));
 
-  const totalReal = wallets.reduce((s, w) => s + Number(w.real_balance), 0);
-  const totalDemo = wallets.reduce((s, w) => s + Number(w.demo_balance), 0);
+  const totalReal = wallets.reduce((s, w) => s + w.real_balance, 0);
+  const totalDemo = wallets.reduce((s, w) => s + w.demo_balance, 0);
 
   return (
     <div className="space-y-6">
@@ -48,7 +71,7 @@ export default function WalletBalancesPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-[#0f1629] border border-white/10 rounded-xl p-4">
-          <div className="text-gray-400 text-sm">Total Wallets</div>
+          <div className="text-gray-400 text-sm">Total Users</div>
           <div className="text-2xl font-bold text-white mt-1">{wallets.length}</div>
         </div>
         <div className="bg-[#0f1629] border border-white/10 rounded-xl p-4">
@@ -89,14 +112,14 @@ export default function WalletBalancesPage() {
               </thead>
               <tbody className="divide-y divide-white/5">
                 {filtered.map((w) => (
-                  <tr key={w.id} className="hover:bg-white/5 transition-colors">
+                  <tr key={w.user_id} className="hover:bg-white/5 transition-colors">
                     <td className="py-3">
-                      <div className="text-white">{(w.users as any)?.email || w.user_id.slice(0, 8)}</div>
-                      <div className="text-gray-500 text-xs">{(w.users as any)?.full_name || '—'}</div>
+                      <div className="text-white">{w.email}</div>
+                      <div className="text-gray-500 text-xs">{w.full_name || '—'}</div>
                     </td>
                     <td className="py-3 text-gray-300">{w.currency}</td>
-                    <td className="py-3 text-green-400 font-medium">${Number(w.real_balance).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
-                    <td className="py-3 text-blue-400 font-medium">${Number(w.demo_balance).toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    <td className="py-3 text-green-400 font-medium">${w.real_balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
+                    <td className="py-3 text-blue-400 font-medium">${w.demo_balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</td>
                     <td className="py-3 text-gray-400">{new Date(w.updated_at).toLocaleString()}</td>
                   </tr>
                 ))}

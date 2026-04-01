@@ -21,7 +21,8 @@ export default function AIRiskPredictionPage() {
     const supabase = createClient();
     const { data: trades } = await supabase
       .from('trades')
-      .select('user_id, status, amount, users(email)');
+      .select('user_id, result, amount, users(email)')
+      .eq('status', 'closed');
 
     if (trades) {
       const map: Record<string, RiskUser> = {};
@@ -29,7 +30,7 @@ export default function AIRiskPredictionPage() {
         if (!map[t.user_id]) map[t.user_id] = { user_id: t.user_id, email: t.users?.email || t.user_id.slice(0, 8), tradeCount: 0, lostCount: 0, totalVolume: 0, riskScore: 0 };
         map[t.user_id].tradeCount++;
         map[t.user_id].totalVolume += Number(t.amount);
-        if (t.status === 'lost') map[t.user_id].lostCount++;
+        if (t.result === 'loss') map[t.user_id].lostCount++;
       });
       const arr = Object.values(map).map((u) => ({
         ...u,

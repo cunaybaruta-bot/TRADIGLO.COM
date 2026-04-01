@@ -9,7 +9,7 @@ interface User {
   email: string;
   full_name: string | null;
   role: string;
-  is_verified: boolean;
+  status: string;
   created_at: string;
 }
 
@@ -19,12 +19,13 @@ export default function AccountStatusPage() {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState<'all' | 'active' | 'suspended'>('all');
   const [message, setMessage] = useState('');
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     const supabase = createClient();
     const { data } = await supabase
       .from('users')
-      .select('id, email, full_name, role, is_verified, created_at')
+      .select('id, email, full_name, role, status, created_at')
       .order('created_at', { ascending: false });
     setUsers((data as User[]) || []);
     setLoading(false);
@@ -32,25 +33,35 @@ export default function AccountStatusPage() {
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
-  const toggleStatus = async (userId: string, current: boolean) => {
+  const toggleStatus = async (userId: string, currentStatus: string) => {
+    setActionLoading(userId);
     const supabase = createClient();
-    await supabase.from('users').update({ is_verified: !current }).eq('id', userId);
-    setMessage(`Account ${!current ? 'activated' : 'suspended'} successfully`);
-    fetchUsers();
+    const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
+    const { error } = await supabase.from('users').update({ status: newStatus }).eq('id', userId);
+    if (error) {
+      setMessage('Failed to update status: ' + error.message);
+    } else {
+      setMessage(`Account ${newStatus === 'active' ? 'activated' : 'suspended'} successfully`);
+      fetchUsers();
+    }
+    setActionLoading(null);
     setTimeout(() => setMessage(''), 3000);
   };
 
   const changeRole = async (userId: string, newRole: string) => {
     const supabase = createClient();
-    await supabase.from('users').update({ role: newRole }).eq('id', userId);
-    setMessage(`Role updated to "${newRole}" successfully`);
-    fetchUsers();
-    setTimeout(() => setMessage(''), 3000);
+    const { error } = await supabase.from('users').update({ role: newRole }).eq('id', userId);
+    if (!error) {
+      setMessage(`Role updated to "${newRole}" successfully`);
+      fetchUsers();
+      setTimeout(() => setMessage(''), 3000);
+    }
   };
 
   const filtered = users.filter((u) => {
     const matchSearch = u.email.toLowerCase().includes(search.toLowerCase()) || (u.full_name || '').toLowerCase().includes(search.toLowerCase());
-    const matchFilter = filter === 'all' || (filter === 'active' && u.is_verified) || (filter === 'suspended' && !u.is_verified);
+    const userStatus = u.status || 'active';
+    const matchFilter = filter === 'all' || filter === userStatus;
     return matchSearch && matchFilter;
   });
 
@@ -62,7 +73,9 @@ export default function AccountStatusPage() {
       </div>
 
       {message && (
-        <div className="bg-green-500/10 border border-green-500/20 text-green-400 px-4 py-3 rounded-lg text-sm">{message}</div>
+        <div className={`px-4 py-3 rounded-lg text-sm border ${message.startsWith('Failed') ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-green-500/10 border-green-500/20 text-green-400'}`}>
+          {message}
+        </div>
       )}
 
       <div className="bg-[#0f1629] border border-white/10 rounded-xl p-4">
@@ -102,37 +115,43 @@ export default function AccountStatusPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-white/5">
-                {filtered.map((u) => (
-                  <tr key={u.id} className="hover:bg-white/5 transition-colors">
-                    <td className="py-3">
-                      <div className="text-white">{u.email}</div>
-                      <div className="text-gray-500 text-xs">{u.full_name || '—'}</div>
-                    </td>
-                    <td className="py-3 text-gray-300 capitalize">
-                      <select
-                        value={u.role}
-                        onChange={(e) => changeRole(u.id, e.target.value)}
-                        className="bg-white/5 border border-white/10 rounded-lg text-xs text-white px-2 py-1 focus:outline-none focus:border-blue-500 cursor-pointer appearance-none"
-                        style={{ backgroundColor: '#1a2235' }}
-                      >
-                        <option value="user" style={{ backgroundColor: '#1a2235' }}>User</option>
-                        <option value="admin" style={{ backgroundColor: '#1a2235' }}>Admin</option>
-                      </select>
-                    </td>
-                    <td className="py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${u.is_verified ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
-                        {u.is_verified ? 'Active' : 'Suspended'}
-                      </span>
-                    </td>
-                    <td className="py-3 text-gray-400">{new Date(u.created_at).toLocaleDateString()}</td>
-                    <td className="py-3">
-                      <button onClick={() => toggleStatus(u.id, u.is_verified)}
-                        className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium transition-colors ${u.is_verified ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'bg-green-500/10 text-green-400 hover:bg-green-500/20'}`}>
-                        {u.is_verified ? <><XCircleIcon className="w-3 h-3" /> Suspend</> : <><CheckCircleIcon className="w-3 h-3" /> Activate</>}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {filtered.map((u) => {
+                  const userStatus = u.status || 'active';
+                  const isActive = userStatus === 'active';
+                  return (
+                    <tr key={u.id} className="hover:bg-white/5 transition-colors">
+                      <td className="py-3">
+                        <div className="text-white">{u.email}</div>
+                        <div className="text-gray-500 text-xs">{u.full_name || '—'}</div>
+                      </td>
+                      <td className="py-3 text-gray-300 capitalize">
+                        <select
+                          value={u.role}
+                          onChange={(e) => changeRole(u.id, e.target.value)}
+                          className="bg-white/5 border border-white/10 rounded-lg text-xs text-white px-2 py-1 focus:outline-none focus:border-blue-500 cursor-pointer appearance-none"
+                          style={{ backgroundColor: '#1a2235' }}
+                        >
+                          <option value="user" style={{ backgroundColor: '#1a2235' }}>User</option>
+                          <option value="admin" style={{ backgroundColor: '#1a2235' }}>Admin</option>
+                        </select>
+                      </td>
+                      <td className="py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${isActive ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'}`}>
+                          {isActive ? 'Active' : 'Suspended'}
+                        </span>
+                      </td>
+                      <td className="py-3 text-gray-400">{new Date(u.created_at).toLocaleDateString()}</td>
+                      <td className="py-3">
+                        <button
+                          onClick={() => toggleStatus(u.id, userStatus)}
+                          disabled={actionLoading === u.id}
+                          className={`flex items-center gap-1 px-3 py-1 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${isActive ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20' : 'bg-green-500/10 text-green-400 hover:bg-green-500/20'}`}>
+                          {actionLoading === u.id ? '...' : isActive ? <><XCircleIcon className="w-3 h-3" /> Suspend</> : <><CheckCircleIcon className="w-3 h-3" /> Activate</>}
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
             {filtered.length === 0 && (

@@ -8,9 +8,10 @@ interface Trade {
   id: string;
   user_id: string;
   asset_id: string;
-  direction: string;
+  order_type: string;
   amount: number;
-  payout: number;
+  profit: number | null;
+  result: string | null;
   status: string;
   created_at: string;
   closed_at: string | null;
@@ -26,8 +27,8 @@ export default function TradeHistoryPage() {
     const supabase = createClient();
     const { data } = await supabase
       .from('trades')
-      .select('id, user_id, asset_id, direction, amount, payout, status, created_at, closed_at, users(email)')
-      .in('status', ['won', 'lost'])
+      .select('id, user_id, asset_id, order_type, amount, profit, result, status, created_at, closed_at, users(email)')
+      .eq('status', 'closed')
       .order('closed_at', { ascending: false })
       .limit(200);
     setTrades((data as any) || []);
@@ -66,7 +67,7 @@ export default function TradeHistoryPage() {
                   <th className="pb-3 font-medium">Asset</th>
                   <th className="pb-3 font-medium">Direction</th>
                   <th className="pb-3 font-medium">Amount</th>
-                  <th className="pb-3 font-medium">Payout</th>
+                  <th className="pb-3 font-medium">Profit</th>
                   <th className="pb-3 font-medium">Result</th>
                   <th className="pb-3 font-medium">Closed At</th>
                 </tr>
@@ -77,15 +78,19 @@ export default function TradeHistoryPage() {
                     <td className="py-3 text-white">{(t.users as any)?.email || t.user_id.slice(0, 8)}</td>
                     <td className="py-3 text-gray-300">{t.asset_id}</td>
                     <td className="py-3">
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${t.direction === 'up' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
-                        {t.direction?.toUpperCase()}
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${t.order_type === 'buy' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
+                        {t.order_type?.toUpperCase()}
                       </span>
                     </td>
                     <td className="py-3 text-white">${Number(t.amount).toLocaleString()}</td>
-                    <td className="py-3 text-yellow-400">${Number(t.payout || 0).toLocaleString()}</td>
                     <td className="py-3">
-                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${t.status === 'won' ? 'bg-green-500/10 text-green-400' : 'bg-red-500/10 text-red-400'}`}>
-                        {t.status?.toUpperCase()}
+                      <span className={t.profit != null && t.profit >= 0 ? 'text-green-400' : 'text-red-400'}>
+                        {t.profit != null ? `${t.profit >= 0 ? '+' : ''}$${Number(t.profit).toLocaleString()}` : '—'}
+                      </span>
+                    </td>
+                    <td className="py-3">
+                      <span className={`px-2 py-0.5 rounded text-xs font-medium ${t.result === 'win' ? 'bg-green-500/10 text-green-400' : t.result === 'loss' ? 'bg-red-500/10 text-red-400' : 'bg-gray-500/10 text-gray-400'}`}>
+                        {t.result ? t.result.toUpperCase() : t.status.toUpperCase()}
                       </span>
                     </td>
                     <td className="py-3 text-gray-400">{t.closed_at ? new Date(t.closed_at).toLocaleString() : '—'}</td>
