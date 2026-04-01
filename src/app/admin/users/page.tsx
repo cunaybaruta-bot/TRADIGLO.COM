@@ -9,6 +9,7 @@ interface User {
   email: string;
   full_name: string | null;
   role: string;
+  status: string;
   is_verified: boolean;
   created_at: string;
 }
@@ -35,14 +36,19 @@ export default function UsersPage() {
   const [search, setSearch] = useState('');
   const [expandedUser, setExpandedUser] = useState<string | null>(null);
   const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState<'success' | 'error'>('success');
   const [tab, setTab] = useState<'all' | 'active' | 'suspended'>('all');
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const fetchUsers = useCallback(async () => {
     const supabase = createClient();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('users')
-      .select('id, email, full_name, role, is_verified, created_at')
+      .select('id, email, full_name, role, status, is_verified, created_at')
       .order('created_at', { ascending: false });
+    if (error) {
+      console.error('Error fetching users:', error);
+    }
     setUsers((data as UserWithWallet[]) || []);
     setLoading(false);
   }, []);
@@ -64,30 +70,74 @@ export default function UsersPage() {
     fetchUserDetails(userId);
   };
 
-  const handleSuspend = async (userId: string) => {
-    const supabase = createClient();
-    await supabase.from('users').update({ role: 'suspended' }).eq('id', userId);
-    setMessage('User suspended');
-    fetchUsers();
+  const showMessage = (msg: string, type: 'success' | 'error' = 'success') => {
+    setMessage(msg);
+    setMessageType(type);
     setTimeout(() => setMessage(''), 3000);
+  };
+
+  const handleSuspend = async (userId: string) => {
+    setActionLoading(userId);
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('users')
+      .update({ status: 'suspended' })
+      .eq('id', userId);
+    if (error) {
+      console.error('Suspend error:', error);
+      showMessage(`Failed to suspend user: ${error.message}`, 'error');
+    } else {
+      showMessage('User suspended successfully');
+      await fetchUsers();
+    }
+    setActionLoading(null);
   };
 
   const handleActivate = async (userId: string) => {
+    setActionLoading(userId);
     const supabase = createClient();
-    await supabase.from('users').update({ role: 'user' }).eq('id', userId);
-    setMessage('User activated');
-    fetchUsers();
-    setTimeout(() => setMessage(''), 3000);
+    const { error } = await supabase
+      .from('users')
+      .update({ status: 'active' })
+      .eq('id', userId);
+    if (error) {
+      console.error('Activate error:', error);
+      showMessage(`Failed to activate user: ${error.message}`, 'error');
+    } else {
+      showMessage('User activated successfully');
+      await fetchUsers();
+    }
+    setActionLoading(null);
   };
+
+  const handleDelete = async (userId: string, userEmail: string) => {
+    if (!confirm(`Are you sure you want to delete user "${userEmail}"? This action cannot be undone.`)) return;
+    setActionLoading(userId);
+    const supabase = createClient();
+    const { error } = await supabase
+      .from('users')
+      .delete()
+      .eq('id', userId);
+    if (error) {
+      console.error('Delete error:', error);
+      showMessage(`Failed to delete user: ${error.message}`, 'error');
+    } else {
+      showMessage('User deleted successfully');
+      await fetchUsers();
+    }
+    setActionLoading(null);
+  };
+
+  const isUserSuspended = (user: UserWithWallet) => user.status === 'suspended';
 
   const filtered = users.filter((u) => {
     const matchSearch = u.email.toLowerCase().includes(search.toLowerCase()) || (u.full_name || '').toLowerCase().includes(search.toLowerCase());
-    const matchTab = tab === 'all' || (tab === 'active' && u.role !== 'suspended') || (tab === 'suspended' && u.role === 'suspended');
+    const matchTab = tab === 'all' || (tab === 'active' && !isUserSuspended(u)) || (tab === 'suspended' && isUserSuspended(u));
     return matchSearch && matchTab;
   });
 
-  const activeCount = users.filter((u) => u.role !== 'suspended').length;
-  const suspendedCount = users.filter((u) => u.role === 'suspended').length;
+  const activeCount = users.filter((u) => !isUserSuspended(u)).length;
+  const suspendedCount = users.filter((u) => isUserSuspended(u)).length;
 
   return (
     <div className="space-y-6">
@@ -119,7 +169,11 @@ export default function UsersPage() {
         </div>
       </div>
 
-      {message && <div className="bg-green-500/10 border border-green-500/20 text-green-400 text-sm px-4 py-2 rounded-lg">{message}</div>}
+      {message && (
+        <div className={`border text-sm px-4 py-2 rounded-lg ${messageType === 'error' ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-green-500/10 border-green-500/20 text-green-400'}`}>
+          {message}
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-1 bg-[#1e293b] rounded-lg p-1 w-fit border border-slate-700">
@@ -152,7 +206,7 @@ export default function UsersPage() {
                   <tr key={user.id} className="hover:bg-slate-700/20 transition-colors">
                     <td className="px-5 py-3 text-white text-sm">{user.email}</td>
                     <td className="px-5 py-3 text-slate-300 text-sm">{user.full_name || '—'}</td>
-                    <td className="px-5 py-3"><StatusBadge active={user.role !== 'suspended'} /></td>
+                    <td className="px-5 py-3"><StatusBadge active={!isUserSuspended(user)} /></td>
                     <td className="px-5 py-3">
                       {user.is_verified ? <CheckCircleIcon className="w-4 h-4 text-green-400" /> : <XCircleIcon className="w-4 h-4 text-slate-500" />}
                     </td>
@@ -163,17 +217,27 @@ export default function UsersPage() {
                           className="text-xs px-2 py-1 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-colors">
                           {expandedUser === user.id ? 'Hide' : 'Details'}
                         </button>
-                        {user.role !== 'suspended' ? (
-                          <button onClick={() => handleSuspend(user.id)}
-                            className="text-xs px-2 py-1 rounded bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors">
-                            Suspend
+                        {!isUserSuspended(user) ? (
+                          <button
+                            onClick={() => handleSuspend(user.id)}
+                            disabled={actionLoading === user.id}
+                            className="text-xs px-2 py-1 rounded bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            {actionLoading === user.id ? '...' : 'Suspend'}
                           </button>
                         ) : (
-                          <button onClick={() => handleActivate(user.id)}
-                            className="text-xs px-2 py-1 rounded bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 transition-colors">
-                            Activate
+                          <button
+                            onClick={() => handleActivate(user.id)}
+                            disabled={actionLoading === user.id}
+                            className="text-xs px-2 py-1 rounded bg-green-500/10 text-green-400 border border-green-500/20 hover:bg-green-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            {actionLoading === user.id ? '...' : 'Activate'}
                           </button>
                         )}
+                        <button
+                          onClick={() => handleDelete(user.id, user.email)}
+                          disabled={actionLoading === user.id}
+                          className="text-xs px-2 py-1 rounded bg-slate-500/10 text-slate-400 border border-slate-500/20 hover:bg-red-500/20 hover:text-red-400 hover:border-red-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                          Delete
+                        </button>
                       </div>
                     </td>
                   </tr>
