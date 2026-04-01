@@ -131,13 +131,6 @@ export default function TrustCenterPage() {
           activities: 'Registered as offshore reporting entity',
         },
         {
-          entity: 'PT. ASET DIGITAL BERKAT (trading as Tokocrypto)',
-          country: 'Indonesia',
-          regulator: 'Bappebti',
-          licenseNo: '001/BAPPEBTI/CP-AK/11/2019',
-          activities: 'Physical crypto asset trader (PFAK license)',
-        },
-        {
           entity: 'Tradiglo Japan Inc.',
           country: 'Japan',
           regulator: 'Japan Financial Services Agency (JFSA)',
