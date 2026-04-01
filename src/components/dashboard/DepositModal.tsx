@@ -174,9 +174,11 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
 
   // Bonus calculation
   const bonusPct = bonusSetting?.bonus_percent ?? 0;
-  const rawBonus = (amountUsd * bonusPct) / 100;
-  const bonusAmt = bonusSetting ? Math.min(rawBonus, bonusSetting.max_bonus) : 0;
-  const totalWithBonus = amountUsd + bonusAmt;
+  const BONUS_MIN_USD = 100;
+  const isBonusEligible = isFirstDeposit && bonusSetting !== null && amountUsd >= BONUS_MIN_USD;
+  const rawBonus = isBonusEligible ? (amountUsd * bonusPct) / 100 : 0;
+  const bonusAmt = isBonusEligible && bonusSetting ? Math.min(rawBonus, bonusSetting.max_bonus) : 0;
+  const totalWithBonus = Math.round((amountUsd + bonusAmt) * 100) / 100;
   const showBonus = isFirstDeposit && bonusSetting && amountUsd > 0;
 
   const methodsForCountry = methods.filter((m) => (m.country || 'Global') === selectedCountry);
@@ -515,10 +517,17 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
                         <span className="text-slate-400">Deposit Amount</span>
                         <span className="text-white font-semibold">≈ ${amountUsd.toFixed(2)}</span>
                       </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-yellow-400 flex items-center gap-1">🎁 Welcome Bonus ({bonusPct}%)</span>
-                        <span className="text-yellow-400 font-semibold">+${bonusAmt.toFixed(2)}</span>
-                      </div>
+                      {isBonusEligible ? (
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-yellow-400 flex items-center gap-1">🎁 Welcome Bonus ({bonusPct}%)</span>
+                          <span className="text-yellow-400 font-semibold">+${bonusAmt.toFixed(2)}</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-slate-500 flex items-center gap-1">🎁 Welcome Bonus ({bonusPct}%)</span>
+                          <span className="text-slate-500 text-[10px]">Bonus available for deposits ≥ $100</span>
+                        </div>
+                      )}
                       <div className="border-t border-yellow-500/20 pt-2 flex items-center justify-between">
                         <div>
                           <div className="text-yellow-400 text-xs font-semibold">Total Credited</div>
@@ -581,7 +590,7 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
                     <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     Submitting...
                   </>
-                ) : showBonus ? (
+                ) : isBonusEligible ? (
                   `Submit Deposit · $${amountUsd.toFixed(2)} + $${bonusAmt.toFixed(2)} bonus = $${totalWithBonus.toFixed(2)}`
                 ) : (
                   `Submit Deposit Request${amountNum > 0 && rate ? ` · ${amountNum} ${currency} ≈ $${amountUsd.toFixed(2)}` : ''}`
