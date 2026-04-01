@@ -311,11 +311,15 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
 
         {/* Welcome Bonus Banner — shown on country step if first deposit */}
         {isFirstDeposit && bonusSetting && step !== 'success' && (
-          <div className="flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-yellow-500/15 to-amber-500/10 border-b border-yellow-500/20" style={{ flexShrink: 0 }}>
-            <span className="text-xl">🎁</span>
+          <div className="flex items-center gap-3 px-5 py-3 bg-[#0f1f2e] border-b border-blue-500/20" style={{ flexShrink: 0 }}>
+            <div className="w-7 h-7 rounded-lg bg-blue-500/15 border border-blue-500/25 flex items-center justify-center flex-shrink-0">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 12 20 22 4 22" /><rect x="2" y="7" width="20" height="5" /><line x1="12" y1="22" x2="12" y2="7" /><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" /><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+              </svg>
+            </div>
             <div className="flex-1 min-w-0">
-              <div className="text-yellow-400 text-xs font-bold">Welcome Bonus: {bonusSetting.bonus_percent}% on your first deposit!</div>
-              <div className="text-yellow-400/60 text-[10px] mt-0.5">
+              <div className="text-blue-300 text-xs font-bold">Welcome Bonus: {bonusSetting.bonus_percent}% on your first deposit</div>
+              <div className="text-slate-500 text-[10px] mt-0.5">
                 Min deposit ${bonusSetting.min_deposit} · Max bonus ${bonusSetting.max_bonus.toLocaleString()}
               </div>
             </div>
@@ -550,12 +554,12 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
                       </div>
                       {isBonusEligible ? (
                         <div className="flex items-center justify-between text-xs">
-                          <span className="text-yellow-400 flex items-center gap-1">🎁 Welcome Bonus ({bonusPct}%)</span>
+                          <span className="text-yellow-400 flex items-center gap-1">Welcome Bonus ({bonusPct}%)</span>
                           <span className="text-yellow-400 font-semibold">+${bonusAmt.toFixed(2)}</span>
                         </div>
                       ) : (
                         <div className="flex items-center justify-between text-xs">
-                          <span className="text-slate-500 flex items-center gap-1">🎁 Welcome Bonus ({bonusPct}%)</span>
+                          <span className="text-slate-500 flex items-center gap-1">Welcome Bonus ({bonusPct}%)</span>
                           <span className="text-slate-500 text-[10px]">Bonus available for deposits ≥ $100</span>
                         </div>
                       )}
@@ -588,7 +592,7 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
               {/* Upload proof */}
               <div>
                 <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
-                  Upload Payment Proof <span className="text-slate-600 normal-case">(optional)</span>
+                  Upload Payment Proof <span className="text-red-400 normal-case">*</span>
                 </label>
                 <label className="block cursor-pointer">
                   <input type="file" accept="image/*,.pdf" onChange={handleFileChange} className="hidden" />
@@ -613,7 +617,7 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
 
               <button
                 onClick={handleSubmit}
-                disabled={submitting || amountNum <= 0}
+                disabled={submitting || amountNum <= 0 || !proofFile}
                 className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold text-sm transition-all flex items-center justify-center gap-2"
               >
                 {submitting ? (
@@ -673,7 +677,7 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
                 </div>
                 {isFirstDeposit && bonusSetting && bonusAmt > 0 && (
                   <div className="flex justify-between text-xs">
-                    <span className="text-yellow-400">🎁 Welcome Bonus</span>
+                    <span className="text-yellow-400">Welcome Bonus</span>
                     <span className="text-yellow-400 font-bold">+${bonusAmt.toFixed(2)}</span>
                   </div>
                 )}
