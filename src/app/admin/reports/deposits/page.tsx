@@ -3,13 +3,12 @@
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
-
 interface Deposit {
   id: string;
   user_id: string;
   amount: number;
   status: string;
-  method: string;
+  payment_method: string | null;
   created_at: string;
   users?: { email: string };
 }
@@ -22,7 +21,7 @@ export default function DepositReportsPage() {
 
   const fetchDeposits = useCallback(async () => {
     const supabase = createClient();
-    let query = supabase.from('deposits').select('id, user_id, amount, status, method, created_at, users(email)').order('created_at', { ascending: false });
+    let query = supabase.from('deposits').select('id, user_id, amount, status, payment_method, created_at, users(email)').order('created_at', { ascending: false });
     if (dateFrom) query = query.gte('created_at', dateFrom);
     if (dateTo) query = query.lte('created_at', dateTo + 'T23:59:59');
     const { data } = await query;
@@ -94,11 +93,11 @@ export default function DepositReportsPage() {
                   <tr key={d.id} className="hover:bg-white/5 transition-colors">
                     <td className="py-3 text-white">{(d.users as any)?.email || d.user_id.slice(0, 8)}</td>
                     <td className="py-3 text-green-400 font-medium">${Number(d.amount).toLocaleString()}</td>
-                    <td className="py-3 text-gray-300">{d.method || '—'}</td>
+                    <td className="py-3 text-gray-300">{d.payment_method || '—'}</td>
                     <td className="py-3">
                       <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${
                         d.status === 'completed' ? 'bg-green-500/10 text-green-400 border-green-500/20' :
-                        d.status === 'pending'? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'
+                        d.status === 'pending' ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20' : 'bg-red-500/10 text-red-400 border-red-500/20'
                       }`}>{d.status}</span>
                     </td>
                     <td className="py-3 text-gray-400">{new Date(d.created_at).toLocaleString()}</td>

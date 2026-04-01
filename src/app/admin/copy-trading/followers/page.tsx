@@ -6,11 +6,11 @@ import { UserGroupIcon } from '@heroicons/react/24/outline';
 
 interface Follower {
   id: string;
-  follower_id: string;
-  strategy_id: string;
-  copy_amount: number;
-  status: string;
-  created_at: string;
+  user_id: string;
+  provider_id: string;
+  is_active: boolean;
+  followed_at: string;
+  allocated_balance: number | null;
   users?: { email: string };
 }
 
@@ -21,9 +21,9 @@ export default function CopyTradingFollowersPage() {
   const fetchFollowers = useCallback(async () => {
     const supabase = createClient();
     const { data } = await supabase
-      .from('copy_trading_followers')
-      .select('id, follower_id, strategy_id, copy_amount, status, created_at, users(email)')
-      .order('created_at', { ascending: false });
+      .from('copy_trade_followers')
+      .select('id, user_id, provider_id, is_active, followed_at, allocated_balance, users(email)')
+      .order('followed_at', { ascending: false });
     setFollowers((data as any) || []);
     setLoading(false);
   }, []);
@@ -52,8 +52,8 @@ export default function CopyTradingFollowersPage() {
               <thead>
                 <tr className="border-b border-white/10 text-gray-400 text-left">
                   <th className="pb-3 font-medium">Follower</th>
-                  <th className="pb-3 font-medium">Strategy ID</th>
-                  <th className="pb-3 font-medium">Copy Amount</th>
+                  <th className="pb-3 font-medium">Provider ID</th>
+                  <th className="pb-3 font-medium">Allocated Balance</th>
                   <th className="pb-3 font-medium">Status</th>
                   <th className="pb-3 font-medium">Joined</th>
                 </tr>
@@ -61,15 +61,15 @@ export default function CopyTradingFollowersPage() {
               <tbody className="divide-y divide-white/5">
                 {followers.map((f) => (
                   <tr key={f.id} className="hover:bg-white/5 transition-colors">
-                    <td className="py-3 text-white">{(f.users as any)?.email || f.follower_id?.slice(0, 8)}</td>
-                    <td className="py-3 text-gray-400 font-mono text-xs">{f.strategy_id?.slice(0, 12)}...</td>
-                    <td className="py-3 text-green-400">${Number(f.copy_amount).toLocaleString()}</td>
+                    <td className="py-3 text-white">{(f.users as any)?.email || f.user_id?.slice(0, 8)}</td>
+                    <td className="py-3 text-gray-400 font-mono text-xs">{f.provider_id?.slice(0, 12)}...</td>
+                    <td className="py-3 text-green-400">{f.allocated_balance != null ? `$${Number(f.allocated_balance).toLocaleString()}` : '—'}</td>
                     <td className="py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${f.status === 'active' ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
-                        {f.status}
+                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${f.is_active ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-gray-500/10 text-gray-400 border-gray-500/20'}`}>
+                        {f.is_active ? 'Active' : 'Stopped'}
                       </span>
                     </td>
-                    <td className="py-3 text-gray-400">{new Date(f.created_at).toLocaleDateString()}</td>
+                    <td className="py-3 text-gray-400">{f.followed_at ? new Date(f.followed_at).toLocaleDateString() : '—'}</td>
                   </tr>
                 ))}
               </tbody>

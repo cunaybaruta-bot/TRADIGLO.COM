@@ -15,7 +15,6 @@ interface Deposit {
   payment_method: string | null;
   payment_method_id: string | null;
   payment_reference: string | null;
-  proof_image: string | null;
   proof_url: string | null;
   status: string;
   created_at: string;
@@ -250,7 +249,7 @@ export default function DepositsPage() {
     const supabase = createClient();
     let query = supabase
       .from('deposits')
-      .select('id, user_id, amount, amount_original, currency_original, amount_usd, payment_method, payment_method_id, payment_reference, proof_image, proof_url, status, created_at, bonus_percent, bonus_amount, final_amount, is_first_deposit, users(email)')
+      .select('id, user_id, amount, amount_original, currency_original, amount_usd, payment_method, payment_method_id, payment_reference, proof_url, status, created_at, bonus_percent, bonus_amount, final_amount, is_first_deposit, users(email)')
       .order('created_at', { ascending: false });
 
     if (filter === 'approved') {
@@ -464,14 +463,14 @@ export default function DepositsPage() {
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        {proofSrcVal ? (
+                        {d.proof_url ? (
                           <button
-                            onClick={() => setProofSrc(proofSrcVal)}
+                            onClick={() => setProofSrc(d.proof_url!)}
                             className="w-10 h-8 rounded-lg overflow-hidden border border-slate-600 hover:border-emerald-500/50 transition-colors flex items-center justify-center bg-slate-800"
                             title="View proof"
                           >
-                            {proofSrcVal.startsWith('data:image') || proofSrcVal.match(/\.(jpg|jpeg|png|gif|webp)/i) ? (
-                              <img src={proofSrcVal} alt="Proof thumbnail" className="w-full h-full object-cover" />
+                            {d.proof_url.startsWith('data:image') || d.proof_url.match(/\.(jpg|jpeg|png|gif|webp)/i) ? (
+                              <img src={d.proof_url} alt="Proof thumbnail" className="w-full h-full object-cover" />
                             ) : (
                               <EyeIcon className="w-4 h-4 text-slate-400" />
                             )}

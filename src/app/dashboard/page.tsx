@@ -435,8 +435,8 @@ function TradeResultModal({ trade, onClose }: { trade: TradeResult; onClose: () 
             margin: '0 auto 18px',
           }}>
             {isWin ? (
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 11.08V12a10 10 0 0 0-5.93-9.14" /><polyline points="22 4 12 14.01 9 11.01" />
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
               </svg>
             ) : (
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke={accentColor} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -905,6 +905,7 @@ export default function DashboardPage() {
 
   const chartRef = useRef<LightweightChartHandle>(null);
   const [isChartReady, setIsChartReady] = useState(false);
+  const handleCloseTradeRef = useRef<(trade: Trade) => Promise<void>>(async () => {});
 
   // ── Auth Check ──────────────────────────────────────────────────────────────
 
@@ -1202,16 +1203,21 @@ export default function DashboardPage() {
   }, [authChecked, fetchOpenTrades]);
 
   const handleTradeRowExpired = useCallback((tradeId: string) => {
-    setFadingTradeIds((prev) => new Set([...prev, tradeId]));
-    setTimeout(() => {
-      handleTradeExpired();
-      setFadingTradeIds((prev) => {
-        const next = new Set(prev);
-        next.delete(tradeId);
-        return next;
-      });
-    }, 300);
-  }, [handleTradeExpired]);
+    const trade = openTrades.find((t) => t.id === tradeId);
+    if (trade) {
+      handleCloseTradeRef.current(trade);
+    } else {
+      setFadingTradeIds((prev) => new Set([...prev, tradeId]));
+      setTimeout(() => {
+        handleTradeExpired();
+        setFadingTradeIds((prev) => {
+          const next = new Set(prev);
+          next.delete(tradeId);
+          return next;
+        });
+      }, 300);
+    }
+  }, [openTrades, handleTradeExpired]);
 
   // ── Amount handlers ─────────────────────────────────────────────────────────
 
@@ -1279,16 +1285,26 @@ export default function DashboardPage() {
       // Calculate WIN/LOSS and show modal
       if (lastPopupTradeIdRef.current !== trade.id) {
         lastPopupTradeIdRef.current = trade.id;
-        const profitVal = trade.profit ?? trade.profit_loss ?? 0;
+        const exitPrice = chartPrice;
+        const entryPrice = trade.entry_price ?? 0;
+        let result: 'win' | 'loss';
+        if (trade.order_type === 'buy') {
+          result = exitPrice >= entryPrice ? 'win' : 'loss';
+        } else {
+          result = exitPrice <= entryPrice ? 'win' : 'loss';
+        }
+        const priceDiff = Math.abs(exitPrice - entryPrice);
+        const pctMove = entryPrice > 0 ? priceDiff / entryPrice : 0;
+        const profitLoss = result === 'win' ? trade.amount * (1 + pctMove) - trade.amount : trade.amount;
         const knownTrade = openTrades.find((t) => t.id === trade.id);
         setTradeResultPopup({
           asset_symbol: knownTrade?.asset_symbol ?? trade.asset_symbol ?? '',
           order_type: trade.order_type,
           amount: trade.amount,
-          result: trade.result as 'win' | 'loss',
-          profit_loss: Math.abs(profitVal),
-          entry_price: trade.entry_price ?? undefined,
-          exit_price: trade.exit_price ?? undefined,
+          result,
+          profit_loss: profitLoss,
+          entry_price: entryPrice,
+          exit_price: exitPrice,
         });
       }
 
@@ -1304,6 +1320,8 @@ export default function DashboardPage() {
       });
     }
   }, [closingTradeIds, fetchOpenTrades, fetchWallet]);
+
+  handleCloseTradeRef.current = handleCloseTrade;
 
   // ── Close all trades ────────────────────────────────────────────────────────
 

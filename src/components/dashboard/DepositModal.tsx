@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { Wallet } from 'lucide-react';
 
 interface PaymentMethod {
   id: string;
@@ -49,6 +50,18 @@ const COUNTRY_CURRENCY: Record<string, string> = {
   Indonesia: 'IDR',
   Philippines: 'PHP',
   'United States': 'USD',
+  China: 'CNY',
+  India: 'INR',
+  'Hong Kong': 'HKD',
+  Taiwan: 'TWD',
+  Pakistan: 'PKR',
+  Bangladesh: 'BDT',
+  'Saudi Arabia': 'SAR',
+  UAE: 'AED',
+  Qatar: 'QAR',
+  Kuwait: 'KWD',
+  'Sri Lanka': 'LKR',
+  Myanmar: 'MMK',
 };
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
@@ -101,6 +114,18 @@ const FLAG_EMOJI: Record<string, string> = {
   Indonesia: '🇮🇩',
   Philippines: '🇵🇭',
   'United States': '🇺🇸',
+  China: '🇨🇳',
+  India: '🇮🇳',
+  'Hong Kong': '🇭🇰',
+  Taiwan: '🇹🇼',
+  Pakistan: '🇵🇰',
+  Bangladesh: '🇧🇩',
+  'Saudi Arabia': '🇸🇦',
+  UAE: '🇦🇪',
+  Qatar: '🇶🇦',
+  Kuwait: '🇰🇼',
+  'Sri Lanka': '🇱🇰',
+  Myanmar: '🇲🇲',
 };
 
 export default function DepositModal({ isOpen, onClose, userId, isDemo }: DepositModalProps) {
@@ -117,9 +142,12 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
   const [proofPreview, setProofPreview] = useState<string | null>(null);
   const [proofBase64, setProofBase64] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [referenceNumber, setReferenceNumber] = useState('');
   const [isFirstDeposit, setIsFirstDeposit] = useState(false);
   const [bonusSetting, setBonusSetting] = useState<BonusSetting | null>(null);
+  const [proofValidating, setProofValidating] = useState(false);
+  const [proofValidationError, setProofValidationError] = useState('');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -157,6 +185,8 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
       setProofFile(null);
       setProofPreview(null);
       setProofBase64(null);
+      setProofValidating(false);
+      setProofValidationError('');
     }
   }, [isOpen, fetchData]);
 
@@ -174,9 +204,11 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
 
   // Bonus calculation
   const bonusPct = bonusSetting?.bonus_percent ?? 0;
-  const rawBonus = (amountUsd * bonusPct) / 100;
-  const bonusAmt = bonusSetting ? Math.min(rawBonus, bonusSetting.max_bonus) : 0;
-  const totalWithBonus = amountUsd + bonusAmt;
+  const BONUS_MIN_USD = 100;
+  const isBonusEligible = isFirstDeposit && bonusSetting !== null && amountUsd >= BONUS_MIN_USD;
+  const rawBonus = isBonusEligible ? (amountUsd * bonusPct) / 100 : 0;
+  const bonusAmt = isBonusEligible && bonusSetting ? Math.min(rawBonus, bonusSetting.max_bonus) : 0;
+  const totalWithBonus = Math.round((amountUsd + bonusAmt) * 100) / 100;
   const showBonus = isFirstDeposit && bonusSetting && amountUsd > 0;
 
   const methodsForCountry = methods.filter((m) => (m.country || 'Global') === selectedCountry);
@@ -198,33 +230,64 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
     setStep('amount');
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setProofFile(file);
+    setProofValidationError('');
+    setProofValidating(true);
+
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = async (ev) => {
       const result = ev.target?.result as string;
       setProofPreview(result);
       setProofBase64(result);
+
+      // File type validation only — admin will verify manually
+      const isImage = file.type.startsWith('image/');
+      const isPdf = file.type === 'application/pdf';
+
+      if (!isImage && !isPdf) {
+        setProofValidationError('Only image files (PNG, JPG) and PDF are accepted.');
+        setProofFile(null);
+        setProofPreview(null);
+        setProofBase64(null);
+      }
+
+      setProofValidating(false);
     };
     reader.readAsDataURL(file);
   };
 
   const handleSubmit = async () => {
-    if (!selectedMethod || !userId) return;
+    if (!selectedMethod) return;
     const val = parseFloat(amount);
     if (isNaN(val) || val <= 0) {
       setAmountError('Please enter a valid amount');
       return;
     }
+    if (isBelowMinDeposit) {
+      setAmountError(`Minimum deposit is $100 USD (≈ ${rate ? Math.ceil(MIN_DEPOSIT_USD / rate.rate_to_usd).toLocaleString() : ''} ${currency})`);
+      return;
+    }
     setSubmitting(true);
+    setSubmitError('');
     try {
       const supabase = createClient();
+
+      // Always get user from auth to ensure valid session
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        setSubmitError('You must be logged in to make a deposit.');
+        setSubmitting(false);
+        return;
+      }
+
       const ref = `DEP-${Date.now().toString(36).toUpperCase()}`;
 
-      const { error } = await supabase.from('deposits').insert({
-        user_id: userId,
+      // Debug log
+      console.log('Submitting deposit:', {
+        user_id: user.id,
         amount: amountUsd,
         amount_original: val,
         currency_original: currency,
@@ -232,15 +295,34 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
         payment_method: selectedMethod.name,
         payment_method_id: selectedMethod.id,
         payment_reference: ref,
-        proof_image: proofBase64,
         status: 'pending',
       });
 
-      if (error) throw error;
+      const { error } = await supabase.from('deposits').insert({
+        user_id: user.id,
+        amount: amountUsd,
+        amount_original: val,
+        currency_original: currency,
+        amount_usd: amountUsd,
+        payment_method: selectedMethod.name,
+        payment_method_id: selectedMethod.id,
+        payment_reference: ref,
+        proof_url: proofBase64 || null,
+        status: 'pending',
+      });
+
+      if (error) {
+        console.error('DEPOSIT ERROR:', error);
+        setSubmitError(error.message || 'Failed to submit deposit. Please try again.');
+        setSubmitting(false);
+        return;
+      }
+
       setReferenceNumber(ref);
       setStep('success');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Deposit error:', err);
+      setSubmitError(err?.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -255,6 +337,9 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
 
   const STEPS: Step[] = ['country', 'method', 'amount'];
   const stepIndex = STEPS.indexOf(step);
+
+  const MIN_DEPOSIT_USD = 100;
+  const isBelowMinDeposit = amountNum > 0 && rate ? amountUsd < MIN_DEPOSIT_USD : false;
 
   return (
     <div
@@ -278,11 +363,13 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
 
         {/* Welcome Bonus Banner — shown on country step if first deposit */}
         {isFirstDeposit && bonusSetting && step !== 'success' && (
-          <div className="flex items-center gap-3 px-5 py-3 bg-gradient-to-r from-yellow-500/15 to-amber-500/10 border-b border-yellow-500/20" style={{ flexShrink: 0 }}>
-            <span className="text-xl">🎁</span>
+          <div className="flex items-center gap-3 px-5 py-3 bg-[#0f1f2e] border-b border-blue-500/20" style={{ flexShrink: 0 }}>
+            <div className="w-7 h-7 rounded-lg bg-blue-500/15 border border-blue-500/25 flex items-center justify-center flex-shrink-0">
+              <Wallet size={14} color="#3b82f6" strokeWidth={2} />
+            </div>
             <div className="flex-1 min-w-0">
-              <div className="text-yellow-400 text-xs font-bold">Welcome Bonus: {bonusSetting.bonus_percent}% on your first deposit!</div>
-              <div className="text-yellow-400/60 text-[10px] mt-0.5">
+              <div className="text-blue-300 text-xs font-bold">Welcome Bonus: {bonusSetting.bonus_percent}% on your first deposit</div>
+              <div className="text-slate-500 text-[10px] mt-0.5">
                 Min deposit ${bonusSetting.min_deposit} · Max bonus ${bonusSetting.max_bonus.toLocaleString()}
               </div>
             </div>
@@ -504,6 +591,11 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
                   />
                 </div>
                 {amountError && <p className="text-red-400 text-xs mt-1.5">{amountError}</p>}
+                {isBelowMinDeposit && !amountError && (
+                  <p className="text-red-400 text-xs mt-1.5">
+                    Minimum deposit is $100 USD (≈ {rate ? Math.ceil(MIN_DEPOSIT_USD / rate.rate_to_usd).toLocaleString() : ''} {currency})
+                  </p>
+                )}
               </div>
 
               {/* USD Estimation with Bonus */}
@@ -515,10 +607,17 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
                         <span className="text-slate-400">Deposit Amount</span>
                         <span className="text-white font-semibold">≈ ${amountUsd.toFixed(2)}</span>
                       </div>
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="text-yellow-400 flex items-center gap-1">🎁 Welcome Bonus ({bonusPct}%)</span>
-                        <span className="text-yellow-400 font-semibold">+${bonusAmt.toFixed(2)}</span>
-                      </div>
+                      {isBonusEligible ? (
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-yellow-400 flex items-center gap-1">Welcome Bonus ({bonusPct}%)</span>
+                          <span className="text-yellow-400 font-semibold">+${bonusAmt.toFixed(2)}</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-slate-500 flex items-center gap-1">Welcome Bonus ({bonusPct}%)</span>
+                          <span className="text-slate-500 text-[10px]">Bonus available for deposits ≥ $100</span>
+                        </div>
+                      )}
                       <div className="border-t border-yellow-500/20 pt-2 flex items-center justify-between">
                         <div>
                           <div className="text-yellow-400 text-xs font-semibold">Total Credited</div>
@@ -548,10 +647,10 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
               {/* Upload proof */}
               <div>
                 <label className="block text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
-                  Upload Payment Proof <span className="text-slate-600 normal-case">(optional)</span>
+                  Upload Payment Proof <span className="text-red-400 normal-case">*</span>
                 </label>
                 <label className="block cursor-pointer">
-                  <input type="file" accept="image/*,.pdf" onChange={handleFileChange} className="hidden" />
+                  <input type="file" accept="image/*,.pdf" onChange={handleFileChange} className="hidden" disabled={proofValidating} />
                   {proofPreview ? (
                     <div className="relative rounded-xl overflow-hidden border border-emerald-500/30">
                       <img src={proofPreview} alt="Proof preview" className="w-full max-h-40 object-cover" />
@@ -561,19 +660,31 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
                     </div>
                   ) : (
                     <div className="border-2 border-dashed border-white/15 hover:border-emerald-500/40 rounded-xl p-5 text-center transition-colors">
-                      <svg className="mx-auto mb-2 text-slate-500" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
-                      </svg>
-                      <p className="text-slate-500 text-xs">Click to upload screenshot or receipt</p>
-                      <p className="text-slate-600 text-[10px] mt-1">PNG, JPG, PDF</p>
+                      {proofValidating ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                          <p className="text-slate-400 text-xs">Validating payment proof...</p>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="mx-auto mb-2 text-slate-500" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+                          </svg>
+                          <p className="text-slate-500 text-xs">Click to upload screenshot or receipt</p>
+                          <p className="text-slate-600 text-[10px] mt-1">PNG, JPG, PDF</p>
+                        </>
+                      )}
                     </div>
                   )}
                 </label>
+                {proofValidationError && (
+                  <p className="text-red-400 text-xs mt-1.5">{proofValidationError}</p>
+                )}
               </div>
 
               <button
                 onClick={handleSubmit}
-                disabled={submitting || amountNum <= 0}
+                disabled={submitting || amountNum <= 0 || !proofFile || isBelowMinDeposit || proofValidating}
                 className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold text-sm transition-all flex items-center justify-center gap-2"
               >
                 {submitting ? (
@@ -581,12 +692,17 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
                     <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     Submitting...
                   </>
-                ) : showBonus ? (
+                ) : isBonusEligible ? (
                   `Submit Deposit · $${amountUsd.toFixed(2)} + $${bonusAmt.toFixed(2)} bonus = $${totalWithBonus.toFixed(2)}`
                 ) : (
                   `Submit Deposit Request${amountNum > 0 && rate ? ` · ${amountNum} ${currency} ≈ $${amountUsd.toFixed(2)}` : ''}`
                 )}
               </button>
+              {submitError && (
+                <div className="mt-2 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-red-400 text-xs">
+                  {submitError}
+                </div>
+              )}
             </div>
           )}
 
@@ -628,7 +744,7 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
                 </div>
                 {isFirstDeposit && bonusSetting && bonusAmt > 0 && (
                   <div className="flex justify-between text-xs">
-                    <span className="text-yellow-400">🎁 Welcome Bonus</span>
+                    <span className="text-yellow-400">Welcome Bonus</span>
                     <span className="text-yellow-400 font-bold">+${bonusAmt.toFixed(2)}</span>
                   </div>
                 )}

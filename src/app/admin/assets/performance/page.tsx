@@ -19,15 +19,15 @@ export default function AssetPerformancePage() {
 
   const fetchPerformance = useCallback(async () => {
     const supabase = createClient();
-    const { data } = await supabase.from('trades').select('asset_id, status, amount');
+    const { data } = await supabase.from('trades').select('asset_id, result, amount').eq('status', 'closed');
     if (data) {
       const map: Record<string, AssetPerf> = {};
       data.forEach((t: any) => {
         if (!map[t.asset_id]) map[t.asset_id] = { asset_id: t.asset_id, total_trades: 0, won: 0, lost: 0, volume: 0, win_rate: 0 };
         map[t.asset_id].total_trades++;
         map[t.asset_id].volume += Number(t.amount);
-        if (t.status === 'won') map[t.asset_id].won++;
-        if (t.status === 'lost') map[t.asset_id].lost++;
+        if (t.result === 'win') map[t.asset_id].won++;
+        if (t.result === 'loss') map[t.asset_id].lost++;
       });
       const arr = Object.values(map).map((a) => ({ ...a, win_rate: a.total_trades > 0 ? (a.won / a.total_trades) * 100 : 0 })).sort((a, b) => b.volume - a.volume);
       setAssets(arr);
