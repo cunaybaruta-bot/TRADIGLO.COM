@@ -49,6 +49,18 @@ const COUNTRY_CURRENCY: Record<string, string> = {
   Indonesia: 'IDR',
   Philippines: 'PHP',
   'United States': 'USD',
+  China: 'CNY',
+  India: 'INR',
+  'Hong Kong': 'HKD',
+  Taiwan: 'TWD',
+  Pakistan: 'PKR',
+  Bangladesh: 'BDT',
+  'Saudi Arabia': 'SAR',
+  UAE: 'AED',
+  Qatar: 'QAR',
+  Kuwait: 'KWD',
+  'Sri Lanka': 'LKR',
+  Myanmar: 'MMK',
 };
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
@@ -101,6 +113,18 @@ const FLAG_EMOJI: Record<string, string> = {
   Indonesia: '🇮🇩',
   Philippines: '🇵🇭',
   'United States': '🇺🇸',
+  China: '🇨🇳',
+  India: '🇮🇳',
+  'Hong Kong': '🇭🇰',
+  Taiwan: '🇹🇼',
+  Pakistan: '🇵🇰',
+  Bangladesh: '🇧🇩',
+  'Saudi Arabia': '🇸🇦',
+  UAE: '🇦🇪',
+  Qatar: '🇶🇦',
+  Kuwait: '🇰🇼',
+  'Sri Lanka': '🇱🇰',
+  Myanmar: '🇲🇲',
 };
 
 export default function DepositModal({ isOpen, onClose, userId, isDemo }: DepositModalProps) {
