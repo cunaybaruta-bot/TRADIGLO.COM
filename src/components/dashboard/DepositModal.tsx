@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { Wallet } from 'lucide-react';
 
 interface PaymentMethod {
   id: string;
@@ -364,9 +365,7 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
         {isFirstDeposit && bonusSetting && step !== 'success' && (
           <div className="flex items-center gap-3 px-5 py-3 bg-[#0f1f2e] border-b border-blue-500/20" style={{ flexShrink: 0 }}>
             <div className="w-7 h-7 rounded-lg bg-blue-500/15 border border-blue-500/25 flex items-center justify-center flex-shrink-0">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 12 20 22 4 22" /><rect x="6" y="18" width="20" height="5" /><line x1="10" y1="18" x2="10" y2="22" /><line x1="14" y1="18" x2="14" y2="22" /><line x1="18" y1="18" x2="18" y2="22" /><polygon points="12 2 20 7 4 7" />
-              </svg>
+              <Wallet size={14} color="#3b82f6" strokeWidth={2} />
             </div>
             <div className="flex-1 min-w-0">
               <div className="text-blue-300 text-xs font-bold">Welcome Bonus: {bonusSetting.bonus_percent}% on your first deposit</div>

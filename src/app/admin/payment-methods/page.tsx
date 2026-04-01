@@ -17,6 +17,18 @@ interface PaymentMethod {
   is_active: boolean;
 }
 
+interface NewMethodForm {
+  country: string;
+  type: string;
+  name: string;
+  account_number: string;
+  account_name: string;
+  network: string;
+  instructions: string;
+  min_deposit: number;
+  max_deposit: number;
+}
+
 const TYPE_COLORS: Record<string, string> = {
   bank: '#3b82f6',
   ewallet: '#8b5cf6',
@@ -31,6 +43,25 @@ const TYPE_LABELS: Record<string, string> = {
   card: 'Card',
 };
 
+const KNOWN_COUNTRIES = [
+  'Malaysia', 'Singapore', 'Thailand', 'Vietnam', 'Japan', 'South Korea',
+  'Philippines', 'China', 'India', 'Hong Kong', 'Taiwan', 'Pakistan',
+  'Bangladesh', 'Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Sri Lanka',
+  'Myanmar', 'United States', 'Global',
+];
+
+const EMPTY_FORM: NewMethodForm = {
+  country: '',
+  type: 'bank',
+  name: '',
+  account_number: '',
+  account_name: '',
+  network: '',
+  instructions: '',
+  min_deposit: 10,
+  max_deposit: 50000,
+};
+
 export default function AdminPaymentMethodsPage() {
   const [methods, setMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
@@ -41,6 +72,10 @@ export default function AdminPaymentMethodsPage() {
   const [filterCountry, setFilterCountry] = useState<string>('all');
   const [filterActive, setFilterActive] = useState<string>('all');
   const [editData, setEditData] = useState<Record<string, Partial<PaymentMethod>>>({});
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addForm, setAddForm] = useState<NewMethodForm>(EMPTY_FORM);
+  const [addSaving, setAddSaving] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
   const fetchMethods = useCallback(async () => {
     setLoading(true);
@@ -79,6 +114,18 @@ export default function AdminPaymentMethodsPage() {
     }
   };
 
+  const handleDelete = async (method: PaymentMethod) => {
+    const supabase = createClient();
+    const { error } = await supabase.from('payment_methods').delete().eq('id', method.id);
+    if (error) {
+      showMessage(`Failed to delete ${method.name}: ${error.message}`, 'error');
+    } else {
+      setMethods((prev) => prev.filter((m) => m.id !== method.id));
+      showMessage(`${method.name} deleted`, 'success');
+    }
+    setDeleteConfirm(null);
+  };
+
   const handleFieldChange = (id: string, field: keyof PaymentMethod, value: string | number) => {
     setEditData((prev) => ({
       ...prev,
@@ -113,9 +160,42 @@ export default function AdminPaymentMethodsPage() {
     setSaving(null);
   };
 
+  const handleAddMethod = async () => {
+    if (!addForm.country || !addForm.name || !addForm.type) {
+      showMessage('Country, name, and type are required', 'error');
+      return;
+    }
+    setAddSaving(true);
+    const supabase = createClient();
+    const { data, error } = await supabase.from('payment_methods').insert({
+      country: addForm.country,
+      type: addForm.type,
+      name: addForm.name,
+      account_number: addForm.account_number || null,
+      account_name: addForm.account_name || null,
+      network: addForm.network || null,
+      instructions: addForm.instructions || null,
+      min_deposit: addForm.min_deposit,
+      max_deposit: addForm.max_deposit,
+      is_active: true,
+    }).select().single();
+    if (error) {
+      showMessage(`Failed to add method: ${error.message}`, 'error');
+    } else {
+      setMethods((prev) => [...prev, data as PaymentMethod].sort((a, b) => a.country.localeCompare(b.country)));
+      showMessage(`${addForm.name} added successfully`, 'success');
+      setShowAddModal(false);
+      setAddForm(EMPTY_FORM);
+    }
+    setAddSaving(false);
+  };
+
   // Get unique countries and types
   const countries = Array.from(new Set(methods.map((m) => m.country).filter(Boolean))).sort();
   const types = Array.from(new Set(methods.map((m) => m.type).filter(Boolean)));
+
+  // All available countries for the add form (known + any from DB not in list)
+  const allCountries = Array.from(new Set([...KNOWN_COUNTRIES, ...countries])).sort();
 
   // Filter
   const filtered = methods.filter((m) => {
@@ -150,9 +230,20 @@ export default function AdminPaymentMethodsPage() {
           <h2 className="text-white text-xl font-bold">Payment Methods</h2>
           <p className="text-slate-400 text-sm mt-1">{methods.length} methods · {methods.filter((m) => m.is_active).length} active</p>
         </div>
-        <div className="flex items-center gap-2">
-          <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-          <span className="text-slate-400 text-xs">Live DB</span>
+        <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span className="text-slate-400 text-xs">Live DB</span>
+          </div>
+          <button
+            onClick={() => { setAddForm(EMPTY_FORM); setShowAddModal(true); }}
+            className="flex items-center gap-2 px-4 py-2 bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 rounded-lg text-sm font-semibold hover:bg-emerald-500/25 transition-all"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            Add Method
+          </button>
         </div>
       </div>
 
@@ -255,6 +346,7 @@ export default function AdminPaymentMethodsPage() {
                             <th className="text-left text-slate-400 text-xs font-medium px-4 py-2.5 whitespace-nowrap">Instructions</th>
                             <th className="text-left text-slate-400 text-xs font-medium px-4 py-2.5 whitespace-nowrap">Status</th>
                             <th className="text-left text-slate-400 text-xs font-medium px-4 py-2.5 whitespace-nowrap">Save</th>
+                            <th className="text-left text-slate-400 text-xs font-medium px-4 py-2.5 whitespace-nowrap">Del</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-700/50">
@@ -348,6 +440,31 @@ export default function AdminPaymentMethodsPage() {
                                     ) : 'Save'}
                                   </button>
                                 </td>
+                                <td className="px-4 py-2.5">
+                                  {deleteConfirm === method.id ? (
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        onClick={() => handleDelete(method)}
+                                        className="px-2 py-1 rounded text-[10px] font-semibold bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 transition-all"
+                                      >
+                                        Confirm
+                                      </button>
+                                      <button
+                                        onClick={() => setDeleteConfirm(null)}
+                                        className="px-2 py-1 rounded text-[10px] font-semibold bg-slate-700/50 text-slate-400 border border-slate-600 hover:bg-slate-700 transition-all"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <button
+                                      onClick={() => setDeleteConfirm(method.id)}
+                                      className="px-2.5 py-1 rounded text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20 transition-all"
+                                    >
+                                      Del
+                                    </button>
+                                  )}
+                                </td>
                               </tr>
                             );
                           })}
@@ -363,6 +480,167 @@ export default function AdminPaymentMethodsPage() {
           {Object.keys(grouped).length === 0 && (
             <div className="text-center py-16 text-slate-500">No payment methods match your filters</div>
           )}
+        </div>
+      )}
+
+      {/* Add Method Modal */}
+      {showAddModal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}
+          onClick={(e) => { if (e.target === e.currentTarget) setShowAddModal(false); }}
+        >
+          <div className="bg-[#0f172a] border border-slate-700 rounded-2xl w-full max-w-md mx-4 overflow-hidden">
+            {/* Modal header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700">
+              <h3 className="text-white font-bold text-base">Add Payment Method</h3>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="w-7 h-7 rounded-lg bg-white/8 hover:bg-white/15 flex items-center justify-center text-slate-400 hover:text-white transition-all"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Modal body */}
+            <div className="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
+              {/* Country */}
+              <div>
+                <label className="block text-slate-400 text-xs font-medium mb-1">Country <span className="text-red-400">*</span></label>
+                <select
+                  value={addForm.country}
+                  onChange={(e) => setAddForm((f) => ({ ...f, country: e.target.value }))}
+                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                >
+                  <option value="">Select country...</option>
+                  {allCountries.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+
+              {/* Type */}
+              <div>
+                <label className="block text-slate-400 text-xs font-medium mb-1">Type <span className="text-red-400">*</span></label>
+                <select
+                  value={addForm.type}
+                  onChange={(e) => setAddForm((f) => ({ ...f, type: e.target.value }))}
+                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                >
+                  <option value="bank">Bank Transfer</option>
+                  <option value="ewallet">E-Wallet</option>
+                  <option value="crypto">Cryptocurrency</option>
+                  <option value="card">Credit / Debit Card</option>
+                </select>
+              </div>
+
+              {/* Name */}
+              <div>
+                <label className="block text-slate-400 text-xs font-medium mb-1">Method Name <span className="text-red-400">*</span></label>
+                <input
+                  type="text"
+                  value={addForm.name}
+                  onChange={(e) => setAddForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="e.g. Maybank, GoPay, USDT TRC20"
+                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                />
+              </div>
+
+              {/* Account Number */}
+              <div>
+                <label className="block text-slate-400 text-xs font-medium mb-1">Account Number / Address</label>
+                <input
+                  type="text"
+                  value={addForm.account_number}
+                  onChange={(e) => setAddForm((f) => ({ ...f, account_number: e.target.value }))}
+                  placeholder="e.g. 1234567890 or wallet address"
+                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                />
+              </div>
+
+              {/* Account Name */}
+              <div>
+                <label className="block text-slate-400 text-xs font-medium mb-1">Account Name / Holder</label>
+                <input
+                  type="text"
+                  value={addForm.account_name}
+                  onChange={(e) => setAddForm((f) => ({ ...f, account_name: e.target.value }))}
+                  placeholder="e.g. PT. Example Company"
+                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                />
+              </div>
+
+              {/* Network */}
+              <div>
+                <label className="block text-slate-400 text-xs font-medium mb-1">Network / Chain</label>
+                <input
+                  type="text"
+                  value={addForm.network}
+                  onChange={(e) => setAddForm((f) => ({ ...f, network: e.target.value }))}
+                  placeholder="e.g. TRC20, ERC20, BEP20"
+                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                />
+              </div>
+
+              {/* Min / Max */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-slate-400 text-xs font-medium mb-1">Min Deposit</label>
+                  <input
+                    type="number"
+                    value={addForm.min_deposit}
+                    onChange={(e) => setAddForm((f) => ({ ...f, min_deposit: parseFloat(e.target.value) || 0 }))}
+                    className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  />
+                </div>
+                <div>
+                  <label className="block text-slate-400 text-xs font-medium mb-1">Max Deposit</label>
+                  <input
+                    type="number"
+                    value={addForm.max_deposit}
+                    onChange={(e) => setAddForm((f) => ({ ...f, max_deposit: parseFloat(e.target.value) || 0 }))}
+                    className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  />
+                </div>
+              </div>
+
+              {/* Instructions */}
+              <div>
+                <label className="block text-slate-400 text-xs font-medium mb-1">Instructions</label>
+                <textarea
+                  value={addForm.instructions}
+                  onChange={(e) => setAddForm((f) => ({ ...f, instructions: e.target.value }))}
+                  placeholder="Payment instructions for the user..."
+                  rows={3}
+                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 resize-none"
+                />
+              </div>
+            </div>
+
+            {/* Modal footer */}
+            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-700">
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-slate-700/50 text-slate-300 border border-slate-600 hover:bg-slate-700 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAddMethod}
+                disabled={addSaving}
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {addSaving ? (
+                  <span className="w-3.5 h-3.5 border border-emerald-400 border-t-transparent rounded-full animate-spin inline-block" />
+                ) : (
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
+                  </svg>
+                )}
+                Add Method
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
