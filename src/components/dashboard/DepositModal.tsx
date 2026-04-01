@@ -2,7 +2,6 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { getChatCompletion } from '@/lib/ai/chatCompletion';
 
 interface PaymentMethod {
   id: string;
@@ -219,78 +218,18 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
       setProofPreview(result);
       setProofBase64(result);
 
-      // AI Vision validation
-      try {
-        const isImage = file.type.startsWith('image/');
-        const isPdf = file.type === 'application/pdf';
+      // File type validation only — admin will verify manually
+      const isImage = file.type.startsWith('image/');
+      const isPdf = file.type === 'application/pdf';
 
-        if (!isImage && !isPdf) {
-          setProofValidationError('Only image files (PNG, JPG) and PDF are accepted.');
-          setProofFile(null);
-          setProofPreview(null);
-          setProofBase64(null);
-          setProofValidating(false);
-          return;
-        }
-
-        let messageContent: any[];
-
-        if (isImage) {
-          messageContent = [
-            {
-              type: 'text',
-              text: 'Analyze this image carefully. Does it appear to be a payment proof, bank transfer receipt, transaction confirmation, e-wallet payment screenshot, or any financial transaction document? Look for elements like: transaction amount, date, reference/transaction ID, bank or payment service name, sender/receiver info. Reply with ONLY a JSON object: {"isPaymentProof": true/false, "reason": "brief reason"}',
-            },
-            {
-              type: 'image_url',
-              image_url: { url: result, detail: 'auto' },
-            },
-          ];
-        } else {
-          messageContent = [
-            {
-              type: 'text',
-              text: 'Analyze this PDF document carefully. Does it appear to be a payment proof, bank transfer receipt, transaction confirmation, or any financial transaction document? Look for elements like: transaction amount, date, reference/transaction ID, bank or payment service name. Reply with ONLY a JSON object: {"isPaymentProof": true/false, "reason": "brief reason"}',
-            },
-            {
-              type: 'file',
-              file: { file_data: result, filename: file.name },
-            },
-          ];
-        }
-
-        const aiResponse = await getChatCompletion(
-          'OPEN_AI',
-          'gpt-4o',
-          [{ role: 'user', content: messageContent }],
-          { max_completion_tokens: 200 }
-        );
-
-        const content = aiResponse?.choices?.[0]?.message?.content || '';
-        let parsed: { isPaymentProof: boolean; reason: string } | null = null;
-
-        try {
-          // Extract JSON from response
-          const jsonMatch = content.match(/\{[\s\S]*\}/);
-          if (jsonMatch) {
-            parsed = JSON.parse(jsonMatch[0]);
-          }
-        } catch {
-          // If parsing fails, treat as valid to avoid blocking legitimate uploads
-          parsed = { isPaymentProof: true, reason: 'Validation inconclusive' };
-        }
-
-        if (parsed && !parsed.isPaymentProof) {
-          setProofValidationError('This file does not appear to be a payment proof. Please upload a bank transfer receipt, transaction screenshot, or payment confirmation.');
-          setProofFile(null);
-          setProofPreview(null);
-          setProofBase64(null);
-        }
-      } catch {
-        // On AI error, allow upload to proceed (admin will review)
-      } finally {
-        setProofValidating(false);
+      if (!isImage && !isPdf) {
+        setProofValidationError('Only image files (PNG, JPG) and PDF are accepted.');
+        setProofFile(null);
+        setProofPreview(null);
+        setProofBase64(null);
       }
+
+      setProofValidating(false);
     };
     reader.readAsDataURL(file);
   };
