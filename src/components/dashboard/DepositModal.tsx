@@ -117,6 +117,7 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
   const [proofPreview, setProofPreview] = useState<string | null>(null);
   const [proofBase64, setProofBase64] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [referenceNumber, setReferenceNumber] = useState('');
   const [isFirstDeposit, setIsFirstDeposit] = useState(false);
   const [bonusSetting, setBonusSetting] = useState<BonusSetting | null>(null);
@@ -214,19 +215,30 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
   };
 
   const handleSubmit = async () => {
-    if (!selectedMethod || !userId) return;
+    if (!selectedMethod) return;
     const val = parseFloat(amount);
     if (isNaN(val) || val <= 0) {
       setAmountError('Please enter a valid amount');
       return;
     }
     setSubmitting(true);
+    setSubmitError('');
     try {
       const supabase = createClient();
+
+      // Always get user from auth to ensure valid session
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) {
+        setSubmitError('You must be logged in to make a deposit.');
+        setSubmitting(false);
+        return;
+      }
+
       const ref = `DEP-${Date.now().toString(36).toUpperCase()}`;
 
-      const { error } = await supabase.from('deposits').insert({
-        user_id: userId,
+      // Debug log
+      console.log('Submitting deposit:', {
+        user_id: user.id,
         amount: amountUsd,
         amount_original: val,
         currency_original: currency,
@@ -234,15 +246,34 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
         payment_method: selectedMethod.name,
         payment_method_id: selectedMethod.id,
         payment_reference: ref,
-        proof_image: proofBase64,
         status: 'pending',
       });
 
-      if (error) throw error;
+      const { error } = await supabase.from('deposits').insert({
+        user_id: user.id,
+        amount: amountUsd,
+        amount_original: val,
+        currency_original: currency,
+        amount_usd: amountUsd,
+        payment_method: selectedMethod.name,
+        payment_method_id: selectedMethod.id,
+        payment_reference: ref,
+        proof_url: proofBase64 || null,
+        status: 'pending',
+      });
+
+      if (error) {
+        console.error('DEPOSIT ERROR:', error);
+        setSubmitError(error.message || 'Failed to submit deposit. Please try again.');
+        setSubmitting(false);
+        return;
+      }
+
       setReferenceNumber(ref);
       setStep('success');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Deposit error:', err);
+      setSubmitError(err?.message || 'An unexpected error occurred. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -596,6 +627,11 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
                   `Submit Deposit Request${amountNum > 0 && rate ? ` · ${amountNum} ${currency} ≈ $${amountUsd.toFixed(2)}` : ''}`
                 )}
               </button>
+              {submitError && (
+                <div className="mt-2 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 text-red-400 text-xs">
+                  {submitError}
+                </div>
+              )}
             </div>
           )}
 
