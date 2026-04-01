@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { getChatCompletion } from '@/lib/ai/chatCompletion';
 
 interface PaymentMethod {
   id: string;
@@ -121,6 +122,8 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
   const [referenceNumber, setReferenceNumber] = useState('');
   const [isFirstDeposit, setIsFirstDeposit] = useState(false);
   const [bonusSetting, setBonusSetting] = useState<BonusSetting | null>(null);
+  const [proofValidating, setProofValidating] = useState(false);
+  const [proofValidationError, setProofValidationError] = useState('');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -158,6 +161,8 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
       setProofFile(null);
       setProofPreview(null);
       setProofBase64(null);
+      setProofValidating(false);
+      setProofValidationError('');
     }
   }, [isOpen, fetchData]);
 
@@ -201,15 +206,91 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
     setStep('amount');
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setProofFile(file);
+    setProofValidationError('');
+    setProofValidating(true);
+
     const reader = new FileReader();
-    reader.onload = (ev) => {
+    reader.onload = async (ev) => {
       const result = ev.target?.result as string;
       setProofPreview(result);
       setProofBase64(result);
+
+      // AI Vision validation
+      try {
+        const isImage = file.type.startsWith('image/');
+        const isPdf = file.type === 'application/pdf';
+
+        if (!isImage && !isPdf) {
+          setProofValidationError('Only image files (PNG, JPG) and PDF are accepted.');
+          setProofFile(null);
+          setProofPreview(null);
+          setProofBase64(null);
+          setProofValidating(false);
+          return;
+        }
+
+        let messageContent: any[];
+
+        if (isImage) {
+          messageContent = [
+            {
+              type: 'text',
+              text: 'Analyze this image carefully. Does it appear to be a payment proof, bank transfer receipt, transaction confirmation, e-wallet payment screenshot, or any financial transaction document? Look for elements like: transaction amount, date, reference/transaction ID, bank or payment service name, sender/receiver info. Reply with ONLY a JSON object: {"isPaymentProof": true/false, "reason": "brief reason"}',
+            },
+            {
+              type: 'image_url',
+              image_url: { url: result, detail: 'auto' },
+            },
+          ];
+        } else {
+          messageContent = [
+            {
+              type: 'text',
+              text: 'Analyze this PDF document carefully. Does it appear to be a payment proof, bank transfer receipt, transaction confirmation, or any financial transaction document? Look for elements like: transaction amount, date, reference/transaction ID, bank or payment service name. Reply with ONLY a JSON object: {"isPaymentProof": true/false, "reason": "brief reason"}',
+            },
+            {
+              type: 'file',
+              file: { file_data: result, filename: file.name },
+            },
+          ];
+        }
+
+        const aiResponse = await getChatCompletion(
+          'OPEN_AI',
+          'gpt-4o',
+          [{ role: 'user', content: messageContent }],
+          { max_completion_tokens: 200 }
+        );
+
+        const content = aiResponse?.choices?.[0]?.message?.content || '';
+        let parsed: { isPaymentProof: boolean; reason: string } | null = null;
+
+        try {
+          // Extract JSON from response
+          const jsonMatch = content.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            parsed = JSON.parse(jsonMatch[0]);
+          }
+        } catch {
+          // If parsing fails, treat as valid to avoid blocking legitimate uploads
+          parsed = { isPaymentProof: true, reason: 'Validation inconclusive' };
+        }
+
+        if (parsed && !parsed.isPaymentProof) {
+          setProofValidationError('This file does not appear to be a payment proof. Please upload a bank transfer receipt, transaction screenshot, or payment confirmation.');
+          setProofFile(null);
+          setProofPreview(null);
+          setProofBase64(null);
+        }
+      } catch {
+        // On AI error, allow upload to proceed (admin will review)
+      } finally {
+        setProofValidating(false);
+      }
     };
     reader.readAsDataURL(file);
   };
@@ -219,6 +300,10 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
     const val = parseFloat(amount);
     if (isNaN(val) || val <= 0) {
       setAmountError('Please enter a valid amount');
+      return;
+    }
+    if (isBelowMinDeposit) {
+      setAmountError(`Minimum deposit is $100 USD (≈ ${rate ? Math.ceil(MIN_DEPOSIT_USD / rate.rate_to_usd).toLocaleString() : ''} ${currency})`);
       return;
     }
     setSubmitting(true);
@@ -289,6 +374,9 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
   const STEPS: Step[] = ['country', 'method', 'amount'];
   const stepIndex = STEPS.indexOf(step);
 
+  const MIN_DEPOSIT_USD = 100;
+  const isBelowMinDeposit = amountNum > 0 && rate ? amountUsd < MIN_DEPOSIT_USD : false;
+
   return (
     <div
       className="fixed inset-0 z-[9999] flex items-center justify-center"
@@ -314,7 +402,7 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
           <div className="flex items-center gap-3 px-5 py-3 bg-[#0f1f2e] border-b border-blue-500/20" style={{ flexShrink: 0 }}>
             <div className="w-7 h-7 rounded-lg bg-blue-500/15 border border-blue-500/25 flex items-center justify-center flex-shrink-0">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 12 20 22 4 22" /><rect x="2" y="7" width="20" height="5" /><line x1="12" y1="22" x2="12" y2="7" /><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" /><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+                <polyline points="20 12 20 22 4 22" /><rect x="6" y="18" width="20" height="5" /><line x1="10" y1="18" x2="10" y2="22" /><line x1="14" y1="18" x2="14" y2="22" /><line x1="18" y1="18" x2="18" y2="22" /><polygon points="12 2 20 7 4 7" />
               </svg>
             </div>
             <div className="flex-1 min-w-0">
@@ -541,6 +629,11 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
                   />
                 </div>
                 {amountError && <p className="text-red-400 text-xs mt-1.5">{amountError}</p>}
+                {isBelowMinDeposit && !amountError && (
+                  <p className="text-red-400 text-xs mt-1.5">
+                    Minimum deposit is $100 USD (≈ {rate ? Math.ceil(MIN_DEPOSIT_USD / rate.rate_to_usd).toLocaleString() : ''} {currency})
+                  </p>
+                )}
               </div>
 
               {/* USD Estimation with Bonus */}
@@ -595,7 +688,7 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
                   Upload Payment Proof <span className="text-red-400 normal-case">*</span>
                 </label>
                 <label className="block cursor-pointer">
-                  <input type="file" accept="image/*,.pdf" onChange={handleFileChange} className="hidden" />
+                  <input type="file" accept="image/*,.pdf" onChange={handleFileChange} className="hidden" disabled={proofValidating} />
                   {proofPreview ? (
                     <div className="relative rounded-xl overflow-hidden border border-emerald-500/30">
                       <img src={proofPreview} alt="Proof preview" className="w-full max-h-40 object-cover" />
@@ -605,19 +698,31 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
                     </div>
                   ) : (
                     <div className="border-2 border-dashed border-white/15 hover:border-emerald-500/40 rounded-xl p-5 text-center transition-colors">
-                      <svg className="mx-auto mb-2 text-slate-500" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
-                      </svg>
-                      <p className="text-slate-500 text-xs">Click to upload screenshot or receipt</p>
-                      <p className="text-slate-600 text-[10px] mt-1">PNG, JPG, PDF</p>
+                      {proofValidating ? (
+                        <>
+                          <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
+                          <p className="text-slate-400 text-xs">Validating payment proof...</p>
+                        </>
+                      ) : (
+                        <>
+                          <svg className="mx-auto mb-2 text-slate-500" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" />
+                          </svg>
+                          <p className="text-slate-500 text-xs">Click to upload screenshot or receipt</p>
+                          <p className="text-slate-600 text-[10px] mt-1">PNG, JPG, PDF</p>
+                        </>
+                      )}
                     </div>
                   )}
                 </label>
+                {proofValidationError && (
+                  <p className="text-red-400 text-xs mt-1.5">{proofValidationError}</p>
+                )}
               </div>
 
               <button
                 onClick={handleSubmit}
-                disabled={submitting || amountNum <= 0 || !proofFile}
+                disabled={submitting || amountNum <= 0 || !proofFile || isBelowMinDeposit || proofValidating}
                 className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold text-sm transition-all flex items-center justify-center gap-2"
               >
                 {submitting ? (
