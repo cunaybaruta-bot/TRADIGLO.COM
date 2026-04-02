@@ -291,17 +291,21 @@ export default function MarketsPage() {
   const [isPlacing, setIsPlacing] = useState(false);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Real-time BTC price via polling internal API (Twelve Data)
+  // Real-time BTC price via Binance WebSocket (same source as TradingView BINANCE:BTCUSDT)
   useEffect(() => {
-    let pollTimer: NodeJS.Timeout | null = null;
+    let ws: WebSocket | null = null;
+    let reconnectTimer: NodeJS.Timeout | null = null;
     let cancelled = false;
 
-    const fetchPrice = () => {
-      fetch('/api/markets/btc-price')
-        .then((r) => r.json())
-        .then((d) => {
-          if (cancelled) return;
-          const price = parseFloat(d.price);
+    const connect = () => {
+      if (cancelled) return;
+      ws = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@trade');
+
+      ws.onmessage = (event) => {
+        if (cancelled) return;
+        try {
+          const data = JSON.parse(event.data);
+          const price = parseFloat(data.p);
           if (!isNaN(price) && price > 0) {
             setPriceDirection(
               prevPriceRef.current === null ? null : price >= prevPriceRef.current ? 'up' : 'down'
@@ -309,20 +313,31 @@ export default function MarketsPage() {
             prevPriceRef.current = price;
             setLivePrice(price);
           }
-        })
-        .catch(() => {})
-        .finally(() => {
-          if (!cancelled) {
-            pollTimer = setTimeout(fetchPrice, 1000);
-          }
-        });
+        } catch {
+          // ignore parse errors
+        }
+      };
+
+      ws.onerror = () => {
+        if (!cancelled) ws?.close();
+      };
+
+      ws.onclose = () => {
+        if (!cancelled) {
+          reconnectTimer = setTimeout(connect, 3000);
+        }
+      };
     };
 
-    fetchPrice();
+    connect();
 
     return () => {
       cancelled = true;
-      if (pollTimer) clearTimeout(pollTimer);
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (ws) {
+        ws.onclose = null;
+        ws.close();
+      }
     };
   }, []);
 
