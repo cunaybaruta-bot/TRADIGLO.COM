@@ -461,16 +461,16 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
                   </div>
                 ))}
                 <div>
-                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Negara</label>
+                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Country</label>
                   <select value={form.country} onChange={e => setForm(f => ({ ...f, country: e.target.value }))} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                    <option value="">Pilih negara</option>
+                    <option value="">Select country</option>
                     {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Timezone</label>
                   <select value={form.timezone} onChange={e => setForm(f => ({ ...f, timezone: e.target.value }))} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                    <option value="">Pilih timezone</option>
+                    <option value="">Select timezone</option>
                     {TIMEZONES.map(tz => <option key={tz} value={tz}>{tz}</option>)}
                   </select>
                 </div>
@@ -478,11 +478,11 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', boxShadow: '0 4px 16px rgba(59,130,246,0.3)' }}
               >
                 {saving ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Check size={14} />}
-                Simpan Perubahan
+Save Changes
               </button>
             </div>
           )}
