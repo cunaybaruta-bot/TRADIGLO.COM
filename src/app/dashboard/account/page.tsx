@@ -1991,7 +1991,29 @@ export default function AccountPage() {
       .on('postgres_changes', { event: '*', schema: 'public', table: 'withdrawals', filter: `user_id=eq.${userId}` }, () => { loadWalletData(userId); })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions', filter: `user_id=eq.${userId}` }, () => { loadWalletData(userId); })
       .subscribe();
-    return () => { supabase.removeChannel(walletSub); };
+
+    const profileSub = supabase.channel(`profile-${userId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'users', filter: `id=eq.${userId}` },
+        (payload) => {
+          const updated = payload.new as Partial<UserProfile>;
+          setProfile(prev => prev ? {
+            ...prev,
+            email_verified: updated.email_verified ?? prev.email_verified,
+            phone_verified: updated.phone_verified ?? prev.phone_verified,
+            kyc_status: updated.kyc_status ?? prev.kyc_status,
+            two_factor_enabled: updated.two_factor_enabled ?? prev.two_factor_enabled,
+            account_status: updated.account_status ?? prev.account_status,
+          } : prev);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(walletSub);
+      supabase.removeChannel(profileSub);
+    };
   }, [userId, supabase, loadWalletData]);
 
   const handleUpdateProfile = async (data: Partial<UserProfile>) => {
