@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import Link from 'next/link';
 
 export default function HeroSection() {
   return (
@@ -109,24 +110,24 @@ export default function HeroSection() {
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-2.5 justify-center items-center mb-4 sm:mb-8">
-          <button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm sm:text-base px-6 sm:px-8 min-h-[44px] rounded-lg transition-all shadow-lg shadow-blue-600/30 w-full sm:w-auto font-semibold inline-flex items-center justify-center gap-2">
+          <Link href="/register" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm sm:text-base px-6 sm:px-8 min-h-[44px] rounded-lg transition-all shadow-lg shadow-blue-600/30 w-full sm:w-auto font-semibold inline-flex items-center justify-center gap-2">
             Start Trading
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14"></path>
               <path d="m12 5 7 7-7 7"></path>
             </svg>
-          </button>
-          <button className="border border-white/30 text-white hover:bg-white/10 text-sm sm:text-base px-6 sm:px-8 min-h-[44px] rounded-lg w-full sm:w-auto transition-all font-semibold inline-flex items-center justify-center gap-2 bg-white/5">
+          </Link>
+          <Link href="/markets" className="border border-white/30 text-white hover:bg-white/10 text-sm sm:text-base px-6 sm:px-8 min-h-[44px] rounded-lg w-full sm:w-auto transition-all font-semibold inline-flex items-center justify-center gap-2 bg-white/5">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <polygon points="5 3 19 12 5 21 5 3"></polygon>
             </svg>
             Explore Markets
-          </button>
+          </Link>
         </div>
 
         {/* Feature badges */}
         <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 md:gap-8 text-slate-400 text-xs">
-          {['Secure Trading', 'Real-time Data', '24/7 Support']?.map((feature) => (
+          {['Secure Trading', 'Real-time Data', '24/7 Support', 'Instant Deposit', 'Instant Withdrawal (Min $10)']?.map((feature) => (
             <div key={feature} className="flex items-center gap-1.5">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-400 flex-shrink-0">
                 <circle cx="12" cy="12" r="10"></circle>
