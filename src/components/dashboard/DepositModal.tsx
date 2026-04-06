@@ -126,6 +126,7 @@ const FLAG_EMOJI: Record<string, string> = {
   Kuwait: '🇰🇼',
   'Sri Lanka': '🇱🇰',
   Myanmar: '🇲🇲',
+  Oman: '🇴🇲',
 };
 
 export default function DepositModal({ isOpen, onClose, userId, isDemo }: DepositModalProps) {
