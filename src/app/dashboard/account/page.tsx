@@ -315,7 +315,7 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
               <div className="text-xs text-slate-400 mb-2 truncate">{profile?.email}</div>
               <div className="flex items-center gap-3 flex-wrap">
                 <span className="text-[10px] font-mono text-slate-500 bg-white/5 px-2 py-0.5 rounded-md border border-white/8">{accountId}</span>
-                <span className="text-[10px] text-slate-500">Member sejak {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }) : '—'}</span>
+                <span className="text-[10px] text-slate-500">Member since {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '—'}</span>
               </div>
             </div>
 
@@ -387,7 +387,7 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
           { label: 'Email', value: profile?.email_verified ? 'Verified' : 'Unverified', color: profile?.email_verified ? '#10b981' : '#64748b', icon: <BadgeCheck size={14} /> },
           { label: 'Phone', value: profile?.phone_verified ? 'Verified' : 'Unverified', color: profile?.phone_verified ? '#10b981' : '#64748b', icon: <Smartphone size={14} /> },
           { label: 'KYC', value: kycCfg.label, color: kycCfg.color, icon: <Fingerprint size={14} /> },
-          { label: '2FA', value: profile?.two_factor_enabled ? 'Aktif' : 'Nonaktif', color: profile?.two_factor_enabled ? '#10b981' : '#64748b', icon: <ShieldCheck size={14} /> },
+          { label: '2FA', value: profile?.two_factor_enabled ? 'Active' : 'Inactive', color: profile?.two_factor_enabled ? '#10b981' : '#64748b', icon: <ShieldCheck size={14} /> },
         ].map(({ label, value, color, icon }) => (
           <GlassCard key={label} className="p-3">
             <div className="flex items-center gap-1.5 mb-2" style={{ color }}>
