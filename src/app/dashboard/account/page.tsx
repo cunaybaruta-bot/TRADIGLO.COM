@@ -172,7 +172,7 @@ function GlassCard({ children, className = '', style = {}, onClick }: { children
 
 // ─── Section: Profile ─────────────────────────────────────────────────────────
 
-function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | null; stats: TradeStats; onUpdate: (data: Partial<UserProfile>) => Promise<void> }) {
+function ProfileSection({ profile, stats, onUpdate, activeCountries }: { profile: UserProfile | null; stats: TradeStats; onUpdate: (data: Partial<UserProfile>) => Promise<void>; activeCountries: string[] }) {
   const supabase = createClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState(false);
@@ -228,9 +228,10 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
       setAvatarUrl(dataUrl);
       await onUpdate({ avatar_url: dataUrl });
       setToast({ message: 'Profile photo updated successfully', type: 'success' });
+      setUploadingAvatar(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (e: any) {
       setToast({ message: e.message || 'Failed to upload photo', type: 'error' });
-    } finally {
       setUploadingAvatar(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
@@ -268,7 +269,7 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
   const netPnL = stats.totalProfit + stats.totalLoss;
 
   const TIMEZONES = ['UTC', 'Asia/Jakarta', 'Asia/Singapore', 'Asia/Tokyo', 'Asia/Dubai', 'Europe/London', 'Europe/Paris', 'America/New_York', 'America/Los_Angeles', 'Australia/Sydney', 'Pacific/Auckland'];
-  const COUNTRIES = ['Indonesia', 'Malaysia', 'Singapore', 'Thailand', 'Philippines', 'Vietnam', 'India', 'China', 'Japan', 'South Korea', 'United States', 'United Kingdom', 'Australia', 'Canada', 'Germany', 'France', 'Netherlands', 'UAE', 'Saudi Arabia', 'Other'];
+  const COUNTRIES = activeCountries.length > 0 ? activeCountries : ['Malaysia', 'Singapore', 'Thailand', 'Philippines', 'Vietnam', 'India', 'China', 'Japan', 'South Korea', 'United States', 'United Kingdom', 'Australia', 'Canada', 'Germany', 'France', 'Netherlands', 'UAE', 'Saudi Arabia', 'Other'];
 
   // ── Verification Modals State ──
   const [activeModal, setActiveModal] = useState<'email' | 'phone' | 'kyc' | '2fa' | null>(null);
@@ -1883,6 +1884,7 @@ export default function AccountPage() {
   const [withdrawals, setWithdrawals] = useState<WithdrawalRecord[]>([]);
   const [transactions, setTransactions] = useState<TransactionRecord[]>([]);
   const [activities, setActivities] = useState<ActivityLog[]>([]);
+  const [activeCountries, setActiveCountries] = useState<string[]>([]);
 
   const handleSectionChange = (id: AccountSection) => {
     setActiveSection(id);
@@ -1909,6 +1911,16 @@ export default function AccountPage() {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) { router.replace('/login'); return; }
     setUserId(user.id);
+
+    // Fetch active countries from payment_methods
+    const { data: pmData } = await supabase
+      .from('payment_methods')
+      .select('country')
+      .eq('is_active', true);
+    if (pmData) {
+      const uniqueCountries = Array.from(new Set(pmData.map((m: { country: string }) => m.country).filter(Boolean))).sort() as string[];
+      setActiveCountries(uniqueCountries);
+    }
 
     const { data: userData } = await supabase.from('users').select('*').eq('id', user.id).single();
     const { data: tradesData } = await supabase.from('trades').select('profit_loss, status, asset_id').eq('user_id', user.id).eq('status', 'closed');
@@ -2004,7 +2016,6 @@ export default function AccountPage() {
     if (data.account_number !== undefined) updatePayload.account_number = data.account_number;
     if (data.preferred_payment_method !== undefined) updatePayload.preferred_payment_method = data.preferred_payment_method;
     if (data.preferred_currency !== undefined) updatePayload.preferred_currency = data.preferred_currency;
-    if (data.username !== undefined) updatePayload.username = data.username;
     await supabase.from('users').update(updatePayload).eq('id', user.id);
     setProfile(prev => prev ? { ...prev, ...data } : prev);
   };
@@ -2029,7 +2040,7 @@ export default function AccountPage() {
 
   const renderSection = () => {
     switch (activeSection) {
-      case 'profile': return <ProfileSection profile={profile} stats={stats} onUpdate={handleUpdateProfile} />;
+      case 'profile': return <ProfileSection profile={profile} stats={stats} onUpdate={handleUpdateProfile} activeCountries={activeCountries} />;
       case 'security': return <SecuritySection />;
       case 'wallet': return (
         <WalletSection
@@ -2072,7 +2083,6 @@ export default function AccountPage() {
         @keyframes slideInToast { from { transform: translateX(100%) scale(0.9); opacity: 0; } to { transform: translateX(0) scale(1); opacity: 1; } }
         @keyframes expandDown { from { opacity: 0; transform: translateY(-8px) scaleY(0.95); } to { opacity: 1; transform: translateY(0) scaleY(1); } }
         @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes sectionFade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .section-animate { animation: sectionFade 0.25s cubic-bezier(0.34,1.56,0.64,1); }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
