@@ -31,8 +31,9 @@ interface Wallet {
 }
 
 interface UserWithWallet extends User {
-  wallet?: Wallet;
+  wallet?: Wallet | null;
   tradeCount?: number;
+  detailsFetched?: boolean;
 }
 
 const StatusBadge = ({ active }: { active: boolean }) => (
@@ -87,7 +88,7 @@ export default function UsersPage() {
       supabase.from('wallets').select('real_balance, demo_balance').eq('user_id', userId).single(),
       supabase.from('trades').select('*', { count: 'exact', head: true }).eq('user_id', userId),
     ]);
-    setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, wallet: wallet || undefined, tradeCount: tradeCount || 0 } : u));
+    setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, wallet: wallet ?? null, tradeCount: tradeCount ?? 0, detailsFetched: true } : u));
   };
 
   const toggleExpand = (userId: string) => {
@@ -308,15 +309,15 @@ export default function UsersPage() {
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div className="bg-[#0f172a] rounded-lg p-3 border border-slate-700">
                               <div className="text-slate-400 text-xs mb-1">Real Balance</div>
-                              <div className="text-green-400 font-semibold">{user.wallet ? `$${Number(user.wallet.real_balance).toFixed(2)}` : 'Loading...'}</div>
+                              <div className="text-green-400 font-semibold">{!user.detailsFetched ? 'Loading...' : user.wallet ? `$${Number(user.wallet.real_balance).toFixed(2)}` : '$0.00'}</div>
                             </div>
                             <div className="bg-[#0f172a] rounded-lg p-3 border border-slate-700">
                               <div className="text-slate-400 text-xs mb-1">Demo Balance</div>
-                              <div className="text-blue-400 font-semibold">{user.wallet ? `$${Number(user.wallet.demo_balance).toFixed(2)}` : 'Loading...'}</div>
+                              <div className="text-blue-400 font-semibold">{!user.detailsFetched ? 'Loading...' : user.wallet ? `$${Number(user.wallet.demo_balance).toFixed(2)}` : '$0.00'}</div>
                             </div>
                             <div className="bg-[#0f172a] rounded-lg p-3 border border-slate-700">
                               <div className="text-slate-400 text-xs mb-1">Total Trades</div>
-                              <div className="text-white font-semibold">{user.tradeCount ?? 'Loading...'}</div>
+                              <div className="text-white font-semibold">{!user.detailsFetched ? 'Loading...' : (user.tradeCount ?? 0)}</div>
                             </div>
                           </div>
 
