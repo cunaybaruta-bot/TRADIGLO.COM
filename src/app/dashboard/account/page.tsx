@@ -1713,7 +1713,7 @@ function ActivitySection({ activities }: { activities: ActivityLog[] }) {
 function PreferencesSection() {
   const [notifications, setNotifications] = useState({ email: true, push: false, trade: true, deposit: true });
   const [defaultMode, setDefaultMode] = useState<'demo' | 'real'>('demo');
-  const [language, setLanguage] = useState('id');
+  const [language, setLanguage] = useState('en');
 
   return (
     <div className="space-y-4">
@@ -1749,15 +1749,28 @@ function PreferencesSection() {
         <div>
           <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Language</label>
           <select value={language} onChange={e => setLanguage(e.target.value)} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-            <option value="id">Indonesian</option>
             <option value="en">English</option>
+            <option value="ms">Malay</option>
+            <option value="ar">Arabic</option>
+            <option value="zh">Chinese (Simplified)</option>
+            <option value="zh-tw">Chinese (Traditional)</option>
+            <option value="fr">French</option>
+            <option value="de">German</option>
+            <option value="hi">Hindi</option>
+            <option value="ja">Japanese</option>
+            <option value="ko">Korean</option>
+            <option value="pt">Portuguese</option>
+            <option value="ru">Russian</option>
+            <option value="es">Spanish</option>
+            <option value="tr">Turkish</option>
+            <option value="ur">Urdu</option>
           </select>
         </div>
         <div>
           <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Default Trading Mode</label>
           <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
-            <button onClick={() => setDefaultMode('demo')} className="flex-1 py-2.5 text-xs font-semibold transition-all" style={{ background: defaultMode === 'demo' ? 'linear-gradient(135deg, #3b82f6, #6366f1)' : 'transparent', color: defaultMode === 'demo' ? 'white' : '#64748b' }}>Demo</button>
-            <button onClick={() => setDefaultMode('real')} className="flex-1 py-2.5 text-xs font-semibold transition-all" style={{ background: defaultMode === 'real' ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'transparent', color: defaultMode === 'real' ? 'white' : '#64748b' }}>Real</button>
+            <button onClick={() => setDefaultMode('demo')} className="w-1/2 py-2.5 text-xs font-semibold transition-all" style={{ background: defaultMode === 'demo' ? 'linear-gradient(135deg, #3b82f6, #6366f1)' : 'transparent', color: defaultMode === 'demo' ? 'white' : '#64748b' }}>Demo</button>
+            <button onClick={() => setDefaultMode('real')} className="w-1/2 py-2.5 text-xs font-semibold transition-all" style={{ background: defaultMode === 'real' ? 'linear-gradient(135deg, #f59e0b, #d97706)' : 'transparent', color: defaultMode === 'real' ? 'white' : '#64748b' }}>Real</button>
           </div>
         </div>
       </GlassCard>
