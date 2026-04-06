@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Shield, Wallet, BarChart2, Trophy, Clock, Settings, Headphones, ChevronRight, ArrowLeft, LogOut, Camera, Edit2, Check, X, Eye, EyeOff, TrendingUp, TrendingDown, Award, Star, Zap, MessageCircle, Send, ChevronDown, Bell, Globe, Monitor, Smartphone, AlertCircle, CheckCircle, Info, RotateCcw, CreditCard, Building2, Hash, DollarSign, Upload, ArrowDownCircle, ArrowUpCircle, RefreshCw, List, Copy, Link2, Users, BadgeCheck, Cpu, ShieldCheck, UserCheck, UserX, AlertTriangle, Fingerprint, Activity, Menu } from 'lucide-react';
+import { User, Shield, Wallet, BarChart2, Trophy, Clock, Settings, Headphones, ChevronRight, ArrowLeft, LogOut, Camera, Edit2, Check, X, Eye, EyeOff, TrendingUp, TrendingDown, Award, Star, Zap, MessageCircle, Send, ChevronDown, Bell, Monitor, Smartphone, AlertCircle, CheckCircle, Info, RotateCcw, CreditCard, Building2, Hash, DollarSign, Upload, ArrowDownCircle, ArrowUpCircle, RefreshCw, List, Copy, Link2, Users, BadgeCheck, Cpu, ShieldCheck, UserCheck, UserX, AlertTriangle, Fingerprint, Activity, Menu } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -1319,7 +1319,7 @@ function WalletSection({
                   {savingFinancial ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Check size={14} />}
                   Save Information
                 </button>
-                <button onClick={() => setEditingFinancial(false)} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <button onClick={() => setEditingFinancial(false)} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm text-slate-400 hover:text-white transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
                   <X size={13} /> Cancel
                 </button>
               </div>
@@ -1354,7 +1354,7 @@ function WalletSection({
             <button
               key={key}
               onClick={() => setTab(key)}
-              className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-xs font-semibold transition-all relative"
+              className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-xs font-semibold transition-all group relative"
               style={{
                 background: tab === key ? color : 'transparent',
                 border: `1px solid ${tab === key ? `${color}30` : 'transparent'}`,
@@ -1492,7 +1492,7 @@ function WalletSection({
                           <div className="flex items-center gap-2">
                             <span className="text-xs font-semibold text-white capitalize">{item.type}</span>
                           </div>
-                          <div className="text-[10px] text-slate-500 truncate">{item.method || '—'} · {formatDate(item.created_at)}</div>
+                          <div className="text-[10px] text-slate-500">{item.method || '—'} · {formatDate(item.created_at)}</div>
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
@@ -1713,7 +1713,6 @@ function ActivitySection({ activities }: { activities: ActivityLog[] }) {
 function PreferencesSection() {
   const [notifications, setNotifications] = useState({ email: true, push: false, trade: true, deposit: true });
   const [defaultMode, setDefaultMode] = useState<'demo' | 'real'>('demo');
-  const [language, setLanguage] = useState('en');
 
   return (
     <div className="space-y-4">
@@ -1725,14 +1724,14 @@ function PreferencesSection() {
           { key: 'trade', label: 'Trade Alerts', desc: 'Trade result notifications' },
           { key: 'deposit', label: 'Deposit & Withdrawal', desc: 'Financial transaction notifications' },
         ].map(({ key, label, desc }) => (
-          <div key={key} className="flex items-center justify-between py-2.5 border-b border-white/5 last:border-0">
-            <div>
+          <div key={key} className="flex items-center justify-between gap-3 py-2.5 border-b border-white/5 last:border-0">
+            <div className="min-w-0 flex-1">
               <div className="text-sm font-medium text-white">{label}</div>
               <div className="text-xs text-slate-500">{desc}</div>
             </div>
             <button
               onClick={() => setNotifications(n => ({ ...n, [key]: !n[key as keyof typeof n] }))}
-              className="relative w-11 h-6 rounded-full transition-all duration-300"
+              className="relative flex-shrink-0 w-11 h-6 rounded-full transition-all duration-300"
               style={{
                 background: notifications[key as keyof typeof notifications] ? 'linear-gradient(135deg, #3b82f6, #6366f1)' : 'rgba(255,255,255,0.1)',
                 boxShadow: notifications[key as keyof typeof notifications] ? '0 0 12px rgba(59,130,246,0.3)' : 'none',
@@ -1745,27 +1744,7 @@ function PreferencesSection() {
       </GlassCard>
 
       <GlassCard className="p-5 space-y-4">
-        <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Globe size={13} /> Language & Display</h4>
-        <div>
-          <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Language</label>
-          <select value={language} onChange={e => setLanguage(e.target.value)} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-            <option value="en">English</option>
-            <option value="ms">Malay</option>
-            <option value="ar">Arabic</option>
-            <option value="zh">Chinese (Simplified)</option>
-            <option value="zh-tw">Chinese (Traditional)</option>
-            <option value="fr">French</option>
-            <option value="de">German</option>
-            <option value="hi">Hindi</option>
-            <option value="ja">Japanese</option>
-            <option value="ko">Korean</option>
-            <option value="pt">Portuguese</option>
-            <option value="ru">Russian</option>
-            <option value="es">Spanish</option>
-            <option value="tr">Turkish</option>
-            <option value="ur">Urdu</option>
-          </select>
-        </div>
+        <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Monitor size={13} /> Trading Mode</h4>
         <div>
           <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Default Trading Mode</label>
           <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
