@@ -111,7 +111,7 @@ function getTraderLevel(totalTrades: number): { level: string; color: string; ne
 
 function generateAccountId(userId: string): string {
   const hash = userId.replace(/-/g, '').slice(0, 6).toUpperCase();
-  return `INV-${hash}`;
+  return `TRD-${hash}`;
 }
 
 function generateReferralCode(userId: string): string {
@@ -176,7 +176,7 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
   const supabase = createClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ full_name: '', phone: '', country: '', timezone: '' });
+  const [form, setForm] = useState({ full_name: '', phone: '', country: '', timezone: '', username: '' });
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -185,7 +185,7 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
 
   useEffect(() => {
     if (profile) {
-      setForm({ full_name: profile.full_name || '', phone: profile.phone || '', country: profile.country || '', timezone: profile.timezone || '' });
+      setForm({ full_name: profile.full_name || '', phone: profile.phone || '', country: profile.country || '', timezone: profile.timezone || '', username: profile.username || '' });
       setAvatarUrl(profile.avatar_url || null);
     }
   }, [profile]);
@@ -246,7 +246,7 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
 
   const accountId = profile?.id ? generateAccountId(profile.id) : '—';
   const referralCode = profile?.referral_code || (profile?.id ? generateReferralCode(profile.id) : '—');
-  const referralLink = `https://canonsite4265.builtwithrocket.new/register?ref=${referralCode}`;
+  const referralLink = `https://tradiglo.com/register?ref=${referralCode}`;
 
   const accountStatusConfig = {
     active: { label: 'Active', color: '#10b981', bg: 'rgba(16,185,129,0.1)', border: 'rgba(16,185,129,0.3)', icon: <UserCheck size={12} /> },
@@ -337,6 +337,7 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
                 {[
                   { label: 'Full Name', key: 'full_name', placeholder: 'Your full name' },
                   { label: 'Phone Number', key: 'phone', placeholder: '+1 xxx xxxx xxxx' },
+                  { label: 'Username', key: 'username', placeholder: 'Your username' },
                 ].map(({ label, key, placeholder }) => (
                   <div key={key}>
                     <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">{label}</label>
@@ -425,7 +426,7 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
       <GlassCard style={{ borderColor: 'rgba(168,85,247,0.2)', background: 'rgba(168,85,247,0.04)' }}>
         <div className="px-5 py-3.5 border-b border-white/8 flex items-center gap-2">
           <Users size={13} className="text-purple-400" />
-          <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Referral Program</span>
+          <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Affiliate Program</span>
         </div>
         <div className="p-5 space-y-4">
           <div className="grid grid-cols-3 gap-3">
@@ -1559,6 +1560,7 @@ export default function AccountPage() {
     if (data.account_number !== undefined) updatePayload.account_number = data.account_number;
     if (data.preferred_payment_method !== undefined) updatePayload.preferred_payment_method = data.preferred_payment_method;
     if (data.preferred_currency !== undefined) updatePayload.preferred_currency = data.preferred_currency;
+    if (data.username !== undefined) updatePayload.username = data.username;
     await supabase.from('users').update(updatePayload).eq('id', user.id);
     setProfile(prev => prev ? { ...prev, ...data } : prev);
   };
