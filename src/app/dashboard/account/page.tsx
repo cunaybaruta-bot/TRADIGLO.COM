@@ -423,6 +423,7 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
     <div className="space-y-4">
       {toast && <Toast toast={toast} onClose={() => setToast(null)} />}
       <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+      <input ref={kycFileRef} type="file" accept="image/*,.pdf" className="hidden" onChange={e => setKycFile(e.target.files?.[0] || null)} />
 
       {/* ── IDENTITY CARD ── */}
       <GlassCard style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(99,102,241,0.05) 50%, rgba(168,85,247,0.08) 100%)', borderColor: 'rgba(59,130,246,0.2)' }}>
@@ -683,7 +684,6 @@ Save Changes
       {/* ── KYC MODAL ── */}
       {activeModal === 'kyc' && (
         <ModalOverlay onClose={() => setActiveModal(null)}>
-          <input ref={kycFileRef} type="file" accept="image/*,.pdf" className="hidden" onChange={e => setKycFile(e.target.files?.[0] || null)} />
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)' }}>
