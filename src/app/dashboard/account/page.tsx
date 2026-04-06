@@ -498,7 +498,7 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
                       className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all"
                       style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)' }}
                       onFocus={e => { e.target.style.borderColor = 'rgba(59,130,246,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.1), inset 0 1px 3px rgba(0,0,0,0.3)'; }}
-                      onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'inset 0 1px 3px rgba(0,0,0,0.3)'; }}
+                      onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }}
                     />
                   </div>
                 ))}
@@ -1357,7 +1357,7 @@ function WalletSection({
               style={{
                 background: tab === key ? color : 'transparent',
                 border: `1px solid ${tab === key ? `${color}30` : 'transparent'}`,
-                color: tab === key ? color : '#64748b',
+                color: tab === key ? '#ffffff' : '#64748b',
               }}
               onMouseEnter={e => { if (tab !== key) { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = '#94a3b8'; } }}
               onMouseLeave={e => { if (tab !== key) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#64748b'; } }}
@@ -1818,7 +1818,7 @@ function SupportSection() {
           <>
             <div>
               <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Subject</label>
-              <input value={ticketForm.subject} onChange={e => setTicketForm(f => ({ ...f, subject: e.target.value }))} placeholder="Enter ticket subject" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)' }} onFocus={e => { e.target.style.borderColor = 'rgba(16,185,129,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1), inset 0 1px 3px rgba(0,0,0,0.3)'; }} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'inset 0 1px 3px rgba(0,0,0,0.3)'; }} />
+              <input value={ticketForm.subject} onChange={e => setTicketForm(f => ({ ...f, subject: e.target.value }))} placeholder="Enter ticket subject" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)' }} onFocus={e => { e.target.style.borderColor = 'rgba(16,185,129,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1), inset 0 1px 3px rgba(0,0,0,0.3)'; }} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }} />
             </div>
             <div>
               <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Message</label>
