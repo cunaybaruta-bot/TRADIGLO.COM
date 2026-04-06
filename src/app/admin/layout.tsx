@@ -52,6 +52,7 @@ const navItems: NavItem[] = [
       { href: '/admin/deposits?status=rejected', label: 'Rejected' },
       { href: '/admin/deposits', label: 'All History' },
       { href: '/admin/payment-methods', label: 'Payment Methods' },
+      { href: '/admin/countries', label: 'Countries & Methods' },
       { href: '/admin/currency-rates', label: 'Currency Rates' },
       { href: '/admin/settings/bonus', label: 'Bonus Settings' },
     ],
