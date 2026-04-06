@@ -853,7 +853,7 @@ Save Changes
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: 'Total Trades', value: stats.totalTrades.toString(), color: '#3b82f6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.2)' },
-          { label: 'Win Rate', value: `${stats.winRate.toFixed(1)}%`, color: stats.winRate >= 50 ? '#10b981' : '#ef4444', bg: stats.winRate >= 50 ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)', border: stats.winRate >= 50 ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)' },
+          { label: 'Win Rate', value: `${stats.winRate.toFixed(1)}%`, color: stats.winRate >= 50 ? '#10b981' : '#ef4444', bg: stats.winRate >= 50 ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', border: stats.winRate >= 50 ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)' },
           { label: 'Total P&L', value: `${netPnL >= 0 ? '+' : ''}$${formatCurrency(netPnL)}`, color: netPnL >= 0 ? '#10b981' : '#ef4444', bg: netPnL >= 0 ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)', border: netPnL >= 0 ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)' },
           { label: 'Level', value: levelInfo.level, color: levelInfo.color, bg: `${levelInfo.color}14`, border: `${levelInfo.color}33` },
         ].map(({ label, value, color, bg, border }) => (
@@ -1472,25 +1472,31 @@ function WalletSection({
           {/* History Tab */}
           {tab === 'history' && (
             <div style={{ animation: 'fadeSlideIn 0.2s ease-out' }}>
-              {transactions.length === 0 ? (
+              {deposits.length === 0 && withdrawals.length === 0 ? (
                 <div className="text-center py-12 text-slate-500 text-sm">No transaction history yet</div>
               ) : (
                 <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {transactions.map(tx => (
-                    <div key={tx.id} className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-white/3 transition-colors" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  {[
+                    ...deposits.map(d => ({ id: d.id, type: 'deposit' as const, amount: d.amount, currency: d.currency, method: d.payment_method, status: d.status, created_at: d.created_at })),
+                    ...withdrawals.map(w => ({ id: w.id, type: 'withdrawal' as const, amount: w.amount, currency: w.currency, method: w.payment_method, status: w.status, created_at: w.created_at })),
+                  ]
+                    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                    .map(item => (
+                    <div key={item.id} className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-white/3 transition-colors" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${txTypeBg(tx.type)}`}>{txTypeIcon(tx.type)}</div>
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${item.type === 'deposit' ? 'text-emerald-400' : 'text-red-400'}`} style={{ background: item.type === 'deposit' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', border: `1px solid ${item.type === 'deposit' ? 'rgba(16,185,129,0.25)' : 'rgba(239,68,68,0.25)'}` }}>
+                          {item.type === 'deposit' ? <ArrowDownCircle size={14} /> : <ArrowUpCircle size={14} />}
+                        </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-white">{txTypeLabel(tx.type)}</span>
-                            <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-md ${tx.is_demo ? 'bg-blue-500/15 text-blue-400' : 'bg-amber-500/15 text-amber-400'}`}>{tx.is_demo ? 'Demo' : 'Real'}</span>
+                            <span className="text-xs font-semibold text-white capitalize">{item.type}</span>
                           </div>
-                          <div className="text-[10px] text-slate-500 truncate">{tx.description || '—'} · {formatDate(tx.created_at)}</div>
+                          <div className="text-[10px] text-slate-500 truncate">{item.method || '—'} · {formatDate(item.created_at)}</div>
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <div className={`text-xs font-bold ${tx.amount >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{tx.amount >= 0 ? '+' : ''}${formatCurrency(Math.abs(tx.amount))}</div>
-                        <div className={`text-[9px] font-medium mt-0.5 ${tx.status === 'completed' ? 'text-emerald-400' : tx.status === 'pending' ? 'text-yellow-400' : 'text-red-400'}`}>{tx.status}</div>
+                        <div className={`text-xs font-bold ${item.type === 'deposit' ? 'text-emerald-400' : 'text-red-400'}`}>{item.type === 'deposit' ? '+' : '-'}${formatCurrency(item.amount)}</div>
+                        <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${item.type === 'deposit' ? depositStatusBadge(item.status) : withdrawalStatusBadge(item.status)}`}>{item.type === 'deposit' ? depositStatusLabel(item.status) : withdrawalStatusLabel(item.status)}</span>
                       </div>
                     </div>
                   ))}
