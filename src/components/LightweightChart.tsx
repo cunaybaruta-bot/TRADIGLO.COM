@@ -700,7 +700,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     useEffect(() => {
       const updateHeight = () => {
         if (window.innerWidth < 640) {
-          setChartHeight(240);
+          setChartHeight(380);
         } else if (window.innerWidth < 1024) {
           setChartHeight(300);
         } else {
@@ -750,7 +750,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         if (!seriesRef.current) return;
         const priceLine = entryLinesRef.current.get(tradeId);
         if (priceLine) {
-          try { seriesRef.current.removePriceLine(priceLine); } catch {}
+          try { seriesRef.current!.removePriceLine(priceLine); } catch {}
           entryLinesRef.current.delete(tradeId);
         }
       },
@@ -1138,7 +1138,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         const w = containerRef.current.clientWidth || 800;
         const isMobile = window.innerWidth < 640;
         const isTablet = window.innerWidth < 1024;
-        const chartH = isMobile ? 240 : isTablet ? 300 : CHART_HEIGHT;
+        const chartH = isMobile ? 380 : isTablet ? 300 : CHART_HEIGHT;
 
         const chart = createChart(containerRef.current, {
           width: w,
@@ -1185,7 +1185,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
             if (cw > 0 && chartRef.current) {
               const isMob = window.innerWidth < 640;
               const isTab = window.innerWidth < 1024;
-              const newH = isMob ? 240 : isTab ? 300 : CHART_HEIGHT;
+              const newH = isMob ? 380 : isTab ? 300 : CHART_HEIGHT;
               try { chartRef.current.applyOptions({ width: cw, height: newH }); } catch {}
               [rsiChartRef, macdChartRef, stochChartRef, atrChartRef, cciChartRef].forEach(r => {
                 if (r.current) { try { r.current.applyOptions({ width: cw }); } catch {} }
