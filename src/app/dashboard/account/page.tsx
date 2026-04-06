@@ -111,7 +111,7 @@ function getTraderLevel(totalTrades: number): { level: string; color: string; ne
 
 function generateAccountId(userId: string): string {
   const hash = userId.replace(/-/g, '').slice(0, 6).toUpperCase();
-  return `INV-${hash}`;
+  return `TRD-${hash}`;
 }
 
 function generateReferralCode(userId: string): string {
@@ -162,9 +162,9 @@ function Toast({ toast, onClose }: { toast: ToastState; onClose: () => void }) {
 
 // ─── Glass Card ───────────────────────────────────────────────────────────────
 
-function GlassCard({ children, className = '', style = {} }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
+function GlassCard({ children, className = '', style = {}, onClick }: { children: React.ReactNode; className?: string; style?: React.CSSProperties; onClick?: () => void }) {
   return (
-    <div className={`rounded-2xl border border-white/8 ${className}`} style={{ background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(12px)', ...style }}>
+    <div className={`rounded-2xl border border-white/8 ${className}`} style={{ background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(12px)', ...style }} onClick={onClick}>
       {children}
     </div>
   );
@@ -176,7 +176,7 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
   const supabase = createClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ full_name: '', phone: '', country: '', timezone: '' });
+  const [form, setForm] = useState({ full_name: '', phone: '', country: '', timezone: '', username: '' });
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
@@ -185,7 +185,7 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
 
   useEffect(() => {
     if (profile) {
-      setForm({ full_name: profile.full_name || '', phone: profile.phone || '', country: profile.country || '', timezone: profile.timezone || '' });
+      setForm({ full_name: profile.full_name || '', phone: profile.phone || '', country: profile.country || '', timezone: profile.timezone || '', username: profile.username || '' });
       setAvatarUrl(profile.avatar_url || null);
     }
   }, [profile]);
@@ -246,7 +246,7 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
 
   const accountId = profile?.id ? generateAccountId(profile.id) : '—';
   const referralCode = profile?.referral_code || (profile?.id ? generateReferralCode(profile.id) : '—');
-  const referralLink = `https://canonsite4265.builtwithrocket.new/register?ref=${referralCode}`;
+  const referralLink = `https://tradiglo.com/register?ref=${referralCode}`;
 
   const accountStatusConfig = {
     active: { label: 'Active', color: '#10b981', bg: 'rgba(16,185,129,0.1)', border: 'rgba(16,185,129,0.3)', icon: <UserCheck size={12} /> },
@@ -270,10 +270,160 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
   const TIMEZONES = ['UTC', 'Asia/Jakarta', 'Asia/Singapore', 'Asia/Tokyo', 'Asia/Dubai', 'Europe/London', 'Europe/Paris', 'America/New_York', 'America/Los_Angeles', 'Australia/Sydney', 'Pacific/Auckland'];
   const COUNTRIES = ['Indonesia', 'Malaysia', 'Singapore', 'Thailand', 'Philippines', 'Vietnam', 'India', 'China', 'Japan', 'South Korea', 'United States', 'United Kingdom', 'Australia', 'Canada', 'Germany', 'France', 'Netherlands', 'UAE', 'Saudi Arabia', 'Other'];
 
+  // ── Verification Modals State ──
+  const [activeModal, setActiveModal] = useState<'email' | 'phone' | 'kyc' | '2fa' | null>(null);
+  const [phoneInput, setPhoneInput] = useState(profile?.phone || '');
+  const [kycFile, setKycFile] = useState<File | null>(null);
+  const [kycDocType, setKycDocType] = useState('passport');
+  const [kycNotes, setKycNotes] = useState('');
+  const [modalLoading, setModalLoading] = useState(false);
+  const kycFileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setPhoneInput(profile?.phone || '');
+  }, [profile?.phone]);
+
+  const handleEmailVerifyRequest = async () => {
+    if (!profile) return;
+    setModalLoading(true);
+    try {
+      const supabase = createClient();
+      // Mark email_verified as false (pending admin approval)
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ email_verified: false, updated_at: new Date().toISOString() })
+        .eq('id', profile.id);
+      if (updateError) throw updateError;
+
+      // Create admin notification so admin can see and approve the request
+      await supabase.from('admin_notifications').insert({
+        type: 'email_verification_request',
+        title: 'Email Verification Request',
+        message: `User ${profile.full_name || profile.email} (${profile.email}) has requested email verification.`,
+        user_id: profile.id,
+        is_read: false,
+      });
+
+      await onUpdate({ email_verified: false });
+      setToast({ message: 'Email verification request sent. Admin will review and verify your email.', type: 'success' });
+      setActiveModal(null);
+    } catch (e: any) {
+      setToast({ message: e.message || 'Failed to send request', type: 'error' });
+    } finally { setModalLoading(false); }
+  };
+
+  const handlePhoneSubmit = async () => {
+    if (!profile) return;
+    if (!phoneInput.trim()) { setToast({ message: 'Please enter a phone number', type: 'error' }); return; }
+    if (!/^\+?[\d\s\-()]{7,20}$/.test(phoneInput)) { setToast({ message: 'Invalid phone number format', type: 'error' }); return; }
+    setModalLoading(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.from('users').update({
+        phone: phoneInput.trim(),
+        phone_verified: false,
+        updated_at: new Date().toISOString(),
+      }).eq('id', profile.id);
+      if (error) throw error;
+
+      // Create admin notification so admin can see and approve the phone number
+      await supabase.from('admin_notifications').insert({
+        type: 'phone_verification_request',
+        title: 'Phone Verification Request',
+        message: `User ${profile.full_name || profile.email} (${profile.email}) submitted phone number: ${phoneInput.trim()} for verification.`,
+        user_id: profile.id,
+        is_read: false,
+      });
+
+      await onUpdate({ phone: phoneInput.trim(), phone_verified: false });
+      setToast({ message: 'Phone number submitted. Admin will verify your number.', type: 'success' });
+      setActiveModal(null);
+    } catch (e: any) {
+      setToast({ message: e.message || 'Failed to submit phone number', type: 'error' });
+    } finally { setModalLoading(false); }
+  };
+
+  const handleKycSubmit = async () => {
+    if (!profile) return;
+    if (!kycFile) { setToast({ message: 'Please upload a document', type: 'error' }); return; }
+    setModalLoading(true);
+    try {
+      const supabase = createClient();
+      // Read file as base64 to store as document URL
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => resolve(ev.target?.result as string);
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(kycFile);
+      });
+
+      // Store KYC document data and set status to pending
+      const { error } = await supabase.from('users').update({
+        kyc_status: 'pending',
+        kyc_document_url: dataUrl,
+        kyc_document_type: kycDocType,
+        kyc_notes: kycNotes.trim() || null,
+        kyc_submitted_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }).eq('id', profile.id);
+      if (error) throw error;
+
+      // Create admin notification so admin can see and approve the KYC submission
+      await supabase.from('admin_notifications').insert({
+        type: 'kyc_submission',
+        title: 'KYC Document Submitted',
+        message: `User ${profile.full_name || profile.email} (${profile.email}) submitted KYC documents. Document type: ${kycDocType}. ${kycNotes.trim() ? `Notes: ${kycNotes.trim()}` : ''}`.trim(),
+        user_id: profile.id,
+        is_read: false,
+      });
+
+      await onUpdate({ kyc_status: 'pending' });
+      setToast({ message: 'KYC documents submitted. Admin will review within 1-3 business days.', type: 'success' });
+      setActiveModal(null);
+      setKycFile(null);
+      setKycNotes('');
+    } catch (e: any) {
+      setToast({ message: e.message || 'Failed to submit KYC', type: 'error' });
+    } finally { setModalLoading(false); }
+  };
+
+  const handle2FAToggle = async () => {
+    if (!profile) return;
+    setModalLoading(true);
+    try {
+      const supabase = createClient();
+      const newVal = !profile.two_factor_enabled;
+      const { error } = await supabase.from('users').update({
+        two_factor_enabled: newVal,
+        updated_at: new Date().toISOString(),
+      }).eq('id', profile.id);
+      if (error) throw error;
+      await onUpdate({ two_factor_enabled: newVal });
+      setToast({ message: `2FA ${newVal ? 'enabled' : 'disabled'} successfully.`, type: 'success' });
+      setActiveModal(null);
+    } catch (e: any) {
+      setToast({ message: e.message || 'Failed to update 2FA', type: 'error' });
+    } finally { setModalLoading(false); }
+  };
+
+  // ── Modal Overlay ──
+  const ModalOverlay = ({ children, onClose }: { children: React.ReactNode; onClose: () => void }) => (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="w-full max-w-md rounded-2xl border border-white/10 p-6 space-y-4" style={{ background: 'rgba(15,23,42,0.98)', boxShadow: '0 24px 64px rgba(0,0,0,0.8)' }}>
+        {children}
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-4">
       {toast && <Toast toast={toast} onClose={() => setToast(null)} />}
       <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+      <input ref={kycFileRef} type="file" accept="image/*,.pdf" className="hidden" onChange={e => setKycFile(e.target.files?.[0] || null)} />
 
       {/* ── IDENTITY CARD ── */}
       <GlassCard style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(99,102,241,0.05) 50%, rgba(168,85,247,0.08) 100%)', borderColor: 'rgba(59,130,246,0.2)' }}>
@@ -315,7 +465,7 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
               <div className="text-xs text-slate-400 mb-2 truncate">{profile?.email}</div>
               <div className="flex items-center gap-3 flex-wrap">
                 <span className="text-[10px] font-mono text-slate-500 bg-white/5 px-2 py-0.5 rounded-md border border-white/8">{accountId}</span>
-                <span className="text-[10px] text-slate-500">Member sejak {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' }) : '—'}</span>
+                <span className="text-[10px] text-slate-500">Member since {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '—'}</span>
               </div>
             </div>
 
@@ -337,6 +487,7 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
                 {[
                   { label: 'Full Name', key: 'full_name', placeholder: 'Your full name' },
                   { label: 'Phone Number', key: 'phone', placeholder: '+1 xxx xxxx xxxx' },
+                  { label: 'Username', key: 'username', placeholder: 'Your username' },
                 ].map(({ label, key, placeholder }) => (
                   <div key={key}>
                     <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">{label}</label>
@@ -347,21 +498,21 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
                       className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all"
                       style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)' }}
                       onFocus={e => { e.target.style.borderColor = 'rgba(59,130,246,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.1), inset 0 1px 3px rgba(0,0,0,0.3)'; }}
-                      onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'inset 0 1px 3px rgba(0,0,0,0.3)'; }}
+                      onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }}
                     />
                   </div>
                 ))}
                 <div>
-                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Negara</label>
+                  <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Country</label>
                   <select value={form.country} onChange={e => setForm(f => ({ ...f, country: e.target.value }))} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                    <option value="">Pilih negara</option>
+                    <option value="">Select country</option>
                     {COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Timezone</label>
                   <select value={form.timezone} onChange={e => setForm(f => ({ ...f, timezone: e.target.value }))} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                    <option value="">Pilih timezone</option>
+                    <option value="">Select timezone</option>
                     {TIMEZONES.map(tz => <option key={tz} value={tz}>{tz}</option>)}
                   </select>
                 </div>
@@ -369,11 +520,11 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', boxShadow: '0 4px 16px rgba(59,130,246,0.3)' }}
               >
                 {saving ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Check size={14} />}
-                Simpan Perubahan
+Save Changes
               </button>
             </div>
           )}
@@ -383,20 +534,266 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
       {/* ── STATUS GRID ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Email', value: profile?.email_verified ? 'Verified' : 'Unverified', color: profile?.email_verified ? '#10b981' : '#64748b', icon: <BadgeCheck size={14} /> },
-          { label: 'Phone', value: profile?.phone_verified ? 'Verified' : 'Unverified', color: profile?.phone_verified ? '#10b981' : '#64748b', icon: <Smartphone size={14} /> },
-          { label: 'KYC', value: kycCfg.label, color: kycCfg.color, icon: <Fingerprint size={14} /> },
-          { label: '2FA', value: profile?.two_factor_enabled ? 'Aktif' : 'Nonaktif', color: profile?.two_factor_enabled ? '#10b981' : '#64748b', icon: <ShieldCheck size={14} /> },
-        ].map(({ label, value, color, icon }) => (
-          <GlassCard key={label} className="p-3">
+          {
+            label: 'Email',
+            value: profile?.email_verified ? 'Verified' : 'Unverified',
+            color: profile?.email_verified ? '#10b981' : '#64748b',
+            icon: <BadgeCheck size={14} />,
+            modal: 'email' as const,
+            actionLabel: profile?.email_verified ? 'Verified ✓' : 'Request Verify',
+            disabled: !!profile?.email_verified,
+          },
+          {
+            label: 'Phone',
+            value: profile?.phone_verified ? 'Verified' : (profile?.phone ? 'Pending' : 'Unverified'),
+            color: profile?.phone_verified ? '#10b981' : (profile?.phone ? '#f59e0b' : '#64748b'),
+            icon: <Smartphone size={14} />,
+            modal: 'phone' as const,
+            actionLabel: profile?.phone_verified ? 'Verified ✓' : (profile?.phone ? 'Update Number' : 'Add Number'),
+            disabled: false,
+          },
+          {
+            label: 'KYC',
+            value: kycCfg.label,
+            color: kycCfg.color,
+            icon: <Fingerprint size={14} />,
+            modal: 'kyc' as const,
+            actionLabel: profile?.kyc_status === 'verified' ? 'Verified ✓' : (profile?.kyc_status === 'pending' ? 'Pending Review' : 'Submit KYC'),
+            disabled: profile?.kyc_status === 'verified' || profile?.kyc_status === 'pending',
+          },
+          {
+            label: '2FA',
+            value: profile?.two_factor_enabled ? 'Active' : 'Inactive',
+            color: profile?.two_factor_enabled ? '#10b981' : '#64748b',
+            icon: <ShieldCheck size={14} />,
+            modal: '2fa' as const,
+            actionLabel: profile?.two_factor_enabled ? 'Disable 2FA' : 'Enable 2FA',
+            disabled: false,
+          },
+        ].map(({ label, value, color, icon, modal, actionLabel, disabled }) => (
+          <GlassCard
+            key={label}
+            className="p-3 transition-all"
+            style={{
+              cursor: disabled ? 'default' : 'pointer',
+              border: `1px solid ${disabled ? 'rgba(255,255,255,0.08)' : `${color}33`}`,
+            }}
+            onClick={() => { if (!disabled) setActiveModal(modal); }}
+          >
             <div className="flex items-center gap-1.5 mb-2" style={{ color }}>
               {icon}
               <span className="text-[10px] font-semibold uppercase tracking-wider">{label}</span>
             </div>
-            <div className="text-sm font-bold" style={{ color }}>{value}</div>
+            <div className="text-sm font-bold mb-1.5" style={{ color }}>{value}</div>
+            <div
+              className="text-[10px] font-medium rounded-lg px-2 py-1 text-center transition-all"
+              style={{
+                background: disabled ? 'rgba(255,255,255,0.04)' : `${color}18`,
+                color: disabled ? '#475569' : color,
+                border: `1px solid ${disabled ? 'rgba(255,255,255,0.06)' : `${color}30`}`,
+              }}
+            >
+              {actionLabel}
+            </div>
           </GlassCard>
         ))}
       </div>
+
+      {/* ── EMAIL MODAL ── */}
+      {activeModal === 'email' && (
+        <ModalOverlay onClose={() => setActiveModal(null)}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)' }}>
+                <BadgeCheck size={16} className="text-blue-400" />
+              </div>
+              <div>
+                <div className="text-sm font-bold text-white">Email Verification</div>
+                <div className="text-[10px] text-slate-500">Request admin to verify your email</div>
+              </div>
+            </div>
+            <button onClick={() => setActiveModal(null)} className="text-slate-500 hover:text-white transition-colors"><X size={16} /></button>
+          </div>
+          <div className="rounded-xl p-4 space-y-2" style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)' }}>
+            <div className="text-xs font-semibold text-blue-300">Your email address</div>
+            <div className="text-sm text-white font-mono">{profile?.email}</div>
+          </div>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Click the button below to send an email verification request to our admin team. Your email will be verified within 24 hours.
+          </p>
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={handleEmailVerifyRequest}
+              disabled={modalLoading}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+              style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', boxShadow: '0 4px 16px rgba(59,130,246,0.3)' }}
+            >
+              {modalLoading ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <BadgeCheck size={14} />}
+              Send Verification Request
+            </button>
+            <button onClick={() => setActiveModal(null)} className="px-4 py-2.5 rounded-xl text-sm text-slate-400 hover:text-white transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>Cancel</button>
+          </div>
+        </ModalOverlay>
+      )}
+
+      {/* ── PHONE MODAL ── */}
+      {activeModal === 'phone' && (
+        <ModalOverlay onClose={() => setActiveModal(null)}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)' }}>
+                <Smartphone size={16} className="text-emerald-400" />
+              </div>
+              <div>
+                <div className="text-sm font-bold text-white">Phone Verification</div>
+                <div className="text-[10px] text-slate-500">Add or update your phone number</div>
+              </div>
+            </div>
+            <button onClick={() => setActiveModal(null)} className="text-slate-500 hover:text-white transition-colors"><X size={16} /></button>
+          </div>
+          <div>
+            <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Phone Number</label>
+            <input
+              value={phoneInput}
+              onChange={e => setPhoneInput(e.target.value)}
+              placeholder="+1 xxx xxxx xxxx"
+              className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+              onFocus={e => { e.target.style.borderColor = 'rgba(16,185,129,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1)'; }}
+              onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }}
+            />
+          </div>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Enter your phone number with country code (e.g. +62 for Indonesia). Admin will verify it within 24 hours.
+          </p>
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={handlePhoneSubmit}
+              disabled={modalLoading || !phoneInput.trim()}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+              style={{ background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 4px 16px rgba(16,185,129,0.3)' }}
+            >
+              {modalLoading ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Smartphone size={14} />}
+              Submit Phone Number
+            </button>
+            <button onClick={() => setActiveModal(null)} className="px-4 py-2.5 rounded-xl text-sm text-slate-400 hover:text-white transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>Cancel</button>
+          </div>
+        </ModalOverlay>
+      )}
+
+      {/* ── KYC MODAL ── */}
+      {activeModal === 'kyc' && (
+        <ModalOverlay onClose={() => setActiveModal(null)}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)' }}>
+                <Fingerprint size={16} className="text-amber-400" />
+              </div>
+              <div>
+                <div className="text-sm font-bold text-white">KYC Verification</div>
+                <div className="text-[10px] text-slate-500">Submit identity documents for review</div>
+              </div>
+            </div>
+            <button onClick={() => setActiveModal(null)} className="text-slate-500 hover:text-white transition-colors"><X size={16} /></button>
+          </div>
+          <div>
+            <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Document Type</label>
+            <select
+              value={kycDocType}
+              onChange={e => setKycDocType(e.target.value)}
+              className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              <option value="passport">Passport</option>
+              <option value="national_id">National ID Card</option>
+              <option value="drivers_license">Driver's License</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Upload Document</label>
+            <button
+              onClick={() => kycFileRef.current?.click()}
+              className="w-full rounded-xl px-3 py-3 text-sm transition-all hover:border-amber-500/40 flex items-center justify-center gap-2"
+              style={{ background: 'rgba(255,255,255,0.03)', border: `2px dashed ${kycFile ? 'rgba(245,158,11,0.5)' : 'rgba(255,255,255,0.12)'}`, color: kycFile ? '#f59e0b' : '#64748b' }}
+            >
+              <Upload size={14} />
+              {kycFile ? kycFile.name : 'Click to upload (JPG, PNG, PDF — max 5MB)'}
+            </button>
+          </div>
+          <div>
+            <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Additional Notes (optional)</label>
+            <textarea
+              value={kycNotes}
+              onChange={e => setKycNotes(e.target.value)}
+              placeholder="Any additional information for the admin..."
+              rows={2}
+              className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all resize-none"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+            />
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={handleKycSubmit}
+              disabled={modalLoading || !kycFile}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+              style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', boxShadow: '0 4px 16px rgba(245,158,11,0.3)' }}
+            >
+              {modalLoading ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Upload size={14} />}
+              Submit KYC Documents
+            </button>
+            <button onClick={() => setActiveModal(null)} className="px-4 py-2.5 rounded-xl text-sm text-slate-400 hover:text-white transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>Cancel</button>
+          </div>
+        </ModalOverlay>
+      )}
+
+      {/* ── 2FA MODAL ── */}
+      {activeModal === '2fa' && (
+        <ModalOverlay onClose={() => setActiveModal(null)}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)' }}>
+                <ShieldCheck size={16} className="text-indigo-400" />
+              </div>
+              <div>
+                <div className="text-sm font-bold text-white">Two-Factor Authentication</div>
+                <div className="text-[10px] text-slate-500">Manage your 2FA security setting</div>
+              </div>
+            </div>
+            <button onClick={() => setActiveModal(null)} className="text-slate-500 hover:text-white transition-colors"><X size={16} /></button>
+          </div>
+          <div className="rounded-xl p-4 space-y-2" style={{ background: profile?.two_factor_enabled ? 'rgba(16,185,129,0.06)' : 'rgba(99,102,241,0.06)', border: `1px solid ${profile?.two_factor_enabled ? 'rgba(16,185,129,0.2)' : 'rgba(99,102,241,0.2)'}` }}>
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${profile?.two_factor_enabled ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+              <span className="text-sm font-semibold" style={{ color: profile?.two_factor_enabled ? '#10b981' : '#94a3b8' }}>
+                2FA is currently {profile?.two_factor_enabled ? 'ENABLED' : 'DISABLED'}
+              </span>
+            </div>
+          </div>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            {profile?.two_factor_enabled
+              ? 'Disabling 2FA will reduce the security of your account. Are you sure you want to proceed?' :'Enabling 2FA adds an extra layer of security to your account. Your request will be processed immediately.'}
+          </p>
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={handle2FAToggle}
+              disabled={modalLoading}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+              style={{
+                background: profile?.two_factor_enabled
+                  ? 'linear-gradient(135deg, #ef4444, #dc2626)'
+                  : 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                boxShadow: profile?.two_factor_enabled
+                  ? '0 4px 16px rgba(239,68,68,0.3)'
+                  : '0 4px 16px rgba(99,102,241,0.3)',
+              }}
+            >
+              {modalLoading ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <ShieldCheck size={14} />}
+              {profile?.two_factor_enabled ? 'Disable 2FA' : 'Enable 2FA'}
+            </button>
+            <button onClick={() => setActiveModal(null)} className="px-4 py-2.5 rounded-xl text-sm text-slate-400 hover:text-white transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>Cancel</button>
+          </div>
+        </ModalOverlay>
+      )}
 
       {/* ── TRADING ACCOUNT INFO ── */}
       <GlassCard>
@@ -425,7 +822,7 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
       <GlassCard style={{ borderColor: 'rgba(168,85,247,0.2)', background: 'rgba(168,85,247,0.04)' }}>
         <div className="px-5 py-3.5 border-b border-white/8 flex items-center gap-2">
           <Users size={13} className="text-purple-400" />
-          <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Referral Program</span>
+          <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Affiliate Program</span>
         </div>
         <div className="p-5 space-y-4">
           <div className="grid grid-cols-3 gap-3">
@@ -456,7 +853,7 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           { label: 'Total Trades', value: stats.totalTrades.toString(), color: '#3b82f6', bg: 'rgba(59,130,246,0.08)', border: 'rgba(59,130,246,0.2)' },
-          { label: 'Win Rate', value: `${stats.winRate.toFixed(1)}%`, color: stats.winRate >= 50 ? '#10b981' : '#ef4444', bg: stats.winRate >= 50 ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)', border: stats.winRate >= 50 ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)' },
+          { label: 'Win Rate', value: `${stats.winRate.toFixed(1)}%`, color: stats.winRate >= 50 ? '#10b981' : '#ef4444', bg: stats.winRate >= 50 ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)', border: stats.winRate >= 50 ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)' },
           { label: 'Total P&L', value: `${netPnL >= 0 ? '+' : ''}$${formatCurrency(netPnL)}`, color: netPnL >= 0 ? '#10b981' : '#ef4444', bg: netPnL >= 0 ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)', border: netPnL >= 0 ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)' },
           { label: 'Level', value: levelInfo.level, color: levelInfo.color, bg: `${levelInfo.color}14`, border: `${levelInfo.color}33` },
         ].map(({ label, value, color, bg, border }) => (
@@ -524,9 +921,9 @@ function SecuritySection() {
                   value={pwForm[key as keyof typeof pwForm]}
                   onChange={e => setPwForm(f => ({ ...f, [key]: e.target.value }))}
                   placeholder="••••••••"
-                  className="w-full rounded-xl px-3 py-2.5 pr-10 text-sm text-white placeholder-slate-600 focus:outline-none transition-all"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
-                  onFocus={e => { e.target.style.borderColor = 'rgba(16,185,129,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1)'; }}
+                  className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all"
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)' }}
+                  onFocus={e => { e.target.style.borderColor = 'rgba(16,185,129,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1), inset 0 1px 3px rgba(0,0,0,0.3)'; }}
                   onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }}
                 />
                 <button onClick={toggle} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
@@ -668,6 +1065,38 @@ function WalletSection({
   const [toast, setToast] = useState<ToastState | null>(null);
   const [resetting, setResetting] = useState(false);
 
+  // Dynamic payment methods filtered by user's country
+  const [countryPaymentMethods, setCountryPaymentMethods] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchCountryMethods = async () => {
+      const userCountry = profile?.country || '';
+      if (!userCountry) {
+        setCountryPaymentMethods(PAYMENT_METHODS);
+        return;
+      }
+      const { data } = await supabase
+        .from('payment_methods')
+        .select('name')
+        .eq('is_active', true)
+        .or(`country.eq.${userCountry},country.eq.Global`)
+        .order('name');
+      if (data && data.length > 0) {
+        setCountryPaymentMethods(data.map((m: { name: string }) => m.name));
+      } else {
+        // Fallback: show Global methods only
+        const { data: globalData } = await supabase
+          .from('payment_methods')
+          .select('name')
+          .eq('is_active', true)
+          .eq('country', 'Global')
+          .order('name');
+        setCountryPaymentMethods(globalData ? globalData.map((m: { name: string }) => m.name) : []);
+      }
+    };
+    fetchCountryMethods();
+  }, [profile?.country]);
+
   // Financial info form
   const [editingFinancial, setEditingFinancial] = useState(false);
   const [financialForm, setFinancialForm] = useState({
@@ -726,6 +1155,7 @@ function WalletSection({
   const handleSubmitDeposit = async () => {
     const amount = parseFloat(depositForm.amount);
     if (!amount || amount <= 0) { setToast({ message: 'Please enter a valid deposit amount', type: 'error' }); return; }
+    if (amount < 100) { setToast({ message: 'Minimum deposit amount is $100', type: 'error' }); return; }
     if (!depositForm.payment_method) { setToast({ message: 'Please select a payment method', type: 'error' }); return; }
     setSubmittingDeposit(true);
     try {
@@ -868,7 +1298,7 @@ function WalletSection({
                   <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block flex items-center gap-1"><CreditCard size={10} /> Payment Method</label>
                   <select value={financialForm.preferred_payment_method} onChange={e => setFinancialForm(f => ({ ...f, preferred_payment_method: e.target.value }))} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={inputStyle}>
                     <option value="">Select method</option>
-                    {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
+                    {countryPaymentMethods.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
                 <div>
@@ -924,7 +1354,13 @@ function WalletSection({
               key={key}
               onClick={() => setTab(key)}
               className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-xs font-semibold transition-all relative"
-              style={{ color: tab === key ? color : '#64748b' }}
+              style={{
+                background: tab === key ? color : 'transparent',
+                border: `1px solid ${tab === key ? `${color}30` : 'transparent'}`,
+                color: tab === key ? '#ffffff' : '#64748b',
+              }}
+              onMouseEnter={e => { if (tab !== key) { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = '#94a3b8'; } }}
+              onMouseLeave={e => { if (tab !== key) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#64748b'; } }}
             >
               {icon} {label}
               {tab === key && <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full" style={{ background: color }} />}
@@ -939,7 +1375,7 @@ function WalletSection({
               <div className="space-y-3">
                 <div>
                   <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Deposit Amount (USD)</label>
-                  <input type="number" value={depositForm.amount} onChange={e => setDepositForm(f => ({ ...f, amount: e.target.value }))} placeholder="Minimum $10" min="10" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle}
+                  <input type="number" value={depositForm.amount} onChange={e => setDepositForm(f => ({ ...f, amount: e.target.value }))} placeholder="Minimum $100" min="100" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle}
                     onFocus={e => { e.target.style.borderColor = 'rgba(16,185,129,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1)'; }}
                     onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }}
                   />
@@ -948,7 +1384,7 @@ function WalletSection({
                   <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Payment Method</label>
                   <select value={depositForm.payment_method} onChange={e => setDepositForm(f => ({ ...f, payment_method: e.target.value }))} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={inputStyle}>
                     <option value="">Select method</option>
-                    {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
+                    {countryPaymentMethods.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
                 <div>
@@ -1000,7 +1436,7 @@ function WalletSection({
                   <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Withdrawal Method</label>
                   <select value={withdrawalForm.payment_method} onChange={e => setWithdrawalForm(f => ({ ...f, payment_method: e.target.value }))} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={inputStyle}>
                     <option value="">Select method</option>
-                    {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
+                    {countryPaymentMethods.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
                 <div>
@@ -1036,25 +1472,31 @@ function WalletSection({
           {/* History Tab */}
           {tab === 'history' && (
             <div style={{ animation: 'fadeSlideIn 0.2s ease-out' }}>
-              {transactions.length === 0 ? (
+              {deposits.length === 0 && withdrawals.length === 0 ? (
                 <div className="text-center py-12 text-slate-500 text-sm">No transaction history yet</div>
               ) : (
                 <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {transactions.map(tx => (
-                    <div key={tx.id} className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-white/3 transition-colors" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                  {[
+                    ...deposits.map(d => ({ id: d.id, type: 'deposit' as const, amount: d.amount, currency: d.currency, method: d.payment_method, status: d.status, created_at: d.created_at })),
+                    ...withdrawals.map(w => ({ id: w.id, type: 'withdrawal' as const, amount: w.amount, currency: w.currency, method: w.payment_method, status: w.status, created_at: w.created_at })),
+                  ]
+                    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+                    .map(item => (
+                    <div key={item.id} className="flex items-center justify-between py-2.5 px-3 rounded-xl hover:bg-white/3 transition-colors" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${txTypeBg(tx.type)}`}>{txTypeIcon(tx.type)}</div>
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${item.type === 'deposit' ? 'text-emerald-400' : 'text-red-400'}`} style={{ background: item.type === 'deposit' ? 'rgba(16,185,129,0.12)' : 'rgba(239,68,68,0.12)', border: `1px solid ${item.type === 'deposit' ? 'rgba(16,185,129,0.25)' : 'rgba(239,68,68,0.25)'}` }}>
+                          {item.type === 'deposit' ? <ArrowDownCircle size={14} /> : <ArrowUpCircle size={14} />}
+                        </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-semibold text-white">{txTypeLabel(tx.type)}</span>
-                            <span className={`text-[9px] font-medium px-1.5 py-0.5 rounded-md ${tx.is_demo ? 'bg-blue-500/15 text-blue-400' : 'bg-amber-500/15 text-amber-400'}`}>{tx.is_demo ? 'Demo' : 'Real'}</span>
+                            <span className="text-xs font-semibold text-white capitalize">{item.type}</span>
                           </div>
-                          <div className="text-[10px] text-slate-500 truncate">{tx.description || '—'} · {formatDate(tx.created_at)}</div>
+                          <div className="text-[10px] text-slate-500 truncate">{item.method || '—'} · {formatDate(item.created_at)}</div>
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <div className={`text-xs font-bold ${tx.amount >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{tx.amount >= 0 ? '+' : ''}${formatCurrency(Math.abs(tx.amount))}</div>
-                        <div className={`text-[9px] font-medium mt-0.5 ${tx.status === 'completed' ? 'text-emerald-400' : tx.status === 'pending' ? 'text-yellow-400' : 'text-red-400'}`}>{tx.status}</div>
+                        <div className={`text-xs font-bold ${item.type === 'deposit' ? 'text-emerald-400' : 'text-red-400'}`}>{item.type === 'deposit' ? '+' : '-'}${formatCurrency(item.amount)}</div>
+                        <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${item.type === 'deposit' ? depositStatusBadge(item.status) : withdrawalStatusBadge(item.status)}`}>{item.type === 'deposit' ? depositStatusLabel(item.status) : withdrawalStatusLabel(item.status)}</span>
                       </div>
                     </div>
                   ))}
@@ -1161,13 +1603,13 @@ function LevelSection({ totalTrades }: { totalTrades: number }) {
     <div className="space-y-4">
       <GlassCard className="p-6" style={{ background: `linear-gradient(135deg, ${levelInfo.color}10, ${levelInfo.color}05)`, borderColor: `${levelInfo.color}30` }}>
         <div className="flex items-center gap-4 mb-5">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: `${levelInfo.color}20`, border: `2px solid ${levelInfo.color}40`, boxShadow: `0 0 24px ${levelInfo.color}20` }}>
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: `${levelInfo.color}20`, border: `2px solid ${levelInfo.color}40`, boxShadow: `${levelInfo.color}20` }}>
             <Trophy size={28} style={{ color: levelInfo.color }} />
           </div>
           <div>
             <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Trader Level</div>
             <div className="text-3xl font-bold" style={{ color: levelInfo.color }}>{levelInfo.level}</div>
-            <div className="text-xs text-slate-400 mt-0.5">Total trades: {totalTrades}</div>
+            <div className="text-xs text-slate-400 mt-1">Total trades: {totalTrades}</div>
           </div>
         </div>
         {levelInfo.level !== 'VIP' && (
@@ -1177,7 +1619,7 @@ function LevelSection({ totalTrades }: { totalTrades: number }) {
               <span className="text-xs font-bold" style={{ color: levelInfo.color }}>{levelInfo.progress}%</span>
             </div>
             <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
-              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${levelInfo.progress}%`, background: `linear-gradient(90deg, ${levelInfo.color}, ${levelInfo.color}aa)`, boxShadow: `0 0 8px ${levelInfo.color}60` }} />
+              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${levelInfo.progress}%`, background: `linear-gradient(90deg, ${levelInfo.color}, ${levelInfo.color}aa)`, boxShadow: `${levelInfo.color}60` }} />
             </div>
             <div className="text-[10px] text-slate-600 mt-1.5">{levelInfo.nextAt - totalTrades} more trades to reach {levelInfo.next}</div>
           </div>
@@ -1290,7 +1732,10 @@ function PreferencesSection() {
             <button
               onClick={() => setNotifications(n => ({ ...n, [key]: !n[key as keyof typeof n] }))}
               className="relative w-11 h-6 rounded-full transition-all duration-300"
-              style={{ background: notifications[key as keyof typeof notifications] ? 'linear-gradient(135deg, #3b82f6, #6366f1)' : 'rgba(255,255,255,0.1)', boxShadow: notifications[key as keyof typeof notifications] ? '0 0 12px rgba(59,130,246,0.3)' : 'none' }}
+              style={{
+                background: notifications[key as keyof typeof notifications] ? 'linear-gradient(135deg, #3b82f6, #6366f1)' : 'rgba(255,255,255,0.1)',
+                boxShadow: notifications[key as keyof typeof notifications] ? '0 0 12px rgba(59,130,246,0.3)' : 'none',
+              }}
             >
               <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-md ${notifications[key as keyof typeof notifications] ? 'translate-x-5' : 'translate-x-1'}`} />
             </button>
@@ -1379,11 +1824,11 @@ function SupportSection() {
           <>
             <div>
               <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Subject</label>
-              <input value={ticketForm.subject} onChange={e => setTicketForm(f => ({ ...f, subject: e.target.value }))} placeholder="Enter ticket subject" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }} />
+              <input value={ticketForm.subject} onChange={e => setTicketForm(f => ({ ...f, subject: e.target.value }))} placeholder="Enter ticket subject" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)' }} onFocus={e => { e.target.style.borderColor = 'rgba(16,185,129,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1), inset 0 1px 3px rgba(0,0,0,0.3)'; }} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }} />
             </div>
             <div>
               <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Message</label>
-              <textarea value={ticketForm.message} onChange={e => setTicketForm(f => ({ ...f, message: e.target.value }))} placeholder="Describe your issue..." rows={4} className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all resize-none" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }} />
+              <textarea value={ticketForm.message} onChange={e => setTicketForm(f => ({ ...f, message: e.target.value }))} placeholder="Describe your issue..." rows={4} className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all resize-none" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)' }} onFocus={e => { e.target.style.borderColor = 'rgba(16,185,129,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1), inset 0 1px 3px rgba(0,0,0,0.3)'; }} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'inset 0 1px 3px rgba(0,0,0,0.3)'; }} />
             </div>
             <button onClick={handleSendTicket} disabled={sending || !ticketForm.subject || !ticketForm.message} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             style={{ background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 4px 16px rgba(16,185,129,0.25)' }}
@@ -1559,6 +2004,7 @@ export default function AccountPage() {
     if (data.account_number !== undefined) updatePayload.account_number = data.account_number;
     if (data.preferred_payment_method !== undefined) updatePayload.preferred_payment_method = data.preferred_payment_method;
     if (data.preferred_currency !== undefined) updatePayload.preferred_currency = data.preferred_currency;
+    if (data.username !== undefined) updatePayload.username = data.username;
     await supabase.from('users').update(updatePayload).eq('id', user.id);
     setProfile(prev => prev ? { ...prev, ...data } : prev);
   };
@@ -1647,7 +2093,7 @@ export default function AccountPage() {
         </div>
         <div className="flex items-center gap-2">
           {/* Notification bell placeholder */}
-          <button className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-500 hover:text-white transition-all hover:scale-105" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-slate-400 hover:text-white transition-colors" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
             <Bell size={15} />
           </button>
           {/* Profile avatar mini */}
@@ -1717,7 +2163,7 @@ export default function AccountPage() {
               <span style={{ color: activeItem?.accent }}>{activeItem?.icon}</span>
               <span className="text-sm font-semibold text-white">{activeItem?.label}</span>
             </div>
-            <button onClick={() => setMobileSidebarOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-slate-400 hover:text-white transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <button onClick={() => setMobileSidebarOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-slate-400 hover:text-white transition-colors" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
               <Menu size={13} /> Menu
             </button>
           </div>
