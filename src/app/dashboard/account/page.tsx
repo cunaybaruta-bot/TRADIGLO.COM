@@ -1364,7 +1364,7 @@ function WalletSection({
               onMouseLeave={e => { if (tab !== key) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#64748b'; } }}
             >
               {icon} {label}
-              {tab === key && <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full" style={{ background: color }} />}
+              {tab === key && <span className="absolute bottom-0 w-6 h-0.5 rounded-full" style={{ background: color }} />}
             </button>
           ))}
         </div>
@@ -1731,13 +1731,13 @@ function PreferencesSection() {
             </div>
             <button
               onClick={() => setNotifications(n => ({ ...n, [key]: !n[key as keyof typeof n] }))}
-              className="relative flex-shrink-0 w-11 h-6 rounded-full transition-all duration-300"
+              className="relative flex-shrink-0 w-11 h-6 rounded-full transition-all duration-300 overflow-hidden"
               style={{
                 background: notifications[key as keyof typeof notifications] ? 'linear-gradient(135deg, #3b82f6, #6366f1)' : 'rgba(255,255,255,0.1)',
                 boxShadow: notifications[key as keyof typeof notifications] ? '0 0 12px rgba(59,130,246,0.3)' : 'none',
               }}
             >
-              <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-md ${notifications[key as keyof typeof notifications] ? 'translate-x-5' : 'translate-x-1'}`} />
+              <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-md ${notifications[key as keyof typeof notifications] ? 'left-[22px]' : 'left-1'}`} />
             </button>
           </div>
         ))}
