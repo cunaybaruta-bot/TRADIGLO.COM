@@ -921,10 +921,10 @@ function SecuritySection() {
                   value={pwForm[key as keyof typeof pwForm]}
                   onChange={e => setPwForm(f => ({ ...f, [key]: e.target.value }))}
                   placeholder="••••••••"
-                  className="w-full rounded-xl px-3 py-2.5 pr-10 text-sm text-white placeholder-slate-600 focus:outline-none transition-all"
+                  className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all"
                   style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)' }}
                   onFocus={e => { e.target.style.borderColor = 'rgba(16,185,129,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1), inset 0 1px 3px rgba(0,0,0,0.3)'; }}
-                  onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'inset 0 1px 3px rgba(0,0,0,0.3)'; }}
+                  onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }}
                 />
                 <button onClick={toggle} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
                   {show ? <EyeOff size={14} /> : <Eye size={14} />}
@@ -1065,6 +1065,38 @@ function WalletSection({
   const [toast, setToast] = useState<ToastState | null>(null);
   const [resetting, setResetting] = useState(false);
 
+  // Dynamic payment methods filtered by user's country
+  const [countryPaymentMethods, setCountryPaymentMethods] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchCountryMethods = async () => {
+      const userCountry = profile?.country || '';
+      if (!userCountry) {
+        setCountryPaymentMethods(PAYMENT_METHODS);
+        return;
+      }
+      const { data } = await supabase
+        .from('payment_methods')
+        .select('name')
+        .eq('is_active', true)
+        .or(`country.eq.${userCountry},country.eq.Global`)
+        .order('name');
+      if (data && data.length > 0) {
+        setCountryPaymentMethods(data.map((m: { name: string }) => m.name));
+      } else {
+        // Fallback: show Global methods only
+        const { data: globalData } = await supabase
+          .from('payment_methods')
+          .select('name')
+          .eq('is_active', true)
+          .eq('country', 'Global')
+          .order('name');
+        setCountryPaymentMethods(globalData ? globalData.map((m: { name: string }) => m.name) : []);
+      }
+    };
+    fetchCountryMethods();
+  }, [profile?.country]);
+
   // Financial info form
   const [editingFinancial, setEditingFinancial] = useState(false);
   const [financialForm, setFinancialForm] = useState({
@@ -1123,6 +1155,7 @@ function WalletSection({
   const handleSubmitDeposit = async () => {
     const amount = parseFloat(depositForm.amount);
     if (!amount || amount <= 0) { setToast({ message: 'Please enter a valid deposit amount', type: 'error' }); return; }
+    if (amount < 100) { setToast({ message: 'Minimum deposit amount is $100', type: 'error' }); return; }
     if (!depositForm.payment_method) { setToast({ message: 'Please select a payment method', type: 'error' }); return; }
     setSubmittingDeposit(true);
     try {
@@ -1265,7 +1298,7 @@ function WalletSection({
                   <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block flex items-center gap-1"><CreditCard size={10} /> Payment Method</label>
                   <select value={financialForm.preferred_payment_method} onChange={e => setFinancialForm(f => ({ ...f, preferred_payment_method: e.target.value }))} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={inputStyle}>
                     <option value="">Select method</option>
-                    {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
+                    {countryPaymentMethods.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
                 <div>
@@ -1342,7 +1375,7 @@ function WalletSection({
               <div className="space-y-3">
                 <div>
                   <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Deposit Amount (USD)</label>
-                  <input type="number" value={depositForm.amount} onChange={e => setDepositForm(f => ({ ...f, amount: e.target.value }))} placeholder="Minimum $10" min="10" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle}
+                  <input type="number" value={depositForm.amount} onChange={e => setDepositForm(f => ({ ...f, amount: e.target.value }))} placeholder="Minimum $100" min="100" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle}
                     onFocus={e => { e.target.style.borderColor = 'rgba(16,185,129,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1)'; }}
                     onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }}
                   />
@@ -1351,7 +1384,7 @@ function WalletSection({
                   <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Payment Method</label>
                   <select value={depositForm.payment_method} onChange={e => setDepositForm(f => ({ ...f, payment_method: e.target.value }))} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={inputStyle}>
                     <option value="">Select method</option>
-                    {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
+                    {countryPaymentMethods.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
                 <div>
@@ -1403,7 +1436,7 @@ function WalletSection({
                   <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Withdrawal Method</label>
                   <select value={withdrawalForm.payment_method} onChange={e => setWithdrawalForm(f => ({ ...f, payment_method: e.target.value }))} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={inputStyle}>
                     <option value="">Select method</option>
-                    {PAYMENT_METHODS.map(m => <option key={m} value={m}>{m}</option>)}
+                    {countryPaymentMethods.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                 </div>
                 <div>
