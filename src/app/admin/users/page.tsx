@@ -15,9 +15,14 @@ interface User {
   email_verified?: boolean;
   phone_verified?: boolean;
   kyc_status?: string;
+  kyc_document_url?: string;
+  kyc_document_type?: string;
+  kyc_notes?: string;
+  kyc_submitted_at?: string;
   two_factor_enabled?: boolean;
   username?: string;
   country?: string;
+  phone?: string;
 }
 
 interface Wallet {
@@ -65,7 +70,7 @@ export default function UsersPage() {
     const supabase = createClient();
     const { data, error } = await supabase
       .from('users')
-      .select('id, email, full_name, role, status, is_verified, created_at, email_verified, phone_verified, kyc_status, two_factor_enabled, username, country')
+      .select('id, email, full_name, role, status, is_verified, created_at, email_verified, phone_verified, kyc_status, kyc_document_url, kyc_document_type, kyc_notes, kyc_submitted_at, two_factor_enabled, username, country, phone')
       .order('created_at', { ascending: false });
     if (error) {
       console.error('Error fetching users:', error);
@@ -326,13 +331,42 @@ export default function UsersPage() {
                               <div className="text-white text-sm font-medium">{user.country || '—'}</div>
                             </div>
                             <div className="bg-[#0f172a] rounded-lg p-3 border border-slate-700">
-                              <div className="text-slate-400 text-xs mb-1">KYC Status</div>
-                              <KycBadge status={user.kyc_status || 'unverified'} />
+                              <div className="text-slate-400 text-xs mb-1">Phone</div>
+                              <div className="text-white text-sm font-medium">{user.phone || '—'}</div>
                             </div>
                             <div className="bg-[#0f172a] rounded-lg p-3 border border-slate-700">
                               <div className="text-slate-400 text-xs mb-1">2FA</div>
                               <VerifyBadge verified={!!user.two_factor_enabled} label="2FA" />
                             </div>
+                          </div>
+
+                          {/* KYC Status & Document */}
+                          <div className="bg-[#0f172a] rounded-lg p-3 border border-slate-700">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="text-slate-400 text-xs">KYC Status</div>
+                              <KycBadge status={user.kyc_status || 'unverified'} />
+                            </div>
+                            {user.kyc_status === 'pending' && user.kyc_document_url && (
+                              <div className="space-y-2 mt-2 pt-2 border-t border-slate-700">
+                                <div className="text-slate-400 text-xs">
+                                  Document Type: <span className="text-white capitalize">{user.kyc_document_type?.replace('_', ' ') || '—'}</span>
+                                  {user.kyc_submitted_at && (
+                                    <span className="ml-2 text-slate-500">· Submitted {new Date(user.kyc_submitted_at).toLocaleDateString()}</span>
+                                  )}
+                                </div>
+                                {user.kyc_notes && (
+                                  <div className="text-slate-400 text-xs">Notes: <span className="text-slate-300">{user.kyc_notes}</span></div>
+                                )}
+                                <a
+                                  href={user.kyc_document_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-colors"
+                                >
+                                  View KYC Document
+                                </a>
+                              </div>
+                            )}
                           </div>
 
                           {/* Verification Controls */}

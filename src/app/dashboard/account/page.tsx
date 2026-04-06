@@ -288,8 +288,23 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
     setModalLoading(true);
     try {
       const supabase = createClient();
-      // Mark email_verified as false (pending admin approval) — admin will set to true
-      // We just notify admin by updating a notes field or simply show confirmation
+      // Mark email_verified as false (pending admin approval)
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({ email_verified: false, updated_at: new Date().toISOString() })
+        .eq('id', profile.id);
+      if (updateError) throw updateError;
+
+      // Create admin notification so admin can see and approve the request
+      await supabase.from('admin_notifications').insert({
+        type: 'email_verification_request',
+        title: 'Email Verification Request',
+        message: `User ${profile.full_name || profile.email} (${profile.email}) has requested email verification.`,
+        user_id: profile.id,
+        is_read: false,
+      });
+
+      await onUpdate({ email_verified: false });
       setToast({ message: 'Email verification request sent. Admin will review and verify your email.', type: 'success' });
       setActiveModal(null);
     } catch (e: any) {
@@ -310,6 +325,16 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
         updated_at: new Date().toISOString(),
       }).eq('id', profile.id);
       if (error) throw error;
+
+      // Create admin notification so admin can see and approve the phone number
+      await supabase.from('admin_notifications').insert({
+        type: 'phone_verification_request',
+        title: 'Phone Verification Request',
+        message: `User ${profile.full_name || profile.email} (${profile.email}) submitted phone number: ${phoneInput.trim()} for verification.`,
+        user_id: profile.id,
+        is_read: false,
+      });
+
       await onUpdate({ phone: phoneInput.trim(), phone_verified: false });
       setToast({ message: 'Phone number submitted. Admin will verify your number.', type: 'success' });
       setActiveModal(null);
@@ -324,18 +349,34 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
     setModalLoading(true);
     try {
       const supabase = createClient();
-      // Read file as base64 to store reference
+      // Read file as base64 to store as document URL
       const dataUrl = await new Promise<string>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (ev) => resolve(ev.target?.result as string);
         reader.onerror = () => reject(new Error('Failed to read file'));
         reader.readAsDataURL(kycFile);
       });
+
+      // Store KYC document data and set status to pending
       const { error } = await supabase.from('users').update({
         kyc_status: 'pending',
+        kyc_document_url: dataUrl,
+        kyc_document_type: kycDocType,
+        kyc_notes: kycNotes.trim() || null,
+        kyc_submitted_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }).eq('id', profile.id);
       if (error) throw error;
+
+      // Create admin notification so admin can see and approve the KYC submission
+      await supabase.from('admin_notifications').insert({
+        type: 'kyc_submission',
+        title: 'KYC Document Submitted',
+        message: `User ${profile.full_name || profile.email} (${profile.email}) submitted KYC documents. Document type: ${kycDocType}. ${kycNotes.trim() ? `Notes: ${kycNotes.trim()}` : ''}`.trim(),
+        user_id: profile.id,
+        is_read: false,
+      });
+
       await onUpdate({ kyc_status: 'pending' });
       setToast({ message: 'KYC documents submitted. Admin will review within 1-3 business days.', type: 'success' });
       setActiveModal(null);
@@ -881,9 +922,9 @@ function SecuritySection() {
                   onChange={e => setPwForm(f => ({ ...f, [key]: e.target.value }))}
                   placeholder="••••••••"
                   className="w-full rounded-xl px-3 py-2.5 pr-10 text-sm text-white placeholder-slate-600 focus:outline-none transition-all"
-                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
-                  onFocus={e => { e.target.style.borderColor = 'rgba(16,185,129,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1)'; }}
-                  onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }}
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)' }}
+                  onFocus={e => { e.target.style.borderColor = 'rgba(16,185,129,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1), inset 0 1px 3px rgba(0,0,0,0.3)'; }}
+                  onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'inset 0 1px 3px rgba(0,0,0,0.3)'; }}
                 />
                 <button onClick={toggle} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors">
                   {show ? <EyeOff size={14} /> : <Eye size={14} />}
@@ -1280,7 +1321,13 @@ function WalletSection({
               key={key}
               onClick={() => setTab(key)}
               className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-xs font-semibold transition-all relative"
-              style={{ color: tab === key ? color : '#64748b' }}
+              style={{
+                background: tab === key ? color : 'transparent',
+                border: `1px solid ${tab === key ? `${color}30` : 'transparent'}`,
+                color: tab === key ? color : '#64748b',
+              }}
+              onMouseEnter={e => { if (tab !== key) { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = '#94a3b8'; } }}
+              onMouseLeave={e => { if (tab !== key) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#64748b'; } }}
             >
               {icon} {label}
               {tab === key && <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full" style={{ background: color }} />}
@@ -2007,7 +2054,7 @@ export default function AccountPage() {
         </div>
         <div className="flex items-center gap-2">
           {/* Notification bell placeholder */}
-          <button className="w-8 h-8 rounded-xl flex items-center justify-center text-slate-500 hover:text-white transition-all hover:scale-105" style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>
+          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-slate-400 hover:text-white transition-colors" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
             <Bell size={15} />
           </button>
           {/* Profile avatar mini */}
