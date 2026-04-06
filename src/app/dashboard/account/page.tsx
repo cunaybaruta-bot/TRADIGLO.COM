@@ -2215,7 +2215,7 @@ export default function AccountPage() {
                 </div>
                 <div>
                   <div className="text-sm font-semibold text-white">{profile?.full_name || 'Pengguna'}</div>
-                  <div className="text-[10px] text-slate-500">{profile?.email}</div>
+                  <div className="text-xs text-slate-500">{profile?.email}</div>
                 </div>
               </div>
               <button onClick={() => setMobileSidebarOpen(false)} className="text-slate-500 hover:text-white transition-colors"><X size={18} /></button>
