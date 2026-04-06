@@ -1295,7 +1295,7 @@ export default function DashboardPage() {
         }
         const priceDiff = Math.abs(exitPrice - entryPrice);
         const pctMove = entryPrice > 0 ? priceDiff / entryPrice : 0;
-        const profitLoss = result === 'win' ? trade.amount * (1 + pctMove) - trade.amount : trade.amount;
+        const profitLoss = result === 'win' ? Math.round(trade.amount * 0.95 * 100) / 100 : trade.amount;
         const knownTrade = openTrades.find((t) => t.id === trade.id);
         setTradeResultPopup({
           asset_symbol: knownTrade?.asset_symbol ?? trade.asset_symbol ?? '',
@@ -1362,7 +1362,7 @@ export default function DashboardPage() {
         }
         const priceDiff = Math.abs(exitPrice - entryPrice);
         const pctMove = entryPrice > 0 ? priceDiff / entryPrice : 0;
-        const profitLoss = result === 'win' ? lastTrade.amount * (1 + pctMove) - lastTrade.amount : lastTrade.amount;
+        const profitLoss = result === 'win' ? Math.round(lastTrade.amount * 0.95 * 100) / 100 : lastTrade.amount;
         lastPopupTradeIdRef.current = lastTrade.id;
         setTradeResultPopup({
           asset_symbol: lastTrade.asset_symbol,
