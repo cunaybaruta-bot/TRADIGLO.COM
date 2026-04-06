@@ -162,9 +162,9 @@ function Toast({ toast, onClose }: { toast: ToastState; onClose: () => void }) {
 
 // ─── Glass Card ───────────────────────────────────────────────────────────────
 
-function GlassCard({ children, className = '', style = {} }: { children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
+function GlassCard({ children, className = '', style = {}, onClick }: { children: React.ReactNode; className?: string; style?: React.CSSProperties; onClick?: () => void }) {
   return (
-    <div className={`rounded-2xl border border-white/8 ${className}`} style={{ background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(12px)', ...style }}>
+    <div className={`rounded-2xl border border-white/8 ${className}`} style={{ background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(12px)', ...style }} onClick={onClick}>
       {children}
     </div>
   );
@@ -1785,11 +1785,11 @@ function SupportSection() {
           <>
             <div>
               <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Subject</label>
-              <input value={ticketForm.subject} onChange={e => setTicketForm(f => ({ ...f, subject: e.target.value }))} placeholder="Enter ticket subject" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }} />
+              <input value={ticketForm.subject} onChange={e => setTicketForm(f => ({ ...f, subject: e.target.value }))} placeholder="Enter ticket subject" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)' }} onFocus={e => { e.target.style.borderColor = 'rgba(16,185,129,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1), inset 0 1px 3px rgba(0,0,0,0.3)'; }} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'inset 0 1px 3px rgba(0,0,0,0.3)'; }} />
             </div>
             <div>
               <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Message</label>
-              <textarea value={ticketForm.message} onChange={e => setTicketForm(f => ({ ...f, message: e.target.value }))} placeholder="Describe your issue..." rows={4} className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all resize-none" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }} />
+              <textarea value={ticketForm.message} onChange={e => setTicketForm(f => ({ ...f, message: e.target.value }))} placeholder="Describe your issue..." rows={4} className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all resize-none" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.3)' }} onFocus={e => { e.target.style.borderColor = 'rgba(16,185,129,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1), inset 0 1px 3px rgba(0,0,0,0.3)'; }} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'inset 0 1px 3px rgba(0,0,0,0.3)'; }} />
             </div>
             <button onClick={handleSendTicket} disabled={sending || !ticketForm.subject || !ticketForm.message} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
             style={{ background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 4px 16px rgba(16,185,129,0.25)' }}
