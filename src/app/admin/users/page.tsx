@@ -84,10 +84,15 @@ export default function UsersPage() {
 
   const fetchUserDetails = async (userId: string) => {
     const supabase = createClient();
-    const [{ data: wallet }, { count: tradeCount }] = await Promise.all([
-      supabase.from('wallets').select('real_balance, demo_balance').eq('user_id', userId).single(),
+    const [{ data: walletRows }, { count: tradeCount }] = await Promise.all([
+      supabase.from('wallets').select('id, balance, is_demo').eq('user_id', userId),
       supabase.from('trades').select('*', { count: 'exact', head: true }).eq('user_id', userId),
     ]);
+    const realWallet = (walletRows || []).find((w: any) => !w.is_demo);
+    const demoWallet = (walletRows || []).find((w: any) => w.is_demo);
+    const wallet = (walletRows && walletRows.length > 0)
+      ? { real_balance: realWallet ? Number(realWallet.balance) : 0, demo_balance: demoWallet ? Number(demoWallet.balance) : 0 }
+      : null;
     setUsers((prev) => prev.map((u) => u.id === userId ? { ...u, wallet: wallet ?? null, tradeCount: tradeCount ?? 0, detailsFetched: true } : u));
   };
 
