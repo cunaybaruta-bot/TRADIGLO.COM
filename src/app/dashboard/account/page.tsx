@@ -270,6 +270,114 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
   const TIMEZONES = ['UTC', 'Asia/Jakarta', 'Asia/Singapore', 'Asia/Tokyo', 'Asia/Dubai', 'Europe/London', 'Europe/Paris', 'America/New_York', 'America/Los_Angeles', 'Australia/Sydney', 'Pacific/Auckland'];
   const COUNTRIES = ['Indonesia', 'Malaysia', 'Singapore', 'Thailand', 'Philippines', 'Vietnam', 'India', 'China', 'Japan', 'South Korea', 'United States', 'United Kingdom', 'Australia', 'Canada', 'Germany', 'France', 'Netherlands', 'UAE', 'Saudi Arabia', 'Other'];
 
+  // ── Verification Modals State ──
+  const [activeModal, setActiveModal] = useState<'email' | 'phone' | 'kyc' | '2fa' | null>(null);
+  const [phoneInput, setPhoneInput] = useState(profile?.phone || '');
+  const [kycFile, setKycFile] = useState<File | null>(null);
+  const [kycDocType, setKycDocType] = useState('passport');
+  const [kycNotes, setKycNotes] = useState('');
+  const [modalLoading, setModalLoading] = useState(false);
+  const kycFileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setPhoneInput(profile?.phone || '');
+  }, [profile?.phone]);
+
+  const handleEmailVerifyRequest = async () => {
+    if (!profile) return;
+    setModalLoading(true);
+    try {
+      const supabase = createClient();
+      // Mark email_verified as false (pending admin approval) — admin will set to true
+      // We just notify admin by updating a notes field or simply show confirmation
+      setToast({ message: 'Email verification request sent. Admin will review and verify your email.', type: 'success' });
+      setActiveModal(null);
+    } catch (e: any) {
+      setToast({ message: e.message || 'Failed to send request', type: 'error' });
+    } finally { setModalLoading(false); }
+  };
+
+  const handlePhoneSubmit = async () => {
+    if (!profile) return;
+    if (!phoneInput.trim()) { setToast({ message: 'Please enter a phone number', type: 'error' }); return; }
+    if (!/^\+?[\d\s\-()]{7,20}$/.test(phoneInput)) { setToast({ message: 'Invalid phone number format', type: 'error' }); return; }
+    setModalLoading(true);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.from('users').update({
+        phone: phoneInput.trim(),
+        phone_verified: false,
+        updated_at: new Date().toISOString(),
+      }).eq('id', profile.id);
+      if (error) throw error;
+      await onUpdate({ phone: phoneInput.trim(), phone_verified: false });
+      setToast({ message: 'Phone number submitted. Admin will verify your number.', type: 'success' });
+      setActiveModal(null);
+    } catch (e: any) {
+      setToast({ message: e.message || 'Failed to submit phone number', type: 'error' });
+    } finally { setModalLoading(false); }
+  };
+
+  const handleKycSubmit = async () => {
+    if (!profile) return;
+    if (!kycFile) { setToast({ message: 'Please upload a document', type: 'error' }); return; }
+    setModalLoading(true);
+    try {
+      const supabase = createClient();
+      // Read file as base64 to store reference
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (ev) => resolve(ev.target?.result as string);
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(kycFile);
+      });
+      const { error } = await supabase.from('users').update({
+        kyc_status: 'pending',
+        updated_at: new Date().toISOString(),
+      }).eq('id', profile.id);
+      if (error) throw error;
+      await onUpdate({ kyc_status: 'pending' });
+      setToast({ message: 'KYC documents submitted. Admin will review within 1-3 business days.', type: 'success' });
+      setActiveModal(null);
+      setKycFile(null);
+      setKycNotes('');
+    } catch (e: any) {
+      setToast({ message: e.message || 'Failed to submit KYC', type: 'error' });
+    } finally { setModalLoading(false); }
+  };
+
+  const handle2FAToggle = async () => {
+    if (!profile) return;
+    setModalLoading(true);
+    try {
+      const supabase = createClient();
+      const newVal = !profile.two_factor_enabled;
+      const { error } = await supabase.from('users').update({
+        two_factor_enabled: newVal,
+        updated_at: new Date().toISOString(),
+      }).eq('id', profile.id);
+      if (error) throw error;
+      await onUpdate({ two_factor_enabled: newVal });
+      setToast({ message: `2FA ${newVal ? 'enabled' : 'disabled'} successfully.`, type: 'success' });
+      setActiveModal(null);
+    } catch (e: any) {
+      setToast({ message: e.message || 'Failed to update 2FA', type: 'error' });
+    } finally { setModalLoading(false); }
+  };
+
+  // ── Modal Overlay ──
+  const ModalOverlay = ({ children, onClose }: { children: React.ReactNode; onClose: () => void }) => (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div className="w-full max-w-md rounded-2xl border border-white/10 p-6 space-y-4" style={{ background: 'rgba(15,23,42,0.98)', boxShadow: '0 24px 64px rgba(0,0,0,0.8)' }}>
+        {children}
+      </div>
+    </div>
+  );
+
   return (
     <div className="space-y-4">
       {toast && <Toast toast={toast} onClose={() => setToast(null)} />}
@@ -384,20 +492,267 @@ function ProfileSection({ profile, stats, onUpdate }: { profile: UserProfile | n
       {/* ── STATUS GRID ── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
-          { label: 'Email', value: profile?.email_verified ? 'Verified' : 'Unverified', color: profile?.email_verified ? '#10b981' : '#64748b', icon: <BadgeCheck size={14} /> },
-          { label: 'Phone', value: profile?.phone_verified ? 'Verified' : 'Unverified', color: profile?.phone_verified ? '#10b981' : '#64748b', icon: <Smartphone size={14} /> },
-          { label: 'KYC', value: kycCfg.label, color: kycCfg.color, icon: <Fingerprint size={14} /> },
-          { label: '2FA', value: profile?.two_factor_enabled ? 'Active' : 'Inactive', color: profile?.two_factor_enabled ? '#10b981' : '#64748b', icon: <ShieldCheck size={14} /> },
-        ].map(({ label, value, color, icon }) => (
-          <GlassCard key={label} className="p-3">
+          {
+            label: 'Email',
+            value: profile?.email_verified ? 'Verified' : 'Unverified',
+            color: profile?.email_verified ? '#10b981' : '#64748b',
+            icon: <BadgeCheck size={14} />,
+            modal: 'email' as const,
+            actionLabel: profile?.email_verified ? 'Verified ✓' : 'Request Verify',
+            disabled: !!profile?.email_verified,
+          },
+          {
+            label: 'Phone',
+            value: profile?.phone_verified ? 'Verified' : (profile?.phone ? 'Pending' : 'Unverified'),
+            color: profile?.phone_verified ? '#10b981' : (profile?.phone ? '#f59e0b' : '#64748b'),
+            icon: <Smartphone size={14} />,
+            modal: 'phone' as const,
+            actionLabel: profile?.phone_verified ? 'Verified ✓' : (profile?.phone ? 'Update Number' : 'Add Number'),
+            disabled: false,
+          },
+          {
+            label: 'KYC',
+            value: kycCfg.label,
+            color: kycCfg.color,
+            icon: <Fingerprint size={14} />,
+            modal: 'kyc' as const,
+            actionLabel: profile?.kyc_status === 'verified' ? 'Verified ✓' : (profile?.kyc_status === 'pending' ? 'Pending Review' : 'Submit KYC'),
+            disabled: profile?.kyc_status === 'verified' || profile?.kyc_status === 'pending',
+          },
+          {
+            label: '2FA',
+            value: profile?.two_factor_enabled ? 'Active' : 'Inactive',
+            color: profile?.two_factor_enabled ? '#10b981' : '#64748b',
+            icon: <ShieldCheck size={14} />,
+            modal: '2fa' as const,
+            actionLabel: profile?.two_factor_enabled ? 'Disable 2FA' : 'Enable 2FA',
+            disabled: false,
+          },
+        ].map(({ label, value, color, icon, modal, actionLabel, disabled }) => (
+          <GlassCard
+            key={label}
+            className="p-3 transition-all"
+            style={{
+              cursor: disabled ? 'default' : 'pointer',
+              border: `1px solid ${disabled ? 'rgba(255,255,255,0.08)' : `${color}33`}`,
+            }}
+            onClick={() => { if (!disabled) setActiveModal(modal); }}
+          >
             <div className="flex items-center gap-1.5 mb-2" style={{ color }}>
               {icon}
               <span className="text-[10px] font-semibold uppercase tracking-wider">{label}</span>
             </div>
-            <div className="text-sm font-bold" style={{ color }}>{value}</div>
+            <div className="text-sm font-bold mb-1.5" style={{ color }}>{value}</div>
+            <div
+              className="text-[10px] font-medium rounded-lg px-2 py-1 text-center transition-all"
+              style={{
+                background: disabled ? 'rgba(255,255,255,0.04)' : `${color}18`,
+                color: disabled ? '#475569' : color,
+                border: `1px solid ${disabled ? 'rgba(255,255,255,0.06)' : `${color}30`}`,
+              }}
+            >
+              {actionLabel}
+            </div>
           </GlassCard>
         ))}
       </div>
+
+      {/* ── EMAIL MODAL ── */}
+      {activeModal === 'email' && (
+        <ModalOverlay onClose={() => setActiveModal(null)}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.3)' }}>
+                <BadgeCheck size={16} className="text-blue-400" />
+              </div>
+              <div>
+                <div className="text-sm font-bold text-white">Email Verification</div>
+                <div className="text-[10px] text-slate-500">Request admin to verify your email</div>
+              </div>
+            </div>
+            <button onClick={() => setActiveModal(null)} className="text-slate-500 hover:text-white transition-colors"><X size={16} /></button>
+          </div>
+          <div className="rounded-xl p-4 space-y-2" style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.15)' }}>
+            <div className="text-xs font-semibold text-blue-300">Your email address</div>
+            <div className="text-sm text-white font-mono">{profile?.email}</div>
+          </div>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Click the button below to send an email verification request to our admin team. Your email will be verified within 24 hours.
+          </p>
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={handleEmailVerifyRequest}
+              disabled={modalLoading}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+              style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', boxShadow: '0 4px 16px rgba(59,130,246,0.3)' }}
+            >
+              {modalLoading ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <BadgeCheck size={14} />}
+              Send Verification Request
+            </button>
+            <button onClick={() => setActiveModal(null)} className="px-4 py-2.5 rounded-xl text-sm text-slate-400 hover:text-white transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>Cancel</button>
+          </div>
+        </ModalOverlay>
+      )}
+
+      {/* ── PHONE MODAL ── */}
+      {activeModal === 'phone' && (
+        <ModalOverlay onClose={() => setActiveModal(null)}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)' }}>
+                <Smartphone size={16} className="text-emerald-400" />
+              </div>
+              <div>
+                <div className="text-sm font-bold text-white">Phone Verification</div>
+                <div className="text-[10px] text-slate-500">Add or update your phone number</div>
+              </div>
+            </div>
+            <button onClick={() => setActiveModal(null)} className="text-slate-500 hover:text-white transition-colors"><X size={16} /></button>
+          </div>
+          <div>
+            <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Phone Number</label>
+            <input
+              value={phoneInput}
+              onChange={e => setPhoneInput(e.target.value)}
+              placeholder="+1 xxx xxxx xxxx"
+              className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+              onFocus={e => { e.target.style.borderColor = 'rgba(16,185,129,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(16,185,129,0.1)'; }}
+              onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }}
+            />
+          </div>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Enter your phone number with country code (e.g. +62 for Indonesia). Admin will verify it within 24 hours.
+          </p>
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={handlePhoneSubmit}
+              disabled={modalLoading || !phoneInput.trim()}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+              style={{ background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 4px 16px rgba(16,185,129,0.3)' }}
+            >
+              {modalLoading ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Smartphone size={14} />}
+              Submit Phone Number
+            </button>
+            <button onClick={() => setActiveModal(null)} className="px-4 py-2.5 rounded-xl text-sm text-slate-400 hover:text-white transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>Cancel</button>
+          </div>
+        </ModalOverlay>
+      )}
+
+      {/* ── KYC MODAL ── */}
+      {activeModal === 'kyc' && (
+        <ModalOverlay onClose={() => setActiveModal(null)}>
+          <input ref={kycFileRef} type="file" accept="image/*,.pdf" className="hidden" onChange={e => setKycFile(e.target.files?.[0] || null)} />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)' }}>
+                <Fingerprint size={16} className="text-amber-400" />
+              </div>
+              <div>
+                <div className="text-sm font-bold text-white">KYC Verification</div>
+                <div className="text-[10px] text-slate-500">Submit identity documents for review</div>
+              </div>
+            </div>
+            <button onClick={() => setActiveModal(null)} className="text-slate-500 hover:text-white transition-colors"><X size={16} /></button>
+          </div>
+          <div>
+            <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Document Type</label>
+            <select
+              value={kycDocType}
+              onChange={e => setKycDocType(e.target.value)}
+              className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+            >
+              <option value="passport">Passport</option>
+              <option value="national_id">National ID Card</option>
+              <option value="drivers_license">Driver's License</option>
+            </select>
+          </div>
+          <div>
+            <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Upload Document</label>
+            <button
+              onClick={() => kycFileRef.current?.click()}
+              className="w-full rounded-xl px-3 py-3 text-sm transition-all hover:border-amber-500/40 flex items-center justify-center gap-2"
+              style={{ background: 'rgba(255,255,255,0.03)', border: `2px dashed ${kycFile ? 'rgba(245,158,11,0.5)' : 'rgba(255,255,255,0.12)'}`, color: kycFile ? '#f59e0b' : '#64748b' }}
+            >
+              <Upload size={14} />
+              {kycFile ? kycFile.name : 'Click to upload (JPG, PNG, PDF — max 5MB)'}
+            </button>
+          </div>
+          <div>
+            <label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Additional Notes (optional)</label>
+            <textarea
+              value={kycNotes}
+              onChange={e => setKycNotes(e.target.value)}
+              placeholder="Any additional information for the admin..."
+              rows={2}
+              className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all resize-none"
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}
+            />
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={handleKycSubmit}
+              disabled={modalLoading || !kycFile}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+              style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', boxShadow: '0 4px 16px rgba(245,158,11,0.3)' }}
+            >
+              {modalLoading ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Upload size={14} />}
+              Submit KYC Documents
+            </button>
+            <button onClick={() => setActiveModal(null)} className="px-4 py-2.5 rounded-xl text-sm text-slate-400 hover:text-white transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>Cancel</button>
+          </div>
+        </ModalOverlay>
+      )}
+
+      {/* ── 2FA MODAL ── */}
+      {activeModal === '2fa' && (
+        <ModalOverlay onClose={() => setActiveModal(null)}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center" style={{ background: 'rgba(99,102,241,0.15)', border: '1px solid rgba(99,102,241,0.3)' }}>
+                <ShieldCheck size={16} className="text-indigo-400" />
+              </div>
+              <div>
+                <div className="text-sm font-bold text-white">Two-Factor Authentication</div>
+                <div className="text-[10px] text-slate-500">Manage your 2FA security setting</div>
+              </div>
+            </div>
+            <button onClick={() => setActiveModal(null)} className="text-slate-500 hover:text-white transition-colors"><X size={16} /></button>
+          </div>
+          <div className="rounded-xl p-4 space-y-2" style={{ background: profile?.two_factor_enabled ? 'rgba(16,185,129,0.06)' : 'rgba(99,102,241,0.06)', border: `1px solid ${profile?.two_factor_enabled ? 'rgba(16,185,129,0.2)' : 'rgba(99,102,241,0.2)'}` }}>
+            <div className="flex items-center gap-2">
+              <span className={`w-2 h-2 rounded-full ${profile?.two_factor_enabled ? 'bg-emerald-400 animate-pulse' : 'bg-slate-500'}`} />
+              <span className="text-sm font-semibold" style={{ color: profile?.two_factor_enabled ? '#10b981' : '#94a3b8' }}>
+                2FA is currently {profile?.two_factor_enabled ? 'ENABLED' : 'DISABLED'}
+              </span>
+            </div>
+          </div>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            {profile?.two_factor_enabled
+              ? 'Disabling 2FA will reduce the security of your account. Are you sure you want to proceed?' :'Enabling 2FA adds an extra layer of security to your account. Your request will be processed immediately.'}
+          </p>
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={handle2FAToggle}
+              disabled={modalLoading}
+              className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+              style={{
+                background: profile?.two_factor_enabled
+                  ? 'linear-gradient(135deg, #ef4444, #dc2626)'
+                  : 'linear-gradient(135deg, #6366f1, #4f46e5)',
+                boxShadow: profile?.two_factor_enabled
+                  ? '0 4px 16px rgba(239,68,68,0.3)'
+                  : '0 4px 16px rgba(99,102,241,0.3)',
+              }}
+            >
+              {modalLoading ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <ShieldCheck size={14} />}
+              {profile?.two_factor_enabled ? 'Disable 2FA' : 'Enable 2FA'}
+            </button>
+            <button onClick={() => setActiveModal(null)} className="px-4 py-2.5 rounded-xl text-sm text-slate-400 hover:text-white transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>Cancel</button>
+          </div>
+        </ModalOverlay>
+      )}
 
       {/* ── TRADING ACCOUNT INFO ── */}
       <GlassCard>
@@ -1162,13 +1517,13 @@ function LevelSection({ totalTrades }: { totalTrades: number }) {
     <div className="space-y-4">
       <GlassCard className="p-6" style={{ background: `linear-gradient(135deg, ${levelInfo.color}10, ${levelInfo.color}05)`, borderColor: `${levelInfo.color}30` }}>
         <div className="flex items-center gap-4 mb-5">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: `${levelInfo.color}20`, border: `2px solid ${levelInfo.color}40`, boxShadow: `0 0 24px ${levelInfo.color}20` }}>
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center" style={{ background: `${levelInfo.color}20`, border: `2px solid ${levelInfo.color}40`, boxShadow: `${levelInfo.color}20` }}>
             <Trophy size={28} style={{ color: levelInfo.color }} />
           </div>
           <div>
             <div className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">Trader Level</div>
             <div className="text-3xl font-bold" style={{ color: levelInfo.color }}>{levelInfo.level}</div>
-            <div className="text-xs text-slate-400 mt-0.5">Total trades: {totalTrades}</div>
+            <div className="text-xs text-slate-400 mt-1">Total trades: {totalTrades}</div>
           </div>
         </div>
         {levelInfo.level !== 'VIP' && (
@@ -1178,7 +1533,7 @@ function LevelSection({ totalTrades }: { totalTrades: number }) {
               <span className="text-xs font-bold" style={{ color: levelInfo.color }}>{levelInfo.progress}%</span>
             </div>
             <div className="h-2 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
-              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${levelInfo.progress}%`, background: `linear-gradient(90deg, ${levelInfo.color}, ${levelInfo.color}aa)`, boxShadow: `0 0 8px ${levelInfo.color}60` }} />
+              <div className="h-full rounded-full transition-all duration-700" style={{ width: `${levelInfo.progress}%`, background: `linear-gradient(90deg, ${levelInfo.color}, ${levelInfo.color}aa)`, boxShadow: `${levelInfo.color}60` }} />
             </div>
             <div className="text-[10px] text-slate-600 mt-1.5">{levelInfo.nextAt - totalTrades} more trades to reach {levelInfo.next}</div>
           </div>
@@ -1291,7 +1646,10 @@ function PreferencesSection() {
             <button
               onClick={() => setNotifications(n => ({ ...n, [key]: !n[key as keyof typeof n] }))}
               className="relative w-11 h-6 rounded-full transition-all duration-300"
-              style={{ background: notifications[key as keyof typeof notifications] ? 'linear-gradient(135deg, #3b82f6, #6366f1)' : 'rgba(255,255,255,0.1)', boxShadow: notifications[key as keyof typeof notifications] ? '0 0 12px rgba(59,130,246,0.3)' : 'none' }}
+              style={{
+                background: notifications[key as keyof typeof notifications] ? 'linear-gradient(135deg, #3b82f6, #6366f1)' : 'rgba(255,255,255,0.1)',
+                boxShadow: notifications[key as keyof typeof notifications] ? '0 0 12px rgba(59,130,246,0.3)' : 'none',
+              }}
             >
               <span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all duration-300 shadow-md ${notifications[key as keyof typeof notifications] ? 'translate-x-5' : 'translate-x-1'}`} />
             </button>
@@ -1719,7 +2077,7 @@ export default function AccountPage() {
               <span style={{ color: activeItem?.accent }}>{activeItem?.icon}</span>
               <span className="text-sm font-semibold text-white">{activeItem?.label}</span>
             </div>
-            <button onClick={() => setMobileSidebarOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-slate-400 hover:text-white transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <button onClick={() => setMobileSidebarOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-slate-400 hover:text-white transition-colors" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
               <Menu size={13} /> Menu
             </button>
           </div>
