@@ -156,11 +156,10 @@ export default function AdminLiveChatPage() {
     const langLabel = TRANSLATE_LANGUAGES.find((l) => l.code === translateLang)?.label || translateLang;
     setTranslating((prev) => ({ ...prev, [msg.id]: true }));
     try {
-      const res = await fetch('/api/ai/chat-completion', {
+      const res = await fetch('/api/ai/translate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          provider: 'OPEN_AI',
           model: 'gpt-4.1-mini',
           messages: [
             {
