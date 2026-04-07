@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { getChatCompletion } from '@/lib/ai/chatCompletion';
 import {
   ChatBubbleLeftRightIcon,
   PaperAirplaneIcon,
@@ -157,19 +156,26 @@ export default function AdminLiveChatPage() {
     const langLabel = TRANSLATE_LANGUAGES.find((l) => l.code === translateLang)?.label || translateLang;
     setTranslating((prev) => ({ ...prev, [msg.id]: true }));
     try {
-      const result = await getChatCompletion(
-        'OPEN_AI',
-        'gpt-4o',
-        [
-          {
-            role: 'system',
-            content: `You are a professional translator. Translate the user's message to ${langLabel}. Return ONLY the translated text, no explanations.`,
-          },
-          { role: 'user', content: msg.message },
-        ],
-        { max_completion_tokens: 500, temperature: 1 }
-      );
-      const translated = result?.choices?.[0]?.message?.content?.trim() || '';
+      const res = await fetch('/api/ai/chat-completion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider: 'OPEN_AI',
+          model: 'gpt-4.1-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a professional translator. Translate the user's message to ${langLabel}. Return ONLY the translated text, no explanations.`,
+            },
+            { role: 'user', content: msg.message },
+          ],
+          stream: false,
+          parameters: { max_completion_tokens: 500, temperature: 1 },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
+      const translated = data?.choices?.[0]?.message?.content?.trim() || '';
       if (!translated) throw new Error('Empty translation response');
       setTranslations((prev) => ({ ...prev, [msg.id]: translated }));
     } catch (err: unknown) {
