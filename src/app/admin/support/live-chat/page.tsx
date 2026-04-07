@@ -159,7 +159,7 @@ export default function AdminLiveChatPage() {
     try {
       const result = await getChatCompletion(
         'OPEN_AI',
-        'gpt-4.1-mini',
+        'gpt-4.1',
         [
           {
             role: 'system',
@@ -167,12 +167,15 @@ export default function AdminLiveChatPage() {
           },
           { role: 'user', content: msg.message },
         ],
-        { max_completion_tokens: 500 }
+        { max_completion_tokens: 500, temperature: 1 }
       );
       const translated = result?.choices?.[0]?.message?.content?.trim() || '';
+      if (!translated) throw new Error('Empty translation response');
       setTranslations((prev) => ({ ...prev, [msg.id]: translated }));
-    } catch {
-      setTranslations((prev) => ({ ...prev, [msg.id]: '⚠️ Translation failed.' }));
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.error('Translation error:', errMsg);
+      setTranslations((prev) => ({ ...prev, [msg.id]: `⚠️ Translation failed: ${errMsg}` }));
     } finally {
       setTranslating((prev) => ({ ...prev, [msg.id]: false }));
     }
