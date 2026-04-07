@@ -444,7 +444,7 @@ function TradeResultModal({ trade, onClose }: { trade: TradeResult; onClose: () 
               </svg>
             )}
           </div>
-          <div style={{ color: accentColor, fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6, opacity: 0.9 }}>
+          <div style={{ color: accentColor, fontSize: 11, fontWeight: 800, letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 6, opacity: 0.9 }}>
             {isWin ? 'WIN' : 'LOSS'}
           </div>
           <div style={{ color: accentColor, fontSize: 48, fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1, marginBottom: 22 }}>
@@ -521,9 +521,9 @@ function BottomNav({ active, onChange }: { active: NavSection; onChange: (s: Nav
     { id: 'copytrade', label: 'Copy Trade', icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
         <path d="M1.5 4v5h5" />
-        <path d="M22.5 20v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+        <path d="M22.5 20v-5h-5" />
         <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1.5 9" />
-        <path d="M3.51 15a9 9 0 0 1 0 7.75" />
+        <path d="M3.51 15a9 9 0 0 0 14.85 3.36L22.5 15" />
       </svg>
     ) },
     { id: 'referral', label: 'Affiliate', icon: (
@@ -543,7 +543,7 @@ function BottomNav({ active, onChange }: { active: NavSection; onChange: (s: Nav
         {/* Ridge 3 */}
         <path d="M31 67 C30 48 38 36 50 36 C62 36 70 48 69 67 C68 80 61 88 50 90 C29 88 18 85 17 64" />
         {/* Ridge 4 */}
-        <path d="M24 66 C23 43 34 28 50 28 C66 28 77 43 76 66 C75 83 66 94 50 97 C34 94 25 88 17 64" />
+        <path d="M24 66 C23 43 34 28 50 28 C66 28 77 43 76 66 C75 83 66 94 50 97 C34 94 25 83 24 66" />
         {/* Ridge 5 */}
         <path d="M17 64 C16 38 30 20 50 20 C70 20 84 38 83 64 C82 85 71 88 50 90 C29 88 18 85 17 64" />
         {/* Ridge 6 - outer */}
@@ -1286,16 +1286,26 @@ export default function DashboardPage() {
       // Calculate WIN/LOSS and show modal
       if (lastPopupTradeIdRef.current !== trade.id) {
         lastPopupTradeIdRef.current = trade.id;
-        const profitVal = trade.profit ?? trade.profit_loss ?? 0;
+        const exitPrice = chartPrice;
+        const entryPrice = trade.entry_price ?? 0;
+        let result: 'win' | 'loss';
+        if (trade.order_type === 'buy') {
+          result = exitPrice >= entryPrice ? 'win' : 'loss';
+        } else {
+          result = exitPrice <= entryPrice ? 'win' : 'loss';
+        }
+        const priceDiff = Math.abs(exitPrice - entryPrice);
+        const pctMove = entryPrice > 0 ? priceDiff / entryPrice : 0;
+        const profitLoss = result === 'win' ? Math.round(trade.amount * 0.95 * 100) / 100 : trade.amount;
         const knownTrade = openTrades.find((t) => t.id === trade.id);
         setTradeResultPopup({
           asset_symbol: knownTrade?.asset_symbol ?? trade.asset_symbol ?? '',
           order_type: trade.order_type,
           amount: trade.amount,
-          result: trade.result as 'win' | 'loss',
-          profit_loss: Math.abs(profitVal),
-          entry_price: trade.entry_price ?? undefined,
-          exit_price: trade.exit_price ?? undefined,
+          result,
+          profit_loss: profitLoss,
+          entry_price: entryPrice,
+          exit_price: exitPrice,
         });
       }
 
@@ -1560,7 +1570,7 @@ export default function DashboardPage() {
                     <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
                       {activeSymbolDisplay}
                     </span>
-                    <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 10, fontWeight: 700, color: '#10b981', letterSpacing: '0.02em', lineHeight: 1 }}>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: '#10b981', letterSpacing: '0.02em', lineHeight: 1 }}>
                       95% <span style={{ fontWeight: 400, color: 'rgba(255,255,255,0.35)', fontSize: 9 }}>payout</span>
                     </span>
                   </div>
@@ -1600,14 +1610,14 @@ export default function DashboardPage() {
                     <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.08)' }} />
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                       <span style={{ fontSize: 9, fontWeight: 500, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: 1 }}>Low</span>
-                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 10, fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.2 }}>
+                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 10, fontWeight: 600, color: '#f87171', letterSpacing: '-0.01em', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>
                         {formatPrice(livePrice * (1 - Math.abs(priceChangePct) / 100 * 0.6 - 0.0008))}
                       </span>
                     </div>
                     <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.08)' }} />
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                       <span style={{ fontSize: 9, fontWeight: 500, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: 1 }}>Vol</span>
-                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 10, fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.2 }}>
+                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.6)', letterSpacing: '-0.01em', lineHeight: 1.2 }}>
                         {livePrice > 1000 ? `${(livePrice * 0.00024).toFixed(2)}K` : `${(livePrice * 0.12).toFixed(0)}`}
                       </span>
                     </div>
@@ -1678,10 +1688,10 @@ export default function DashboardPage() {
             {activeNav === 'trade' && (
               <div className="px-2 sm:px-3 pt-3 pb-2">
                 {/* Mobile: collapsed bar */}
-                <div>
+                <div className="sm:hidden">
                   <button
                     onClick={() => openTrades.length > 0 && setOpenTradesMobileExpanded(prev => !prev)}
-                    className={`sm:hidden w-full flex items-center justify-between px-3 py-2 rounded-xl border transition-all ${openTrades.length > 0 ? 'bg-[#0d0d0d] border-white/10 cursor-pointer' : 'bg-[#0d0d0d] border-white/10 cursor-default'}`}
+                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl border transition-all ${openTrades.length > 0 ? 'bg-[#0d0d0d] border-white/10 cursor-pointer' : 'bg-[#0d0d0d] border-white/10 cursor-default'}`}
                   >
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
@@ -1702,7 +1712,7 @@ export default function DashboardPage() {
 
                   {/* Expanded content on mobile */}
                   {openTradesMobileExpanded && openTrades.length > 0 && (
-                    <div className="sm:hidden mt-1 bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden">
+                    <div className="mt-1 bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden">
                       <div className="px-3 py-2 border-b border-white/10 flex items-center justify-end">
                         {openTrades.length > 0 && (
                           <button
@@ -1762,7 +1772,7 @@ export default function DashboardPage() {
                     </div>
                   )}
 
-                  {/* Desktop: original full table — visible on sm and above */}
+                  {/* Desktop: original full table */}
                   <div className="hidden sm:block bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden">
                     <div className="px-3 py-2.5 border-b border-white/10 flex items-center justify-between">
                       <div className="flex items-center gap-2">

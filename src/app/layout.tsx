@@ -2,6 +2,7 @@ import React from 'react';
 import type { Metadata, Viewport } from 'next';
 import '../styles/index.css';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { LanguageProvider } from '@/contexts/LanguageContext';
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -40,7 +41,9 @@ export default function RootLayout({
 </head>
       <body style={{ fontFamily: "'Inter', sans-serif" }}>
         <AuthProvider>
-          {children}
+          <LanguageProvider>
+            {children}
+          </LanguageProvider>
         </AuthProvider>
       </body>
     </html>

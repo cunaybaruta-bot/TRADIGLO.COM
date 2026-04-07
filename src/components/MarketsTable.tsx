@@ -149,7 +149,7 @@ export default function MarketsTable() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [rowsPerPage, setRowsPerPage] = useState(100);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState('all');
 
@@ -324,7 +324,7 @@ export default function MarketsTable() {
 
             {filteredCoins.length > 0 && (
             <div className="overflow-x-auto">
-              <table className="w-full" style={{ minWidth: '900px' }}>
+              <table className="w-full" style={{ minWidth: '480px' }}>
                 <thead>
                   <tr className="border-b border-[#1e2a4a]">
                     <th className="w-8 px-3 py-3"></th>
@@ -336,17 +336,17 @@ export default function MarketsTable() {
                     <th className="px-3 py-3 text-left">
                       <span className="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">Coin</span>
                     </th>
-                    <th className="w-16 px-2 py-3"></th>
+                    <th className="w-16 px-2 py-3 hidden sm:table-cell"></th>
                     <th className="px-3 py-3 text-right">
                       <span className="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">Price</span>
                     </th>
-                    <th className="px-3 py-3 text-right">
+                    <th className="px-3 py-3 text-right hidden sm:table-cell">
                       <span className="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">1h</span>
                     </th>
                     <th className="px-3 py-3 text-right">
                       <span className="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">24h</span>
                     </th>
-                    <th className="px-3 py-3 text-right">
+                    <th className="px-3 py-3 text-right hidden sm:table-cell">
                       <span className="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">7d</span>
                     </th>
                     <th className="px-3 py-3 text-right hidden lg:table-cell">
@@ -417,7 +417,7 @@ export default function MarketsTable() {
                         </td>
 
                         {/* Buy Button */}
-                        <td className="px-1 sm:px-2">
+                        <td className="px-1 sm:px-2 hidden sm:table-cell">
                           {hasBuy && (
                             <button className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded border border-green-500 text-green-400 text-[9px] sm:text-xs font-semibold hover:bg-green-500/10 transition-colors whitespace-nowrap tracking-wide">
                               Buy
@@ -433,7 +433,7 @@ export default function MarketsTable() {
                         </td>
 
                         {/* 1h % */}
-                        <td className="px-2 sm:px-3 text-right">
+                        <td className="px-2 sm:px-3 text-right hidden sm:table-cell">
                           <span className={`text-[11px] sm:text-sm font-semibold tabular-nums flex items-center justify-end gap-0.5 ${change1h.positive ? 'text-green-400' : 'text-red-400'}`}>
                             <span className="text-[9px] sm:text-[10px]">{change1h.positive ? '▲' : '▼'}</span>
                             {change1h.text}
@@ -449,7 +449,7 @@ export default function MarketsTable() {
                         </td>
 
                         {/* 7d % */}
-                        <td className="px-2 sm:px-3 text-right">
+                        <td className="px-2 sm:px-3 text-right hidden sm:table-cell">
                           <span className={`text-[11px] sm:text-sm font-semibold tabular-nums flex items-center justify-end gap-0.5 ${change7d.positive ? 'text-green-400' : 'text-red-400'}`}>
                             <span className="text-[9px] sm:text-[10px]">{change7d.positive ? '▲' : '▼'}</span>
                             {change7d.text}
@@ -546,7 +546,7 @@ export default function MarketsTable() {
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center">
                     <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7m0 0l-7 7m7-7h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                     </svg>
                   </div>
                 </div>
@@ -558,7 +558,7 @@ export default function MarketsTable() {
                   aria-label="Scroll to top"
                 >
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
                   </svg>
                 </button>
               </div>

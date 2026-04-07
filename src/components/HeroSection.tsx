@@ -1,8 +1,11 @@
 'use client';
 import React from 'react';
 import Link from 'next/link';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export default function HeroSection() {
+  const { t } = useLanguage();
+
   return (
     <section className="relative overflow-hidden pt-8 sm:pt-20 md:pt-28 pb-8 sm:pb-16 md:pb-24 bg-black">
       {/* Background glows */}
@@ -16,20 +19,20 @@ export default function HeroSection() {
           <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-400">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
           </svg>
-          #1 Crypto Trading Platform
+          {t('hero_badge')}
         </div>
 
         {/* Heading */}
         <h1 className="text-2xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-3 sm:mb-6 tracking-tight leading-tight">
-          Trade Crypto<br />
+          {t('hero_heading_1')}<br />
           <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-500 to-purple-500">
-            like a pro
+            {t('hero_heading_2')}
           </span>
         </h1>
 
         {/* Subtitle */}
         <p className="text-xs sm:text-base md:text-lg text-slate-400 mb-4 sm:mb-8 max-w-xs sm:max-w-lg mx-auto leading-relaxed">
-          Advanced trading tools, lightning-fast execution, and unmatched security. Join millions of traders worldwide.
+          {t('hero_subtitle')}
         </p>
 
         {/* Bonus Banner */}
@@ -102,16 +105,16 @@ export default function HeroSection() {
                 animation: 'textShimmer 3s linear infinite',
               }}
             >
-              100% Deposit Bonus
+              {t('hero_bonus_title')}
             </div>
-            <div className="text-[10px] sm:text-xs text-slate-300 whitespace-nowrap">Deposit $1,000 and trade with $2,000 instantly</div>
+            <div className="text-[10px] sm:text-xs text-slate-300 whitespace-nowrap">{t('hero_bonus_desc')}</div>
           </div>
         </div>
 
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row gap-2.5 justify-center items-center mb-4 sm:mb-8">
           <Link href="/register" className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white text-sm sm:text-base px-6 sm:px-8 min-h-[44px] rounded-lg transition-all shadow-lg shadow-blue-600/30 w-full sm:w-auto font-semibold inline-flex items-center justify-center gap-2">
-            Start Trading
+            {t('hero_cta_start')}
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M5 12h14"></path>
               <path d="m12 5 7 7-7 7"></path>
@@ -121,13 +124,19 @@ export default function HeroSection() {
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
               <polygon points="5 3 19 12 5 21 5 3"></polygon>
             </svg>
-            Explore Markets
+            {t('hero_cta_explore')}
           </Link>
         </div>
 
         {/* Feature badges */}
         <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-6 md:gap-8 text-slate-400 text-xs">
-          {['Secure Trading', 'Real-time Data', '24/7 Support', 'Instant Deposit', 'Instant Withdrawal (Min $10)']?.map((feature) => (
+          {[
+            t('hero_feature_secure'),
+            t('hero_feature_realtime'),
+            t('hero_feature_support'),
+            t('hero_feature_deposit'),
+            t('hero_feature_withdraw'),
+          ]?.map((feature) => (
             <div key={feature} className="flex items-center gap-1.5">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-green-400 flex-shrink-0">
                 <circle cx="12" cy="12" r="10"></circle>

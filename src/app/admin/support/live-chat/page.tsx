@@ -35,8 +35,10 @@ interface ChatMessage {
 const TRANSLATE_LANGUAGES = [
   { code: 'en', label: 'English' },
   { code: 'id', label: 'Indonesian' },
+  { code: 'ms', label: 'Malay' },
   { code: 'ar', label: 'Arabic' },
-  { code: 'zh', label: 'Chinese' },
+  { code: 'zh', label: 'Chinese (Simplified)' },
+  { code: 'zh-TW', label: 'Chinese (Traditional)' },
   { code: 'es', label: 'Spanish' },
   { code: 'fr', label: 'French' },
   { code: 'de', label: 'German' },
@@ -46,6 +48,26 @@ const TRANSLATE_LANGUAGES = [
   { code: 'pt', label: 'Portuguese' },
   { code: 'ru', label: 'Russian' },
   { code: 'tr', label: 'Turkish' },
+  { code: 'th', label: 'Thai' },
+  { code: 'vi', label: 'Vietnamese' },
+  { code: 'it', label: 'Italian' },
+  { code: 'nl', label: 'Dutch' },
+  { code: 'pl', label: 'Polish' },
+  { code: 'sv', label: 'Swedish' },
+  { code: 'da', label: 'Danish' },
+  { code: 'fi', label: 'Finnish' },
+  { code: 'no', label: 'Norwegian' },
+  { code: 'cs', label: 'Czech' },
+  { code: 'ro', label: 'Romanian' },
+  { code: 'hu', label: 'Hungarian' },
+  { code: 'uk', label: 'Ukrainian' },
+  { code: 'fa', label: 'Persian' },
+  { code: 'ur', label: 'Urdu' },
+  { code: 'bn', label: 'Bengali' },
+  { code: 'ta', label: 'Tamil' },
+  { code: 'te', label: 'Telugu' },
+  { code: 'sw', label: 'Swahili' },
+  { code: 'tl', label: 'Filipino' },
 ];
 
 export default function AdminLiveChatPage() {
@@ -56,9 +78,11 @@ export default function AdminLiveChatPage() {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [closingSession, setClosingSession] = useState(false);
-  const [translateLang, setTranslateLang] = useState('en');
+  const [translateLang, setTranslateLang] = useState('id');
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [translating, setTranslating] = useState<Record<string, boolean>>({});
+  const [adminTranslateLang, setAdminTranslateLang] = useState('ar');
+  const [translatingInput, setTranslatingInput] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Stable supabase client reference — never recreated on re-render
@@ -160,7 +184,7 @@ export default function AdminLiveChatPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'gpt-4.1-mini',
+          model: 'gpt-4o-mini',
           messages: [
             {
               role: 'system',
@@ -185,6 +209,40 @@ export default function AdminLiveChatPage() {
       setTranslating((prev) => ({ ...prev, [msg.id]: false }));
     }
   }, [translateLang]);
+
+  const handleTranslateInput = useCallback(async () => {
+    if (!messageText.trim()) return;
+    const langLabel = TRANSLATE_LANGUAGES.find((l) => l.code === adminTranslateLang)?.label || adminTranslateLang;
+    setTranslatingInput(true);
+    try {
+      const res = await fetch('/api/ai/translate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system',
+              content: `You are a professional translator. Translate the user's message to ${langLabel}. Return ONLY the translated text, no explanations.`,
+            },
+            { role: 'user', content: messageText.trim() },
+          ],
+          stream: false,
+          parameters: { max_completion_tokens: 500, temperature: 1 },
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
+      const translated = data?.choices?.[0]?.message?.content?.trim() || '';
+      if (!translated) throw new Error('Empty translation response');
+      setMessageText(translated);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      console.error('Input translation error:', errMsg);
+    } finally {
+      setTranslatingInput(false);
+    }
+  }, [messageText, adminTranslateLang]);
 
   const handleSendMessage = async () => {
     if (!messageText.trim() || !selectedSession) return;
@@ -292,10 +350,10 @@ export default function AdminLiveChatPage() {
                       setTranslateLang(e.target.value);
                       setTranslations({});
                     }}
-                    className="bg-transparent text-xs text-slate-300 focus:outline-none cursor-pointer"
+                    className="bg-slate-800 text-xs text-slate-200 focus:outline-none cursor-pointer border-none max-w-[120px]"
                   >
                     {TRANSLATE_LANGUAGES.map((l) => (
-                      <option key={l.code} value={l.code} className="bg-slate-800">
+                      <option key={l.code} value={l.code} className="bg-slate-800 text-slate-200">
                         {l.label}
                       </option>
                     ))}
@@ -384,6 +442,30 @@ export default function AdminLiveChatPage() {
                   >
                     <PaperAirplaneIcon className="w-4 h-4" />
                     {sending ? '...' : 'Send'}
+                  </button>
+                </div>
+                {/* Admin translate input row */}
+                <div className="flex items-center gap-2 mt-2">
+                  <LanguageIcon className="w-3.5 h-3.5 text-purple-400 flex-shrink-0" />
+                  <span className="text-xs text-slate-400">Translate to:</span>
+                  <select
+                    value={adminTranslateLang}
+                    onChange={(e) => setAdminTranslateLang(e.target.value)}
+                    className="bg-slate-800 border border-slate-600 text-xs text-slate-200 rounded-lg px-2 py-1 focus:outline-none cursor-pointer"
+                  >
+                    {TRANSLATE_LANGUAGES.map((l) => (
+                      <option key={l.code} value={l.code} className="bg-slate-800 text-slate-200">
+                        {l.label}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    onClick={handleTranslateInput}
+                    disabled={translatingInput || !messageText.trim()}
+                    className="flex items-center gap-1 text-xs bg-purple-600/20 hover:bg-purple-600/30 border border-purple-500/30 text-purple-300 px-3 py-1 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    <LanguageIcon className="w-3 h-3" />
+                    {translatingInput ? 'Translating...' : 'Translate'}
                   </button>
                 </div>
               </div>

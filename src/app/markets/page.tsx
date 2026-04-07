@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Header from '@/components/Header';
 import TickerTape from '@/components/TickerTape';
 import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
 
 // TradingView Advanced Chart Widget (same as member dashboard)
 function TradingViewChart({ symbol }: { symbol: string }) {
@@ -144,137 +145,12 @@ interface DemoTrade {
   status: 'open' | 'closed';
 }
 
-// Signup Prompt Modal
-function SignupPromptModal({ onClose }: { onClose: () => void }) {
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(6px)' }}
-    >
-      <div
-        className="w-full max-w-sm rounded-2xl p-6 relative"
-        style={{ background: '#0d0d0d', border: '1px solid rgba(124,58,237,0.4)' }}
-      >
-        {/* Glow accent */}
-        <div
-          className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-1 rounded-b-full"
-          style={{ background: 'linear-gradient(90deg, #7c3aed, #6d28d9)' }}
-        />
-
-        {/* Icon */}
-        <div className="flex justify-center mb-4 mt-2">
-          <div
-            className="w-16 h-16 rounded-full flex items-center justify-center"
-            style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)' }}
-          >
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2a10 10 0 1 0 10 10" />
-              <path d="M12 8v4l3 3" />
-              <path d="M18 2v6h6" />
-            </svg>
-          </div>
-        </div>
-
-        <h2 className="text-white text-xl font-bold text-center mb-2">Demo Limit Reached</h2>
-        <p className="text-slate-400 text-sm text-center mb-6 leading-relaxed">
-          You&apos;ve used all <span className="text-purple-400 font-semibold">5 free demo trades</span>. Create a free account to continue trading with unlimited demo access and real funds.
-        </p>
-
-        {/* Benefits */}
-        <div className="space-y-2 mb-6">
-          {[
-            'Unlimited demo trading',
-            'Real account with live markets',
-            'Deposit & withdraw anytime',
-          ].map((benefit) => (
-            <div key={benefit} className="flex items-center gap-2">
-              <div className="w-4 h-4 rounded-full flex items-center justify-center flex-shrink-0" style={{ background: 'rgba(34,197,94,0.2)' }}>
-                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#22c55e" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              </div>
-              <span className="text-slate-300 text-xs">{benefit}</span>
-            </div>
-          ))}
-        </div>
-
-        <div className="space-y-2">
-          <Link
-            href="/register"
-            className="block w-full py-3 rounded-xl font-bold text-white text-sm text-center transition-all hover:opacity-90"
-            style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
-          >
-            Create Free Account
-          </Link>
-          <Link
-            href="/login"
-            className="block w-full py-3 rounded-xl font-semibold text-sm text-center transition-all hover:bg-white/10"
-            style={{ color: '#94a3b8', border: '1px solid rgba(255,255,255,0.1)' }}
-          >
-            Sign In to Existing Account
-          </Link>
-        </div>
-
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 w-7 h-7 rounded-lg flex items-center justify-center hover:bg-white/10 transition-colors"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18" />
-            <line x1="6" y1="6" x2="18" y2="18" />
-          </svg>
-        </button>
-      </div>
-    </div>
-  );
-}
-
-// Trade Result Toast
-function TradeToast({ trade, onDismiss }: { trade: DemoTrade; onDismiss: () => void }) {
-  useEffect(() => {
-    const t = setTimeout(onDismiss, 4000);
-    return () => clearTimeout(t);
-  }, [onDismiss]);
-
-  const isWin = trade.result === 'win';
-  return (
-    <div
-      className="fixed bottom-6 right-4 z-40 rounded-xl p-4 shadow-2xl max-w-xs w-full"
-      style={{
-        background: isWin ? 'rgba(22,163,74,0.95)' : 'rgba(220,38,38,0.95)',
-        border: `1px solid ${isWin ? '#16a34a' : '#dc2626'}`,
-        backdropFilter: 'blur(8px)',
-      }}
-    >
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center flex-shrink-0">
-          {isWin ? (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          ) : (
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18" />
-              <line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          )}
-        </div>
-        <div>
-          <p className="text-white font-bold text-sm">{isWin ? 'Trade Won!' : 'Trade Lost'}</p>
-          <p className="text-white/80 text-xs">
-            {trade.direction} · ${trade.amount} · {isWin ? `+$${trade.profit?.toFixed(2)}` : `-$${trade.amount}`}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 export default function MarketsPage() {
   const [investmentAmount, setInvestmentAmount] = useState(10);
   const [amountInput, setAmountInput] = useState<string>('10');
   const [durationIndex, setDurationIndex] = useState(6);
   const [activeTab, setActiveTab] = useState<'open' | 'history'>('open');
+  const { user } = useAuth();
 
   // Live price state — fetched from Binance API (same source as TradingView chart)
   const [livePrice, setLivePrice] = useState<number | null>(null);
@@ -499,7 +375,7 @@ export default function MarketsPage() {
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
-                <polyline points="12 6 12 12 16 14" />
+                <polyline points="12 6 9 17 4 12" />
               </svg>
               <span className="text-purple-300 text-xs font-medium">
                 {tradesRemaining} demo trade{tradesRemaining !== 1 ? 's' : ''} left
@@ -700,31 +576,27 @@ export default function MarketsPage() {
                   <span className="text-white text-[10px] font-semibold">95%</span>
                 </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-slate-500 text-[10px]">Trades Left</span>
-                <span
-                  className="text-[10px] font-bold px-1.5 py-0.5 rounded"
-                  style={{
-                    background: tradesRemaining > 1 ? 'rgba(124,58,237,0.15)' : 'rgba(220,38,38,0.15)',
-                    color: tradesRemaining > 1 ? '#a78bfa' : '#f87171',
-                    border: `1px solid ${tradesRemaining > 1 ? 'rgba(124,58,237,0.3)' : 'rgba(220,38,38,0.3)'}`,
-                  }}
-                >
-                  {tradesRemaining}/{DEMO_TRADE_LIMIT}
-                </span>
-              </div>
             </div>
 
             {/* SELL / BUY buttons */}
-            {demoLimitLoaded && demoTradeCount >= DEMO_TRADE_LIMIT ? (
-              <div className="p-3">
-                <button
-                  onClick={() => setShowSignupModal(true)}
-                  className="w-full py-3 rounded-xl font-bold text-white text-sm flex items-center justify-center transition-all hover:opacity-90"
-                  style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}
+            {!user ? (
+              <div className="flex gap-0 w-full">
+                <Link
+                  href="/register"
+                  className="flex-1 py-3 text-white font-extrabold text-base tracking-widest transition-all flex items-center justify-center gap-2 hover:opacity-90"
+                  style={{ background: '#e53935', borderRadius: '0 0 0 12px' }}
                 >
-                  Sign Up to Continue
-                </button>
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /></svg>
+                  SELL
+                </Link>
+                <Link
+                  href="/register"
+                  className="flex-1 py-3 text-white font-extrabold text-base tracking-widest transition-all flex items-center justify-center gap-2 hover:opacity-90"
+                  style={{ background: '#2e7d32', borderRadius: '0 0 12px 0' }}
+                >
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l8 8h-5v8H9v-8H4z" /></svg>
+                  BUY
+                </Link>
               </div>
             ) : (
               <div className="flex gap-0 w-full">

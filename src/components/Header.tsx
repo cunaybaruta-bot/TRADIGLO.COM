@@ -1,8 +1,92 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage, LangCode } from '../contexts/LanguageContext';
+
+const LANGUAGES = [
+  { code: 'en', label: 'English', flag: '🇬🇧' },
+  { code: 'ar', label: 'العربية', flag: '🇸🇦' },
+  { code: 'zh', label: '中文', flag: '🇨🇳' },
+  { code: 'ms', label: 'Melayu', flag: '🇲🇾' },
+  { code: 'th', label: 'ภาษาไทย', flag: '🇹🇭' },
+  { code: 'vi', label: 'Tiếng Việt', flag: '🇻🇳' },
+];
+
+function LanguageDropdown({ compact = false }: { compact?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [dropdownMounted, setDropdownMounted] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const { lang, setLang } = useLanguage();
+
+  useEffect(() => {
+    setDropdownMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
+  const current = LANGUAGES.find((l) => l.code === lang) || LANGUAGES[0];
+
+  const handleSelect = (code: string) => {
+    setLang(code as LangCode);
+    setOpen(false);
+  };
+
+  if (!dropdownMounted) {
+    return (
+      <div className={`inline-flex items-center gap-1 rounded-md border border-white/20 bg-white/10 text-slate-300 ${compact ? 'min-h-[32px] px-2 text-[11px]' : 'min-h-[44px] px-3 text-xs lg:text-sm'}`}>
+        <span>🇬🇧</span>
+        <span className="font-medium uppercase">en</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={ref} className="relative flex-shrink-0">
+      <button
+        onClick={() => setOpen((prev) => !prev)}
+        className={`inline-flex items-center gap-1 rounded-md border border-white/20 bg-white/10 hover:bg-white/15 text-slate-300 hover:text-white transition-all ${
+          compact ? 'min-h-[32px] px-2 text-[11px]' : 'min-h-[44px] px-3 text-xs lg:text-sm'
+        }`}
+        aria-label="Select language"
+        aria-expanded={open}
+      >
+        <span>{current.flag}</span>
+        <span className="font-medium uppercase">{current.code}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${open ? 'rotate-180' : ''}`}>
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 w-40 rounded-md border border-white/20 bg-black/95 shadow-xl z-50 py-1">
+          {LANGUAGES.map((lang) => (
+            <button
+              key={lang.code}
+              onClick={() => handleSelect(lang.code)}
+              className={`w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-white/10 transition-colors text-left ${
+                current.code === lang.code ? 'text-white bg-white/10' : 'text-slate-300'
+              }`}
+            >
+              <span>{lang.flag}</span>
+              <span>{lang.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -103,7 +187,9 @@ export default function Header() {
         </div>
 
         {/* Desktop Auth Buttons */}
-        <div className="hidden md:flex items-center gap-2 lg:gap-2.5 flex-shrink-0 ml-auto">
+        <div className="hidden lg:flex items-center gap-2 lg:gap-2.5 flex-shrink-0 ml-auto">
+          {/* Language Dropdown — desktop */}
+          <LanguageDropdown />
           {mounted && !loading && user ? (
             <button
               onClick={handleSignOut}
@@ -130,11 +216,11 @@ export default function Header() {
         </div>
 
         {/* Mobile Auth Buttons */}
-        <div className="md:hidden flex items-center gap-2 ml-auto flex-shrink-0">
+        <div className="lg:hidden flex items-center gap-2 ml-auto flex-shrink-0">
           {mounted && !loading && user ? (
             <button
               onClick={handleSignOut}
-              className="inline-flex items-center justify-center rounded-md text-xs font-medium min-h-[44px] px-3 bg-slate-700 text-white hover:bg-slate-600 transition-all whitespace-nowrap"
+              className="inline-flex items-center justify-center rounded-md text-[11px] font-medium min-h-[32px] px-2.5 bg-slate-700 text-white hover:bg-slate-600 transition-all whitespace-nowrap"
             >
               Sign Out
             </button>
@@ -146,6 +232,8 @@ export default function Header() {
               Sign In
             </Link>
           )}
+          {/* Language Dropdown — mobile (before hamburger) */}
+          <LanguageDropdown compact />
           <button
             className="inline-flex items-center justify-center min-w-[44px] min-h-[44px] rounded-md text-white hover:bg-white/10 transition-all flex-shrink-0"
             aria-label="Toggle menu"
@@ -161,7 +249,7 @@ export default function Header() {
       </div>
       {/* Mobile Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed top-[56px] left-0 right-0 z-40 border-t border-white/10 bg-black px-4 py-3 shadow-lg">
+        <div className="lg:hidden fixed top-[56px] left-0 right-0 z-40 border-t border-white/10 bg-black px-4 py-3 shadow-lg">
           <nav className="flex flex-col gap-1">
             {[...navItems, ...(mounted && !loading && user ? [{ label: 'Dashboard', href: '/dashboard' }] : [])]?.map((item) => (
               <Link
