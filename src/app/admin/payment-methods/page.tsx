@@ -46,7 +46,7 @@ const TYPE_LABELS: Record<string, string> = {
 const KNOWN_COUNTRIES = [
   'Malaysia', 'Singapore', 'Thailand', 'Vietnam', 'Japan', 'South Korea',
   'Philippines', 'China', 'India', 'Hong Kong', 'Taiwan', 'Pakistan',
-  'Bangladesh', 'Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Sri Lanka',
+  'Bangladesh', 'Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Oman', 'Sri Lanka',
   'Myanmar', 'United States', 'Global',
 ];
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { HomeIcon, UsersIcon, WalletIcon, ArrowDownTrayIcon, ArrowUpTrayIcon, ChartBarIcon, UserGroupIcon, CpuChipIcon, CubeIcon, DocumentChartBarIcon, ShieldExclamationIcon, CommandLineIcon, ServerIcon, Cog6ToothIcon, BellIcon, ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon, ChevronDownIcon, ChevronRightIcon, GiftIcon } from '@heroicons/react/24/outline';
+import { HomeIcon, UsersIcon, WalletIcon, ArrowDownTrayIcon, ArrowUpTrayIcon, ChartBarIcon, UserGroupIcon, CpuChipIcon, CubeIcon, DocumentChartBarIcon, ShieldExclamationIcon, CommandLineIcon, ServerIcon, Cog6ToothIcon, BellIcon, ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon, ChevronDownIcon, ChevronRightIcon, GiftIcon, LifebuoyIcon } from '@heroicons/react/24/outline';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import NotificationBell from '@/components/admin/NotificationBell';
 
@@ -52,6 +52,7 @@ const navItems: NavItem[] = [
       { href: '/admin/deposits?status=rejected', label: 'Rejected' },
       { href: '/admin/deposits', label: 'All History' },
       { href: '/admin/payment-methods', label: 'Payment Methods' },
+      { href: '/admin/countries', label: 'Countries & Methods' },
       { href: '/admin/currency-rates', label: 'Currency Rates' },
       { href: '/admin/settings/bonus', label: 'Bonus Settings' },
     ],
@@ -86,6 +87,17 @@ const navItems: NavItem[] = [
     href: '/admin/referrals',
     label: 'Affiliates',
     icon: GiftIcon,
+  },
+  {
+    href: '/admin/support',
+    label: 'Support Center',
+    icon: LifebuoyIcon,
+    subItems: [
+      { href: '/admin/support', label: 'Tickets' },
+      { href: '/admin/support/live-chat', label: 'Live Chat' },
+      { href: '/admin/support/faq', label: 'FAQ Manager' },
+      { href: '/admin/support/chatbot', label: 'AI Chatbot' },
+    ],
   },
   {
     href: '/admin/ai-intelligence',

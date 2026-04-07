@@ -364,7 +364,7 @@ function TradeResultPopup({ trade, onClose }: { trade: TradeResult; onClose: () 
       <div style={{ color: '#475569', fontSize: 10, display: 'flex', alignItems: 'center', gap: 4 }}>
         <span style={{ color: '#64748b', fontWeight: 600 }}>{symbol}</span>
         <span style={{ color: '#334155' }}>·</span>
-        <span style={{ color: '#475569' }}>{directionLabel}</span>
+        <span style={{ color: '#64748b' }}>{directionLabel}</span>
       </div>
     </div>
   );
@@ -444,7 +444,7 @@ function TradeResultModal({ trade, onClose }: { trade: TradeResult; onClose: () 
               </svg>
             )}
           </div>
-          <div style={{ color: accentColor, fontSize: 11, fontWeight: 800, letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 6, opacity: 0.9 }}>
+          <div style={{ color: accentColor, fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6, opacity: 0.9 }}>
             {isWin ? 'WIN' : 'LOSS'}
           </div>
           <div style={{ color: accentColor, fontSize: 48, fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1, marginBottom: 22 }}>
@@ -521,9 +521,9 @@ function BottomNav({ active, onChange }: { active: NavSection; onChange: (s: Nav
     { id: 'copytrade', label: 'Copy Trade', icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
         <path d="M1.5 4v5h5" />
-        <path d="M22.5 20v-5h-5" />
+        <path d="M22.5 20v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
         <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1.5 9" />
-        <path d="M3.51 15a9 9 0 0 0 14.85 3.36L22.5 15" />
+        <path d="M3.51 15a9 9 0 0 1 0 7.75" />
       </svg>
     ) },
     { id: 'referral', label: 'Affiliate', icon: (
@@ -543,7 +543,7 @@ function BottomNav({ active, onChange }: { active: NavSection; onChange: (s: Nav
         {/* Ridge 3 */}
         <path d="M31 67 C30 48 38 36 50 36 C62 36 70 48 69 67 C68 80 61 88 50 90 C29 88 18 85 17 64" />
         {/* Ridge 4 */}
-        <path d="M24 66 C23 43 34 28 50 28 C66 28 77 43 76 66 C75 83 66 94 50 97 C34 94 25 83 24 66" />
+        <path d="M24 66 C23 43 34 28 50 28 C66 28 77 43 76 66 C75 83 66 94 50 97 C34 94 25 88 17 64" />
         {/* Ridge 5 */}
         <path d="M17 64 C16 38 30 20 50 20 C70 20 84 38 83 64 C82 85 71 88 50 90 C29 88 18 85 17 64" />
         {/* Ridge 6 - outer */}
@@ -889,6 +889,7 @@ export default function DashboardPage() {
   const [closingTradeIds, setClosingTradeIds] = useState<Set<string>>(new Set());
   const [closeAllLoading, setCloseAllLoading] = useState(false);
   const [showCloseAllConfirm, setShowCloseAllConfirm] = useState(false);
+  const [openTradesMobileExpanded, setOpenTradesMobileExpanded] = useState(false);
   const [showDepositModal, setShowDepositModal] = useState(false);
 
   interface TradeOpenNotifData {
@@ -1285,26 +1286,16 @@ export default function DashboardPage() {
       // Calculate WIN/LOSS and show modal
       if (lastPopupTradeIdRef.current !== trade.id) {
         lastPopupTradeIdRef.current = trade.id;
-        const exitPrice = chartPrice;
-        const entryPrice = trade.entry_price ?? 0;
-        let result: 'win' | 'loss';
-        if (trade.order_type === 'buy') {
-          result = exitPrice >= entryPrice ? 'win' : 'loss';
-        } else {
-          result = exitPrice <= entryPrice ? 'win' : 'loss';
-        }
-        const priceDiff = Math.abs(exitPrice - entryPrice);
-        const pctMove = entryPrice > 0 ? priceDiff / entryPrice : 0;
-        const profitLoss = result === 'win' ? Math.round(trade.amount * 0.95 * 100) / 100 : trade.amount;
+        const profitVal = trade.profit ?? trade.profit_loss ?? 0;
         const knownTrade = openTrades.find((t) => t.id === trade.id);
         setTradeResultPopup({
           asset_symbol: knownTrade?.asset_symbol ?? trade.asset_symbol ?? '',
           order_type: trade.order_type,
           amount: trade.amount,
-          result,
-          profit_loss: profitLoss,
-          entry_price: entryPrice,
-          exit_price: exitPrice,
+          result: trade.result as 'win' | 'loss',
+          profit_loss: Math.abs(profitVal),
+          entry_price: trade.entry_price ?? undefined,
+          exit_price: trade.exit_price ?? undefined,
         });
       }
 
@@ -1569,7 +1560,7 @@ export default function DashboardPage() {
                     <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 12, fontWeight: 700, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1.2 }}>
                       {activeSymbolDisplay}
                     </span>
-                    <span style={{ fontSize: 10, fontWeight: 700, color: '#10b981', letterSpacing: '0.02em', lineHeight: 1 }}>
+                    <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 10, fontWeight: 700, color: '#10b981', letterSpacing: '0.02em', lineHeight: 1 }}>
                       95% <span style={{ fontWeight: 400, color: 'rgba(255,255,255,0.35)', fontSize: 9 }}>payout</span>
                     </span>
                   </div>
@@ -1609,14 +1600,14 @@ export default function DashboardPage() {
                     <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.08)' }} />
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                       <span style={{ fontSize: 9, fontWeight: 500, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: 1 }}>Low</span>
-                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 10, fontWeight: 600, color: '#f87171', letterSpacing: '-0.01em', lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>
+                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 10, fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.2 }}>
                         {formatPrice(livePrice * (1 - Math.abs(priceChangePct) / 100 * 0.6 - 0.0008))}
                       </span>
                     </div>
                     <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.08)' }} />
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                       <span style={{ fontSize: 9, fontWeight: 500, color: 'rgba(255,255,255,0.3)', letterSpacing: '0.08em', textTransform: 'uppercase', lineHeight: 1 }}>Vol</span>
-                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.6)', letterSpacing: '-0.01em', lineHeight: 1.2 }}>
+                      <span style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontSize: 10, fontWeight: 600, letterSpacing: '-0.01em', lineHeight: 1.2 }}>
                         {livePrice > 1000 ? `${(livePrice * 0.00024).toFixed(2)}K` : `${(livePrice * 0.12).toFixed(0)}`}
                       </span>
                     </div>
@@ -1686,40 +1677,124 @@ export default function DashboardPage() {
             {/* OPEN TRADES TABLE */}
             {activeNav === 'trade' && (
               <div className="px-2 sm:px-3 pt-3 pb-2">
-                <div className="bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden">
-                  <div className="px-3 py-2.5 border-b border-white/10 flex items-center justify-between">
+                {/* Mobile: collapsed bar */}
+                <div>
+                  <button
+                    onClick={() => openTrades.length > 0 && setOpenTradesMobileExpanded(prev => !prev)}
+                    className={`sm:hidden w-full flex items-center justify-between px-3 py-2 rounded-xl border transition-all ${openTrades.length > 0 ? 'bg-[#0d0d0d] border-white/10 cursor-pointer' : 'bg-[#0d0d0d] border-white/10 cursor-default'}`}
+                  >
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                      <h3 className="text-xs font-semibold text-white uppercase tracking-wider">Open Trades</h3>
+                      <span className="text-xs font-semibold text-white uppercase tracking-wider">Open Trades</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      {openTrades.length > 0 && (
-                        <button
-                          onClick={() => setShowCloseAllConfirm(true)}
-                          disabled={closeAllLoading || closingTradeIds.size > 0}
-                          className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                        >
-                          {closeAllLoading ? (
-                            <span className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
-                          ) : (
-                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7 7 7" /></svg>
-                          )}
-                          Close All
-                        </button>
-                      )}
                       <span className="text-xs text-slate-500">{openTrades.length} open</span>
+                      {openTrades.length > 0 && (
+                        <svg
+                          className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${openTradesMobileExpanded ? 'rotate-180' : ''}`}
+                          fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                        </svg>
+                      )}
                     </div>
-                  </div>
-                  {tradesLoading && openTrades.length === 0 ? (
-                    <div className="flex items-center justify-center py-6">
-                      <span className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                  </button>
+
+                  {/* Expanded content on mobile */}
+                  {openTradesMobileExpanded && openTrades.length > 0 && (
+                    <div className="sm:hidden mt-1 bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden">
+                      <div className="px-3 py-2 border-b border-white/10 flex items-center justify-end">
+                        {openTrades.length > 0 && (
+                          <button
+                            onClick={() => setShowCloseAllConfirm(true)}
+                            disabled={closeAllLoading || closingTradeIds.size > 0}
+                            className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                          >
+                            {closeAllLoading ? (
+                              <span className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7 7 7" /></svg>
+                            )}
+                            Close All
+                          </button>
+                        )}
+                      </div>
+                      <div className="flex flex-col divide-y divide-white/5">
+                        {openTrades.map((trade) => (
+                          <div key={trade.id} className={`px-3 py-2.5 flex flex-col gap-1.5 transition-all duration-300 ${fadingTradeIds.has(trade.id) ? 'opacity-0' : 'opacity-100'}`}>
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-white">{trade.asset_symbol}</span>
+                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${trade.order_type === 'buy' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+                                  {trade.order_type.toUpperCase()}
+                                </span>
+                              </div>
+                              <button
+                                onClick={() => handleCloseTrade(trade)}
+                                disabled={closingTradeIds.has(trade.id) || closeAllLoading}
+                                title="Close trade"
+                                className="w-7 h-7 flex items-center justify-center rounded bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                              >
+                                {closingTradeIds.has(trade.id) ? (
+                                  <span className="w-3.5 h-3.5 border border-red-400 border-t-transparent rounded-full animate-spin" />
+                                ) : (
+                                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7 7 7" /></svg>
+                                )}
+                              </button>
+                            </div>
+                            <div className="grid grid-cols-3 gap-1.5 text-xs">
+                              <div>
+                                <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Amount</div>
+                                <div className="text-slate-300 font-medium text-[11px]" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.amount)}</div>
+                              </div>
+                              <div>
+                                <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Entry</div>
+                                <div className="text-slate-300 font-medium text-[11px]" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.entry_price)}</div>
+                              </div>
+                              <div>
+                                <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Remaining</div>
+                                <CountdownCell tradeId={trade.id} openedAt={trade.opened_at} durationSeconds={trade.duration_seconds} onExpired={handleTradeRowExpired} />
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ) : openTrades.length === 0 ? (
-                    <div className="text-center py-5 text-slate-500 text-sm">No open trades</div>
-                  ) : (
-                    <>
-                      {/* Desktop table */}
-                      <div className="hidden sm:block overflow-x-auto">
+                  )}
+
+                  {/* Desktop: original full table — visible on sm and above */}
+                  <div className="hidden sm:block bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden">
+                    <div className="px-3 py-2.5 border-b border-white/10 flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                        <h3 className="text-xs font-semibold text-white uppercase tracking-wider">Open Trades</h3>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {openTrades.length > 0 && (
+                          <button
+                            onClick={() => setShowCloseAllConfirm(true)}
+                            disabled={closeAllLoading || closingTradeIds.size > 0}
+                            className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                          >
+                            {closeAllLoading ? (
+                              <span className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7 7 7" /></svg>
+                            )}
+                            Close All
+                          </button>
+                        )}
+                        <span className="text-xs text-slate-500">{openTrades.length} open</span>
+                      </div>
+                    </div>
+                    {tradesLoading && openTrades.length === 0 ? (
+                      <div className="flex items-center justify-center py-6">
+                        <span className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    ) : openTrades.length === 0 ? (
+                      <div className="text-center py-5 text-slate-500 text-sm">No open trades</div>
+                    ) : (
+                      <div className="overflow-x-auto">
                         <table className="w-full text-xs">
                           <thead>
                             <tr className="text-slate-500 border-b border-white/5">
@@ -1766,50 +1841,8 @@ export default function DashboardPage() {
                           </tbody>
                         </table>
                       </div>
-
-                      {/* Mobile cards */}
-                      <div className="sm:hidden flex flex-col divide-y divide-white/5">
-                        {openTrades.map((trade) => (
-                          <div key={trade.id} className={`px-3 py-2.5 flex flex-col gap-1.5 transition-all duration-300 ${fadingTradeIds.has(trade.id) ? 'opacity-0' : 'opacity-100'}`}>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-bold text-white">{trade.asset_symbol}</span>
-                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${trade.order_type === 'buy' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
-                                  {trade.order_type.toUpperCase()}
-                                </span>
-                              </div>
-                              <button
-                                onClick={() => handleCloseTrade(trade)}
-                                disabled={closingTradeIds.has(trade.id) || closeAllLoading}
-                                title="Close trade"
-                                className="w-7 h-7 flex items-center justify-center rounded bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                              >
-                                {closingTradeIds.has(trade.id) ? (
-                                  <span className="w-3.5 h-3.5 border border-red-400 border-t-transparent rounded-full animate-spin" />
-                                ) : (
-                                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7 7 7" /></svg>
-                                )}
-                              </button>
-                            </div>
-                            <div className="grid grid-cols-3 gap-1.5 text-xs">
-                              <div>
-                                <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Amount</div>
-                                <div className="text-slate-300 font-medium text-[11px]" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.amount)}</div>
-                              </div>
-                              <div>
-                                <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Entry</div>
-                                <div className="text-slate-300 font-medium text-[11px]" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.entry_price)}</div>
-                              </div>
-                              <div>
-                                <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Remaining</div>
-                                <CountdownCell tradeId={trade.id} openedAt={trade.opened_at} durationSeconds={trade.duration_seconds} onExpired={handleTradeRowExpired} />
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             )}
@@ -1850,7 +1883,7 @@ export default function DashboardPage() {
                                   </span>
                                 </td>
                                 <td className="px-3 py-2.5 text-slate-300" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.amount)}</td>
-                                <td className="px-3 py-2.5 text-slate-400" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.entry_price)}</td>
+                                <td className="px-3 py-2.5 text-slate-300" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.entry_price)}</td>
                                 <td className="px-3 py-2.5 text-slate-400" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>{trade.exit_price != null ? `$${formatCurrency(trade.exit_price)}` : '—'}</td>
                                 <td className={`px-3 py-2.5 font-semibold ${(trade.profit_loss ?? 0) >= 0 ? 'text-emerald-400' : 'text-red-400'}`} style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>
                                   {trade.profit_loss != null ? `${trade.profit_loss >= 0 ? '+' : ''}$${formatCurrency(trade.profit_loss)}` : '—'}
