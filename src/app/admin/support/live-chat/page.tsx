@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { getChatCompletion } from '@/lib/ai/chatCompletion';
 import {
   ChatBubbleLeftRightIcon,
   PaperAirplaneIcon,
@@ -9,6 +10,7 @@ import {
   CheckCircleIcon,
   ClockIcon,
   UserCircleIcon,
+  LanguageIcon,
 } from '@heroicons/react/24/outline';
 
 interface ChatSession {
@@ -31,6 +33,22 @@ interface ChatMessage {
   created_at: string;
 }
 
+const TRANSLATE_LANGUAGES = [
+  { code: 'en', label: 'English' },
+  { code: 'id', label: 'Indonesian' },
+  { code: 'ar', label: 'Arabic' },
+  { code: 'zh', label: 'Chinese' },
+  { code: 'es', label: 'Spanish' },
+  { code: 'fr', label: 'French' },
+  { code: 'de', label: 'German' },
+  { code: 'hi', label: 'Hindi' },
+  { code: 'ja', label: 'Japanese' },
+  { code: 'ko', label: 'Korean' },
+  { code: 'pt', label: 'Portuguese' },
+  { code: 'ru', label: 'Russian' },
+  { code: 'tr', label: 'Turkish' },
+];
+
 export default function AdminLiveChatPage() {
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<ChatSession | null>(null);
@@ -39,6 +57,9 @@ export default function AdminLiveChatPage() {
   const [sending, setSending] = useState(false);
   const [loading, setLoading] = useState(true);
   const [closingSession, setClosingSession] = useState(false);
+  const [translateLang, setTranslateLang] = useState('en');
+  const [translations, setTranslations] = useState<Record<string, string>>({});
+  const [translating, setTranslating] = useState<Record<string, boolean>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Stable supabase client reference — never recreated on re-render
@@ -122,9 +143,40 @@ export default function AdminLiveChatPage() {
     };
   }, [selectedSession?.id, supabase, fetchMessages]);
 
+  // Clear translations when switching sessions
+  useEffect(() => {
+    setTranslations({});
+    setTranslating({});
+  }, [selectedSession?.id]);
+
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const handleTranslate = useCallback(async (msg: ChatMessage) => {
+    const langLabel = TRANSLATE_LANGUAGES.find((l) => l.code === translateLang)?.label || translateLang;
+    setTranslating((prev) => ({ ...prev, [msg.id]: true }));
+    try {
+      const result = await getChatCompletion(
+        'OPEN_AI',
+        'gpt-4.1-mini',
+        [
+          {
+            role: 'system',
+            content: `You are a professional translator. Translate the user's message to ${langLabel}. Return ONLY the translated text, no explanations.`,
+          },
+          { role: 'user', content: msg.message },
+        ],
+        { max_completion_tokens: 500 }
+      );
+      const translated = result?.choices?.[0]?.message?.content?.trim() || '';
+      setTranslations((prev) => ({ ...prev, [msg.id]: translated }));
+    } catch {
+      setTranslations((prev) => ({ ...prev, [msg.id]: '⚠️ Translation failed.' }));
+    } finally {
+      setTranslating((prev) => ({ ...prev, [msg.id]: false }));
+    }
+  }, [translateLang]);
 
   const handleSendMessage = async () => {
     if (!messageText.trim() || !selectedSession) return;
@@ -223,6 +275,24 @@ export default function AdminLiveChatPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
+                {/* Translate language selector */}
+                <div className="flex items-center gap-1.5 bg-slate-800 border border-slate-600 rounded-lg px-2 py-1">
+                  <LanguageIcon className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
+                  <select
+                    value={translateLang}
+                    onChange={(e) => {
+                      setTranslateLang(e.target.value);
+                      setTranslations({});
+                    }}
+                    className="bg-transparent text-xs text-slate-300 focus:outline-none cursor-pointer"
+                  >
+                    {TRANSLATE_LANGUAGES.map((l) => (
+                      <option key={l.code} value={l.code} className="bg-slate-800">
+                        {l.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 {selectedSession.status === 'active' && (
                   <button
                     onClick={handleCloseSession}
@@ -255,7 +325,31 @@ export default function AdminLiveChatPage() {
                         {msg.sender_type === 'admin' ? 'Admin' : msg.sender_type === 'bot' ? '🤖 AI Bot' : 'User'}
                       </div>
                       <div className="text-white text-sm whitespace-pre-wrap">{msg.message}</div>
-                      <div className="text-slate-500 text-xs mt-1">{new Date(msg.created_at).toLocaleTimeString()}</div>
+                      {/* Translation result */}
+                      {translations[msg.id] && (
+                        <div className="mt-2 pt-2 border-t border-slate-600/40">
+                          <div className="text-xs text-blue-400 font-medium mb-0.5 flex items-center gap-1">
+                            <LanguageIcon className="w-3 h-3" />
+                            {TRANSLATE_LANGUAGES.find((l) => l.code === translateLang)?.label}
+                          </div>
+                          <div className="text-slate-300 text-sm whitespace-pre-wrap">{translations[msg.id]}</div>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between mt-1 gap-2">
+                        <div className="text-slate-500 text-xs">{new Date(msg.created_at).toLocaleTimeString()}</div>
+                        {/* Translate button — only for user/bot messages */}
+                        {msg.sender_type !== 'admin' && (
+                          <button
+                            onClick={() => handleTranslate(msg)}
+                            disabled={translating[msg.id]}
+                            className="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 disabled:opacity-50 transition-colors"
+                            title={`Translate to ${TRANSLATE_LANGUAGES.find((l) => l.code === translateLang)?.label}`}
+                          >
+                            <LanguageIcon className="w-3 h-3" />
+                            {translating[msg.id] ? 'Translating...' : translations[msg.id] ? 'Re-translate' : 'Translate'}
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))
