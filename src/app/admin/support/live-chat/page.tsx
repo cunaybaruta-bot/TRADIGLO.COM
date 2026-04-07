@@ -159,7 +159,7 @@ export default function AdminLiveChatPage() {
     try {
       const result = await getChatCompletion(
         'OPEN_AI',
-        'gpt-4.1',
+        'gpt-4o',
         [
           {
             role: 'system',
