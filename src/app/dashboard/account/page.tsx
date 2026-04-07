@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Shield, Wallet, BarChart2, Trophy, Clock, Settings, Headphones, ChevronRight, ArrowLeft, LogOut, Camera, Edit2, Check, X, Eye, EyeOff, TrendingUp, TrendingDown, Award, Star, Zap, MessageCircle, Send, ChevronDown, Bell, Monitor, Smartphone, AlertCircle, CheckCircle, Info, RotateCcw, CreditCard, Building2, Hash, DollarSign, Upload, ArrowDownCircle, ArrowUpCircle, RefreshCw, List, Copy, Link2, Users, BadgeCheck, Cpu, ShieldCheck, UserCheck, UserX, AlertTriangle, Fingerprint, Activity, Menu } from 'lucide-react';
+import { User, Shield, Wallet, BarChart2, Trophy, Clock, Settings, Headphones, ChevronRight, ArrowLeft, LogOut, Camera, Edit2, Check, X, Eye, EyeOff, TrendingUp, TrendingDown, Award, Star, Zap, MessageCircle, Send, ChevronDown, Bell, Monitor, Smartphone, AlertCircle, CheckCircle, Info, RotateCcw, CreditCard, DollarSign, Upload, ArrowDownCircle, ArrowUpCircle, List, Copy, Link2, Users, BadgeCheck, Cpu, ShieldCheck, UserCheck, UserX, AlertTriangle, Fingerprint, Activity, Menu } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 
@@ -125,7 +125,7 @@ type AccountSection = 'profile' | 'security' | 'wallet' | 'stats' | 'level' | 'a
 const NAV_ITEMS: { id: AccountSection; label: string; icon: React.ReactNode; accent: string }[] = [
   { id: 'profile', label: 'Profile', icon: <User size={16} />, accent: '#3b82f6' },
   { id: 'security', label: 'Security', icon: <Shield size={16} />, accent: '#10b981' },
-  { id: 'wallet', label: 'Wallet', icon: <Wallet size={16} />, accent: '#f59e0b' },
+  { id: 'wallet', label: 'Wallet', icon: <Wallet size = {16} />, accent: '#f59e0b' },
   { id: 'stats', label: 'Stats', icon: <BarChart2 size={16} />, accent: '#6366f1' },
   { id: 'level', label: 'Level & Reward', icon: <Trophy size={16} />, accent: '#a855f7' },
   { id: 'activity', label: 'Activity', icon: <Clock size={16} />, accent: '#06b6d4' },
@@ -135,7 +135,7 @@ const NAV_ITEMS: { id: AccountSection; label: string; icon: React.ReactNode; acc
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 
-interface ToastState { message: string; type: 'success' | 'error' | 'info' }
+interface ToastState { message: string; type: 'success\' | \'error\' | \'info' }
 
 function Toast({ toast, onClose }: { toast: ToastState; onClose: () => void }) {
   useEffect(() => {
@@ -388,7 +388,7 @@ function ProfileSection({ profile, stats, onUpdate, activeCountries }: { profile
                 <span className="text-[10px] text-slate-500">Member since {profile?.created_at ? new Date(profile.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : '—'}</span>
               </div>
             </div>
-            <button onClick={() => setEditing(v => !v)} className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all hover:scale-105 active:scale-95" style={{ background: editing ? 'rgba(239,68,68,0.1)' : 'rgba(59,130,246,0.1)', color: editing ? '#ef4444' : '#60a5fa', border: `1px solid ${editing ? 'rgba(239,68,68,0.3)' : 'rgba(59,130,246,0.3)'}` }}>
+            <button onClick={() => setEditing(v => !v)} className="flex-shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all hover:scale-105 active:scale-95" style={{ background: editing ? 'rgba(16,185,129,0.15)' : 'rgba(59,130,246,0.1)', color: editing ? '#10b981' : '#94a3b8', border: `1px solid ${editing ? 'rgba(16,185,129,0.3)' : 'rgba(59,130,246,0.3)'}` }}>
               {editing ? <X size={12} /> : <Edit2 size={12} />} {editing ? 'Cancel' : 'Edit'}
             </button>
           </div>
@@ -865,7 +865,7 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
           {tab === 'history' && (
             <div style={{ animation: 'fadeSlideIn 0.2s ease-out' }}>
               {deposits.length === 0 && withdrawals.length === 0 ? (
-                <div className="text-center py-12 text-slate-500 text-sm">No transaction history yet</div>
+                <div className="flex flex-col items-center justify-center h-full gap-2 text-slate-500"><MessageCircle size={28} className="opacity-30" /><span className="text-xs">No messages yet. Say hello!</span></div>
               ) : (
                 <div className="space-y-2 max-h-96 overflow-y-auto">
                   {[...deposits.map(d => ({ id: d.id, type: 'deposit' as const, amount: d.amount, currency: d.currency, method: d.payment_method, status: d.status, created_at: d.created_at })), ...withdrawals.map(w => ({ id: w.id, type: 'withdrawal' as const, amount: w.amount, currency: w.currency, method: w.payment_method, status: w.status, created_at: w.created_at }))].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map(item => (
@@ -1097,7 +1097,7 @@ interface SupportChatMessage {
 }
 
 function SupportSection() {
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   // ── Ticket state ──
@@ -1158,14 +1158,39 @@ function SupportSection() {
   // ── Realtime subscription for chat ──
   useEffect(() => {
     if (!chatSession) return;
-    const channel = supabase.channel(`member_chat_${chatSession.id}`).on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `session_id=eq.${chatSession.id}` }, (payload) => {
-      setChatMessages(prev => {
-        if (prev.find(m => m.id === (payload.new as SupportChatMessage).id)) return prev;
-        return [...prev, payload.new as SupportChatMessage];
+    const channelName = `member_chat_${chatSession.id}`;
+    const channel = supabase
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `session_id=eq.${chatSession.id}`,
+        },
+        (payload) => {
+          setChatMessages(prev => {
+            if (prev.find(m => m.id === (payload.new as SupportChatMessage).id)) return prev;
+            return [...prev, payload.new as SupportChatMessage];
+          });
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR') {
+          // Re-fetch messages on channel error as fallback
+          supabase
+            .from('chat_messages')
+            .select('id, session_id, sender_type, message, created_at')
+            .eq('session_id', chatSession.id)
+            .order('created_at', { ascending: true })
+            .then(({ data }) => {
+              if (data) setChatMessages(data as SupportChatMessage[]);
+            });
+        }
       });
-    }).subscribe();
     return () => { supabase.removeChannel(channel); };
-  }, [chatSession]);
+  }, [chatSession?.id, supabase]);
 
   // ── Send chat message ──
   const handleSendChat = async () => {
@@ -1238,7 +1263,7 @@ function SupportSection() {
           {chatSession?.status === 'active' ? (
             <div className="p-3 border-t border-white/8">
               <div className="flex gap-2">
-                <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendChat(); } }} placeholder="Type a message..." className="flex-1 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }} onFocus={e => { e.target.style.borderColor = 'rgba(59,130,246,0.5)'; }} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; }} />
+                <input value={chatInput} onChange={e => setChatInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendChat(); } }} placeholder="Type a message..." className="flex-1 rounded-xl px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }} onFocus={e => { e.target.style.borderColor = 'rgba(59,130,246,0.5)'; e.target.style.boxShadow = '0 0 0 3px rgba(59,130,246,0.1), inset 0 1px 3px rgba(0,0,0,0.3)'; }} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; e.target.style.boxShadow = 'none'; }} />
                 <button onClick={handleSendChat} disabled={chatSending || !chatInput.trim()} className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)' }}>
                   {chatSending ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <Send size={13} />}
                 </button>
@@ -1528,7 +1553,7 @@ export default function AccountPage() {
             ))}
           </div>
           <div className="p-3 border-t" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
-            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 hover:text-red-400 transition-all text-xs font-medium" style={{ background: 'transparent' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.06)'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; }}>
+            <button onClick={handleLogout} className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-500 hover:text-red-400 transition-all text-xs font-medium" style={{ background: 'transparent' }} onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(239,68,68,0.06)'; (e.currentTarget as HTMLElement).style.color = '#94a3b8'; }} onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#64748b'; }}>
               <LogOut size={15} /> Logout
             </button>
           </div>

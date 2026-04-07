@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import {
   ChatBubbleLeftRightIcon,
@@ -40,7 +40,9 @@ export default function AdminLiveChatPage() {
   const [loading, setLoading] = useState(true);
   const [closingSession, setClosingSession] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const supabase = createClient();
+
+  // Stable supabase client reference — never recreated on re-render
+  const supabase = useMemo(() => createClient(), []);
 
   const fetchSessions = useCallback(async () => {
     const { data } = await supabase
@@ -49,7 +51,7 @@ export default function AdminLiveChatPage() {
       .order('updated_at', { ascending: false });
     if (data) setSessions(data as any);
     setLoading(false);
-  }, []);
+  }, [supabase]);
 
   const fetchMessages = useCallback(async (sessionId: string) => {
     const { data } = await supabase
@@ -58,28 +60,61 @@ export default function AdminLiveChatPage() {
       .eq('session_id', sessionId)
       .order('created_at', { ascending: true });
     if (data) setMessages(data);
-  }, []);
+  }, [supabase]);
 
+  // Sessions realtime subscription
   useEffect(() => {
     fetchSessions();
     const channel = supabase
-      .channel('chat_sessions_admin')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_sessions' }, fetchSessions)
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [fetchSessions]);
+      .channel('admin_chat_sessions_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'chat_sessions' }, () => {
+        fetchSessions();
+      })
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR') {
+          // Retry after short delay
+          setTimeout(() => fetchSessions(), 2000);
+        }
+      });
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchSessions, supabase]);
 
+  // Messages realtime subscription — re-subscribes when selectedSession changes
   useEffect(() => {
     if (!selectedSession) return;
     fetchMessages(selectedSession.id);
+
+    const channelName = `admin_chat_messages_${selectedSession.id}`;
     const channel = supabase
-      .channel(`chat_messages_admin_${selectedSession.id}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `session_id=eq.${selectedSession.id}` }, (payload) => {
-        setMessages((prev) => [...prev, payload.new as ChatMessage]);
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [selectedSession, fetchMessages]);
+      .channel(channelName)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'chat_messages',
+          filter: `session_id=eq.${selectedSession.id}`,
+        },
+        (payload) => {
+          setMessages((prev) => {
+            const exists = prev.find((m) => m.id === (payload.new as ChatMessage).id);
+            if (exists) return prev;
+            return [...prev, payload.new as ChatMessage];
+          });
+        }
+      )
+      .subscribe((status) => {
+        if (status === 'CHANNEL_ERROR') {
+          setTimeout(() => fetchMessages(selectedSession.id), 2000);
+        }
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [selectedSession?.id, supabase, fetchMessages]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -205,8 +240,8 @@ export default function AdminLiveChatPage() {
                 messages.map((msg) => (
                   <div key={msg.id} className={`flex ${msg.sender_type === 'admin' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[75%] rounded-xl px-4 py-2.5 ${
-                      msg.sender_type === 'admin' ?'bg-[#22c55e]/10 border border-[#22c55e]/20'
-                        : msg.sender_type === 'bot' ?'bg-cyan-500/10 border border-cyan-500/20' :'bg-slate-700/50 border border-slate-600/50'
+                      msg.sender_type === 'admin' ? 'bg-[#22c55e]/10 border border-[#22c55e]/20'
+                        : msg.sender_type === 'bot' ? 'bg-cyan-500/10 border border-cyan-500/20' : 'bg-slate-700/50 border border-slate-600/50'
                     }`}>
                       <div className={`text-xs font-medium mb-1 ${
                         msg.sender_type === 'admin' ? 'text-[#22c55e]' : msg.sender_type === 'bot' ? 'text-cyan-400' : 'text-slate-400'
