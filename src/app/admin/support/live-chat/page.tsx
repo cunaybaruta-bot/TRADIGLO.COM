@@ -111,8 +111,14 @@ export default function AdminLiveChatPage() {
         }
       });
 
+    // Polling fallback — re-fetch every 3s in case realtime event is missed
+    const pollInterval = setInterval(() => {
+      fetchMessages(selectedSession.id);
+    }, 3000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(pollInterval);
     };
   }, [selectedSession?.id, supabase, fetchMessages]);
 

@@ -784,7 +784,7 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
                 <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Bank Name</label><input value={financialForm.bank_name} onChange={e => setFinancialForm(f => ({ ...f, bank_name: e.target.value }))} placeholder="e.g. BCA, Mandiri, BRI" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle} onFocus={e => { e.target.style.borderColor = 'rgba(245,158,11,0.5)'; }} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; }} /></div>
                 <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Account Number</label><input value={financialForm.account_number} onChange={e => setFinancialForm(f => ({ ...f, account_number: e.target.value }))} placeholder="Bank account number" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle} onFocus={e => { e.target.style.borderColor = 'rgba(245,158,11,0.5)'; }} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; }} /></div>
                 <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Payment Method</label><select value={financialForm.preferred_payment_method} onChange={e => setFinancialForm(f => ({ ...f, preferred_payment_method: e.target.value }))} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={inputStyle}><option value="">Select method</option>{countryPaymentMethods.map(m => <option key={m} value={m}>{m}</option>)}</select></div>
-                <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Currency</label><select value={financialForm.preferred_currency} onChange={e => setFinancialForm(f => ({ ...f, preferred_currency: e.target.value }))} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={inputStyle}>{['USD', 'IDR', 'SGD', 'MYR', 'EUR', 'GBP'].map(c => <option key={c} value={c}>{c}</option>)}</select></div>
+                <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Currency</label><select value={financialForm.preferred_currency} onChange={e => setFinancialForm(f => ({ ...f, preferred_currency: e.target.value }))} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={inputStyle}><option value="USD">USD</option><option value="IDR">IDR</option><option value="SGD">SGD</option><option value="MYR">MYR</option><option value="EUR">EUR</option><option value="GBP">GBP</option></select></div>
               </div>
               <div className="flex items-center gap-2 pt-1">
                 <button onClick={handleSaveFinancial} disabled={savingFinancial} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', boxShadow: '0 4px 16px rgba(245,158,11,0.25)' }}>
@@ -917,7 +917,7 @@ function StatsSection({ stats }: { stats: TradeStats }) {
       </div>
       <GlassCard className="p-5">
         <div className="flex items-center justify-between mb-4">
-          <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Performance Chart</h4>
+          <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2"><Send size={13} /> Submit Ticket</h4>
           <div className="flex rounded-xl overflow-hidden" style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
             {(['daily', 'weekly', 'monthly'] as const).map(p => (
               <button key={p} onClick={() => setChartPeriod(p)} className="px-2.5 py-1 text-[10px] font-medium transition-all" style={{ background: chartPeriod === p ? 'rgba(99,102,241,0.3)' : 'transparent', color: chartPeriod === p ? '#a5b4fc' : '#64748b' }}>
@@ -1189,7 +1189,23 @@ function SupportSection() {
             });
         }
       });
-    return () => { supabase.removeChannel(channel); };
+
+    // Polling fallback — re-fetch every 3s in case realtime event is missed
+    const pollInterval = setInterval(() => {
+      supabase
+        .from('chat_messages')
+        .select('id, session_id, sender_type, message, created_at')
+        .eq('session_id', chatSession.id)
+        .order('created_at', { ascending: true })
+        .then(({ data }) => {
+          if (data) setChatMessages(data as SupportChatMessage[]);
+        });
+    }, 3000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      clearInterval(pollInterval);
+    };
   }, [chatSession?.id, supabase]);
 
   // ── Send chat message ──
@@ -1281,8 +1297,8 @@ function SupportSection() {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <button onClick={handleOpenChat} className="flex items-center gap-3 p-4 rounded-2xl hover:scale-105 transition-all group text-left" style={{ background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.2)' }}>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center text-blue-400 transition-all group-hover:scale-110" style={{ background: 'rgba(59,130,246,0.15)' }}><MessageCircle size={20} /></div>
+        <button onClick={handleOpenChat} className="flex items-center gap-3 p-4 rounded-2xl hover:scale-105 transition-all group text-left" style={{ background: 'rgba(5,5,5,0.9)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.2)' }}><MessageCircle size={20} /></div>
           <div><div className="text-sm font-semibold text-white">Live Chat</div><div className="text-xs text-slate-500">Chat directly with support</div></div>
           <ChevronRight size={16} className="ml-auto text-slate-600 group-hover:text-slate-400 transition-colors" />
         </button>
