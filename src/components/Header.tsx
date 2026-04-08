@@ -94,6 +94,7 @@ export default function Header() {
   const pathname = usePathname();
   const router = useRouter();
   const { user, signOut, loading } = useAuth();
+  const { t } = useLanguage();
 
   useEffect(() => {
     setMounted(true);
@@ -109,11 +110,11 @@ export default function Header() {
   };
 
   const navItems = [
-    { label: 'Markets', href: '/markets' },
-    { label: 'Copy Trading', href: '/copy-trading' },
-    { label: 'Screener', href: '/screener' },
-    { label: 'News', href: '/news' },
-    { label: 'Affiliate', href: '/referral' },
+    { labelKey: 'nav_markets', href: '/markets' },
+    { labelKey: 'nav_copy_trading', href: '/copy-trading' },
+    { labelKey: 'nav_screener', href: '/screener' },
+    { labelKey: 'nav_news', href: '/news' },
+    { labelKey: 'nav_affiliate', href: '/referral' },
   ];
 
   return (
@@ -149,13 +150,13 @@ export default function Header() {
         <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5 text-sm font-medium text-slate-300 flex-shrink-0">
           {navItems?.map((item) => (
             <Link
-              key={item?.label}
+              key={item?.labelKey}
               href={item?.href}
               className={`px-3 xl:px-4 min-h-[44px] rounded-md hover:text-white hover:bg-white/10 transition-colors whitespace-nowrap text-xs xl:text-sm inline-flex items-center ${
                 mounted && pathname === item?.href ? 'text-white bg-white/10' : ''
               }`}
             >
-              {item?.label}
+              {t(item.labelKey)}
             </Link>
           ))}
           {/* Dashboard — only visible to logged-in members */}
@@ -166,7 +167,7 @@ export default function Header() {
                 pathname === '/dashboard' ? 'text-white bg-white/10' : ''
               }`}
             >
-              Dashboard
+              {t('nav_dashboard')}
             </Link>
           )}
         </nav>
@@ -195,7 +196,7 @@ export default function Header() {
               onClick={handleSignOut}
               className="inline-flex items-center justify-center rounded-md text-xs lg:text-sm font-medium min-h-[44px] px-4 lg:px-5 text-slate-300 hover:bg-white/10 hover:text-white transition-all whitespace-nowrap"
             >
-              Sign Out
+              {t('nav_sign_out')}
             </button>
           ) : (
             <>
@@ -203,13 +204,13 @@ export default function Header() {
                 href="/auth?tab=signin"
                 className="inline-flex items-center justify-center rounded-md text-xs lg:text-sm font-medium min-h-[44px] px-4 lg:px-5 text-slate-300 hover:bg-white/10 hover:text-white transition-all whitespace-nowrap"
               >
-                Sign In
+                {t('nav_sign_in')}
               </Link>
               <Link
                 href="/auth"
                 className="inline-flex items-center justify-center rounded-md text-xs lg:text-sm font-medium min-h-[44px] px-4 lg:px-5 bg-blue-600 text-white hover:bg-blue-700 transition-all whitespace-nowrap"
               >
-                Get Started
+                {t('nav_get_started')}
               </Link>
             </>
           )}
@@ -222,14 +223,14 @@ export default function Header() {
               onClick={handleSignOut}
               className="inline-flex items-center justify-center rounded-md text-[11px] font-medium min-h-[32px] px-2.5 bg-slate-700 text-white hover:bg-slate-600 transition-all whitespace-nowrap"
             >
-              Sign Out
+              {t('nav_sign_out')}
             </button>
           ) : (
             <Link
               href="/auth?tab=signin"
               className="inline-flex items-center justify-center rounded-md text-xs font-medium min-h-[44px] px-3 bg-blue-600 text-white hover:bg-blue-700 transition-all whitespace-nowrap"
             >
-              Sign In
+              {t('nav_sign_in')}
             </Link>
           )}
           {/* Language Dropdown — mobile (before hamburger) */}
@@ -251,14 +252,14 @@ export default function Header() {
       {mobileMenuOpen && (
         <div className="lg:hidden fixed top-[56px] left-0 right-0 z-40 border-t border-white/10 bg-black px-4 py-3 shadow-lg">
           <nav className="flex flex-col gap-1">
-            {[...navItems, ...(mounted && !loading && user ? [{ label: 'Dashboard', href: '/dashboard' }] : [])]?.map((item) => (
+            {[...navItems, ...(mounted && !loading && user ? [{ labelKey: 'nav_dashboard', href: '/dashboard' }] : [])]?.map((item) => (
               <Link
-                key={item?.label}
+                key={item?.labelKey}
                 href={item?.href}
                 className="text-left px-3 py-2.5 rounded-md text-sm transition-colors text-slate-300 hover:text-white hover:bg-white/10"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                {item?.label}
+                {t(item.labelKey)}
               </Link>
             ))}
           </nav>

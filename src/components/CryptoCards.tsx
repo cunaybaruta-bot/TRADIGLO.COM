@@ -1,14 +1,16 @@
 'use client';
 import React from 'react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface CryptoCardProps {
   name: string;
   price: string;
   change: string;
   isPositive: boolean;
+  cryptoLabel: string;
 }
 
-function CryptoCard({ name, price, change, isPositive }: CryptoCardProps) {
+function CryptoCard({ name, price, change, isPositive, cryptoLabel }: CryptoCardProps) {
   return (
     <div className="bg-black border border-[#1e2a4a] rounded-2xl p-4 sm:p-5 hover:border-blue-500/60 hover:bg-[#0f0f0f] hover:scale-[1.02] transition-all duration-200 cursor-pointer select-none">
       <div className="flex items-start justify-between mb-3 sm:mb-4">
@@ -36,14 +38,17 @@ function CryptoCard({ name, price, change, isPositive }: CryptoCardProps) {
         }`}>
           {change}
         </span>
-        <span className="text-slate-500 text-xs font-medium tracking-wider">CRYPTO</span>
+        <span className="text-slate-500 text-xs font-medium tracking-wider">{cryptoLabel}</span>
       </div>
     </div>
   );
 }
 
 export default function CryptoCards() {
-  const cards: CryptoCardProps[] = [
+  const { t } = useLanguage();
+  const cryptoLabel = t('crypto_label');
+
+  const cards = [
     { name: 'Solana', price: '$84.94', change: '+3.42%', isPositive: true },
     { name: 'Ethereum', price: '$1,994.15', change: '+2.44%', isPositive: true },
     { name: 'XRP', price: '$1.36', change: '+1.05%', isPositive: true },
@@ -55,7 +60,7 @@ export default function CryptoCards() {
       <div className="container mx-auto">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {cards.map((card) => (
-            <CryptoCard key={card.name} {...card} />
+            <CryptoCard key={card.name} {...card} cryptoLabel={cryptoLabel} />
           ))}
         </div>
       </div>

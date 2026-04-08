@@ -1,6 +1,7 @@
 'use client';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import AppImage from '@/components/ui/AppImage';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface SparklineData {
   price: number[];
@@ -55,12 +56,12 @@ const SPORTS_COINS = new Set([
 ]);
 
 const CATEGORY_TABS = [
-  { id: 'all', label: 'All', icon: null, fire: false },
-  { id: 'highlights', label: 'Highlights', icon: '≡', fire: false },
-  { id: 'categories', label: 'Categories', icon: '⬡', fire: false },
-  { id: 'mobile-mining', label: 'Mobile Mining', icon: null, fire: true },
-  { id: 'quantum-resistant', label: 'Quantum-Resistant', icon: null, fire: true },
-  { id: 'sports', label: 'Sports', icon: null, fire: true },
+  { id: 'all', labelKey: 'markets_tab_all', icon: null, fire: false },
+  { id: 'highlights', labelKey: 'markets_tab_highlights', icon: '≡', fire: false },
+  { id: 'categories', labelKey: 'markets_tab_categories', icon: '⬡', fire: false },
+  { id: 'mobile-mining', labelKey: 'markets_tab_mobile_mining', icon: null, fire: true },
+  { id: 'quantum-resistant', labelKey: 'markets_tab_quantum', icon: null, fire: true },
+  { id: 'sports', labelKey: 'markets_tab_sports', icon: null, fire: true },
 ];
 
 function formatPrice(price: number): string {
@@ -152,6 +153,7 @@ export default function MarketsTable() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [favorites, setFavorites] = useState<Set<string>>(new Set());
   const [activeTab, setActiveTab] = useState('all');
+  const { t } = useLanguage();
 
   // suppress unused warning
   void coins;
@@ -245,13 +247,13 @@ export default function MarketsTable() {
                 {tab.id === 'all' && activeTab === 'all' && (
                   <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block" />
                 )}
-                {tab.label}
+                {t(tab.labelKey)}
               </button>
             ))}
           </div>
           <button className="flex items-center gap-1 px-2 sm:px-3 py-1.5 sm:py-2 ml-1 rounded-lg border border-[#2a3a5c] text-slate-400 hover:text-slate-200 hover:border-slate-500 text-[10px] sm:text-xs font-medium transition-colors whitespace-nowrap flex-shrink-0">
             <span className="text-xs sm:text-sm">✦</span>
-            <span className="hidden sm:inline">Customize</span>
+            <span className="hidden sm:inline">{t('markets_customize')}</span>
           </button>
         </div>
 
@@ -259,15 +261,15 @@ export default function MarketsTable() {
         <div className="flex items-center justify-between px-2 sm:px-4 py-2 sm:py-2.5 border-b border-[#1e2a4a]">
           <div className="flex items-center gap-2">
             <span className="text-white font-semibold text-[10px] sm:text-xs tracking-tight">
-              {activeTab === 'all' ? 'All Markets' :
-               activeTab === 'highlights' ? 'Highlights' :
-               activeTab === 'categories' ? 'Categories' :
-               activeTab === 'mobile-mining' ? 'Mobile Mining' :
-               activeTab === 'quantum-resistant' ? 'Quantum-Resistant' :
-               activeTab === 'sports' ? 'Sports' : 'All Markets'}
+              {activeTab === 'all' ? t('markets_label_all') :
+               activeTab === 'highlights' ? t('markets_label_highlights') :
+               activeTab === 'categories' ? t('markets_label_categories') :
+               activeTab === 'mobile-mining' ? t('markets_label_mobile_mining') :
+               activeTab === 'quantum-resistant' ? t('markets_label_quantum') :
+               activeTab === 'sports' ? t('markets_label_sports') : t('markets_label_all')}
             </span>
             <span className="px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-[9px] sm:text-[10px] font-medium">
-              {loading ? '...' : activeTab === 'all' ? `${TOTAL_RESULTS.toLocaleString()}+ Coins` : `${filteredCoins.length} Coins`}
+              {loading ? '...' : activeTab === 'all' ? `${TOTAL_RESULTS.toLocaleString()}+ ${t('markets_coins_suffix')}` : `${filteredCoins.length} ${t('markets_coins_suffix')}`}
             </span>
           </div>
           <button
@@ -278,7 +280,7 @@ export default function MarketsTable() {
             <svg className={`w-2.5 h-2.5 sm:w-3 sm:h-3 ${loading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            Refresh
+            {t('markets_refresh')}
           </button>
         </div>
 
@@ -286,7 +288,7 @@ export default function MarketsTable() {
         {loading && (
           <div className="flex flex-col items-center justify-center py-20 gap-4">
             <div className="w-10 h-10 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-            <p className="text-slate-400 text-sm">Fetching live market data...</p>
+            <p className="text-slate-400 text-sm">{t('markets_fetching')}</p>
           </div>
         )}
 
@@ -303,7 +305,7 @@ export default function MarketsTable() {
               onClick={() => fetchCoins(currentPage, rowsPerPage)}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
             >
-              Try Again
+              {t('markets_try_again')}
             </button>
           </div>
         )}
@@ -317,8 +319,8 @@ export default function MarketsTable() {
                 <div className="w-12 h-12 rounded-full bg-slate-800 flex items-center justify-center">
                   <span className="text-2xl">🔍</span>
                 </div>
-                <p className="text-slate-400 text-sm">No coins found in this category from current page data.</p>
-                <p className="text-slate-600 text-xs">Try refreshing or browsing a different page.</p>
+                <p className="text-slate-400 text-sm">{t('markets_no_coins')}</p>
+                <p className="text-slate-600 text-xs">{t('markets_no_coins_hint')}</p>
               </div>
             )}
 
@@ -334,29 +336,29 @@ export default function MarketsTable() {
                       </span>
                     </th>
                     <th className="px-3 py-3 text-left">
-                      <span className="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">Coin</span>
+                      <span className="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">{t('markets_col_coin')}</span>
                     </th>
                     <th className="w-16 px-2 py-3 hidden sm:table-cell"></th>
                     <th className="px-3 py-3 text-right">
-                      <span className="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">Price</span>
+                      <span className="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">{t('markets_col_price')}</span>
                     </th>
                     <th className="px-3 py-3 text-right hidden sm:table-cell">
-                      <span className="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">1h</span>
+                      <span className="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">{t('markets_col_1h')}</span>
                     </th>
                     <th className="px-3 py-3 text-right">
-                      <span className="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">24h</span>
+                      <span className="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">{t('markets_col_24h')}</span>
                     </th>
                     <th className="px-3 py-3 text-right hidden sm:table-cell">
-                      <span className="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">7d</span>
+                      <span className="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">{t('markets_col_7d')}</span>
                     </th>
                     <th className="px-3 py-3 text-right hidden lg:table-cell">
-                      <span className="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">24h Volume</span>
+                      <span className="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">{t('markets_col_volume')}</span>
                     </th>
                     <th className="px-3 py-3 text-right hidden md:table-cell">
-                      <span className="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">Market Cap</span>
+                      <span className="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">{t('markets_col_marketcap')}</span>
                     </th>
                     <th className="px-3 py-3 text-right hidden xl:table-cell">
-                      <span className="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">Last 7 Days</span>
+                      <span className="text-slate-500 text-[11px] font-semibold uppercase tracking-wider">{t('markets_col_chart')}</span>
                     </th>
                   </tr>
                 </thead>
@@ -420,7 +422,7 @@ export default function MarketsTable() {
                         <td className="px-1 sm:px-2 hidden sm:table-cell">
                           {hasBuy && (
                             <button className="px-1.5 sm:px-2.5 py-0.5 sm:py-1 rounded border border-green-500 text-green-400 text-[9px] sm:text-xs font-semibold hover:bg-green-500/10 transition-colors whitespace-nowrap tracking-wide">
-                              Buy
+                              {t('markets_buy')}
                             </button>
                           )}
                         </td>
@@ -485,7 +487,7 @@ export default function MarketsTable() {
             <div className="flex items-center justify-between px-4 py-4 border-t border-[#1e2a4a] flex-wrap gap-3">
               {/* Left: Showing X to Y of Z results */}
               <span className="text-slate-500 text-xs tabular-nums whitespace-nowrap">
-                Showing {startResult.toLocaleString()} to {endResult.toLocaleString()} of {TOTAL_RESULTS.toLocaleString()} results
+                {t('markets_showing')} {startResult.toLocaleString()} {t('markets_to')} {endResult.toLocaleString()} {t('markets_of')} {TOTAL_RESULTS.toLocaleString()} {t('markets_results')}
               </span>
 
               {/* Center: Page navigation */}
@@ -533,7 +535,7 @@ export default function MarketsTable() {
 
               {/* Right: Rows dropdown + scroll to top */}
               <div className="flex items-center gap-2">
-                <span className="text-slate-400 text-xs font-medium">Rows</span>
+                <span className="text-slate-400 text-xs font-medium">{t('markets_rows')}</span>
                 <div className="relative">
                   <select
                     value={rowsPerPage}

@@ -1,5 +1,6 @@
 'use client';
 import React from 'react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface Mover {
   rank: number;
@@ -10,6 +11,8 @@ interface Mover {
 }
 
 export default function TopMovers() {
+  const { t } = useLanguage();
+
   const movers: Mover[] = [
     { rank: 1, name: 'Solana', price: '$84.94', change: '+3.42%', isPositive: true },
     { rank: 2, name: 'BNB', price: '$635.01', change: '+3.28%', isPositive: true },
@@ -31,11 +34,11 @@ export default function TopMovers() {
                 <path d="M13 17V5"></path>
                 <path d="M8 17v-3"></path>
               </svg>
-              <span className="text-white font-semibold text-sm sm:text-base">Top Movers</span>
+              <span className="text-white font-semibold text-sm sm:text-base">{t('top_movers_title')}</span>
             </div>
             <div className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full border border-blue-500/40 bg-transparent">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
-              <span className="text-blue-400 text-xs font-medium">Live</span>
+              <span className="text-blue-400 text-xs font-medium">{t('top_movers_live')}</span>
             </div>
           </div>
 
