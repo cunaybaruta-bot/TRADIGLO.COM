@@ -8,6 +8,7 @@ import LightweightChart, { type LightweightChartHandle } from '@/components/Ligh
 import AssetSelectorModal from '@/components/AssetSelectorModal';
 import DashboardTopBar from '@/components/dashboard/DashboardTopBar';
 import DepositModal from '@/components/dashboard/DepositModal';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -500,8 +501,9 @@ type NavSection = 'trade' | 'history' | 'copytrade' | 'account' | 'referral';
 
 function BottomNav({ active, onChange }: { active: NavSection; onChange: (s: NavSection) => void }) {
   const router = useRouter();
+  const { t } = useLanguage();
   const items: { id: NavSection; label: string; icon: React.ReactNode }[] = [
-    { id: 'trade', label: 'Trade', icon: (
+    { id: 'trade', label: t('dash_nav_trade'), icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
         {/* Candle 1 - bearish */}
         <line x1="6" y1="3" x2="6" y2="6" />
@@ -517,8 +519,8 @@ function BottomNav({ active, onChange }: { active: NavSection; onChange: (s: Nav
         <line x1="18" y1="15" x2="18" y2="19" />
       </svg>
     ) },
-    { id: 'history', label: 'History', icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3.5 3.5" /></svg> },
-    { id: 'copytrade', label: 'Copy Trade', icon: (
+    { id: 'history', label: t('dash_nav_history'), icon: <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><circle cx="12" cy="12" r="9" strokeLinecap="round" strokeLinejoin="round" /><path strokeLinecap="round" strokeLinejoin="round" d="M12 7v5l3.5 3.5" /></svg> },
+    { id: 'copytrade', label: t('dash_nav_copytrade'), icon: (
       <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
         <path d="M1.5 4v5h5" />
         <path d="M22.5 20v-5h-5" />
@@ -526,15 +528,15 @@ function BottomNav({ active, onChange }: { active: NavSection; onChange: (s: Nav
         <path d="M3.51 15a9 9 0 0 0 14.85 3.36L22.5 15" />
       </svg>
     ) },
-    { id: 'referral', label: 'Affiliate', icon: (
+    { id: 'referral', label: t('dash_nav_affiliate'), icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
         <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
         <circle cx="9" cy="7" r="4" />
-        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+        <path d="M23 21v-2a4 4 0 0 1 0 7.75" />
         <path d="M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
     ) },
-    { id: 'account', label: 'Account', icon: (
+    { id: 'account', label: t('dash_nav_account'), icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 100 120" stroke="currentColor" strokeWidth={4.5} strokeLinecap="round" strokeLinejoin="round">
         {/* Innermost loop - core of fingerprint */}
         <path d="M44 62 C44 55 56 55 56 62 C56 69 44 69 44 62" />
@@ -592,6 +594,8 @@ function CopyTradeTab({ userId, wallet }: { userId: string; wallet: Wallet | nul
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
+
+  const { t } = useLanguage();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -673,15 +677,15 @@ function CopyTradeTab({ userId, wallet }: { userId: string; wallet: Wallet | nul
   }
 
   if (!provider) {
-    return <div className="px-4 py-10 text-center text-slate-500 text-sm">Copy Trade not available</div>;
+    return <div className="px-4 py-10 text-center text-slate-500 text-sm">{t('dash_copy_not_available')}</div>;
   }
 
   const scores = [
-    { label: 'Activity', value: provider.activity_score },
-    { label: 'Probability', value: provider.probability_score },
-    { label: 'Reliability', value: provider.reliability_score },
-    { label: 'Popularity', value: provider.popularity_score },
-    { label: 'Experience', value: provider.experience_score },
+    { label: t('dash_copy_score_activity'), value: provider.activity_score },
+    { label: t('dash_copy_score_probability'), value: provider.probability_score },
+    { label: t('dash_copy_score_reliability'), value: provider.reliability_score },
+    { label: t('dash_copy_score_popularity'), value: provider.popularity_score },
+    { label: t('dash_copy_score_experience'), value: provider.experience_score },
   ];
 
   return (
@@ -702,7 +706,7 @@ function CopyTradeTab({ userId, wallet }: { userId: string; wallet: Wallet | nul
                   <span className="text-white font-bold text-sm">{provider.name}</span>
                   {isFollowing && (
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                      Following
+                      {t('dash_copy_following_badge')}
                     </span>
                   )}
                 </div>
@@ -711,14 +715,14 @@ function CopyTradeTab({ userId, wallet }: { userId: string; wallet: Wallet | nul
             </div>
             <div className="text-right">
               <div className="text-emerald-400 font-black text-xl">{provider.win_rate}%</div>
-              <div className="text-slate-500 text-[10px]">Win Rate</div>
+              <div className="text-slate-500 text-[10px]">{t('dash_copy_win_rate')}</div>
             </div>
           </div>
 
           {/* Guarantee Badge */}
           <div className="flex items-center gap-2 px-3 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-lg">
             <svg className="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0-1.042-.133-2.052-.382-3.016z" /></svg>
-            <span className="text-emerald-400 text-xs font-semibold">100% Balance Guarantee on Loss</span>
+            <span className="text-emerald-400 text-xs font-semibold">{t('dash_copy_guarantee')}</span>
           </div>
         </div>
 
@@ -727,15 +731,15 @@ function CopyTradeTab({ userId, wallet }: { userId: string; wallet: Wallet | nul
           <div className="grid grid-cols-3 gap-2 mb-3">
             <div className="text-center">
               <div className="text-white font-bold text-sm">{activeFollowersCount.toLocaleString()}</div>
-              <div className="text-slate-500 text-[10px]">Active Followers</div>
+              <div className="text-slate-500 text-[10px]">{t('dash_copy_active_followers')}</div>
             </div>
             <div className="text-center border-x border-white/10">
               <div className="text-white font-bold text-sm">${provider.min_balance_usd.toLocaleString()}</div>
-              <div className="text-slate-500 text-[10px]">Min Balance</div>
+              <div className="text-slate-500 text-[10px]">{t('dash_copy_min_balance')}</div>
             </div>
             <div className="text-center">
               <div className="text-emerald-400 font-bold text-sm">{provider.win_rate}%</div>
-              <div className="text-slate-500 text-[10px]">Win Rate</div>
+              <div className="text-slate-500 text-[10px]">{t('dash_copy_win_rate')}</div>
             </div>
           </div>
 
@@ -759,7 +763,7 @@ function CopyTradeTab({ userId, wallet }: { userId: string; wallet: Wallet | nul
             <div className="space-y-2">
               <div className="flex items-center gap-2 px-3 py-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                 <svg className="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <span className="text-blue-400 text-xs">You are currently copying Tradiglo trades</span>
+                <span className="text-blue-400 text-xs">{t('dash_copy_copying_msg')}</span>
               </div>
               <button
                 onClick={handleStopFollow}
@@ -768,14 +772,14 @@ function CopyTradeTab({ userId, wallet }: { userId: string; wallet: Wallet | nul
               >
                 {actionLoading ? (
                   <span className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin inline-block" />
-                ) : 'Stop Follow'}
+                ) : t('dash_copy_stop_follow')}
               </button>
             </div>
           ) : (
             <div className="space-y-2">
               <div className="flex items-center gap-2 px-3 py-2 bg-blue-500/10 border border-blue-500/20 rounded-lg">
                 <svg className="w-4 h-4 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <span className="text-blue-400 text-xs">Ready to copy Tradiglo trades?</span>
+                <span className="text-blue-400 text-xs">{t('dash_copy_ready_msg')}</span>
               </div>
               <button
                 onClick={handleFollow}
@@ -784,7 +788,7 @@ function CopyTradeTab({ userId, wallet }: { userId: string; wallet: Wallet | nul
               >
                 {actionLoading ? (
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
-                ) : 'Follow Tradiglo'}
+                ) : t('dash_copy_follow_btn')}
               </button>
             </div>
           )}
@@ -794,10 +798,10 @@ function CopyTradeTab({ userId, wallet }: { userId: string; wallet: Wallet | nul
       {/* Copy Trade History */}
       <div className="bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden">
         <div className="px-4 py-3 border-b border-white/10">
-          <h3 className="text-xs font-semibold text-white uppercase tracking-wider">Copy Trade History</h3>
+          <h3 className="text-xs font-semibold text-white uppercase tracking-wider">{t('dash_copy_history_title')}</h3>
         </div>
         {copyResults.length === 0 ? (
-          <div className="text-center py-8 text-slate-500 text-xs">No copy trade history yet</div>
+          <div className="text-center py-8 text-slate-500 text-xs">{t('dash_copy_no_history')}</div>
         ) : (
           <div className="divide-y divide-white/5">
             {copyResults.map((r) => (
@@ -819,7 +823,7 @@ function CopyTradeTab({ userId, wallet }: { userId: string; wallet: Wallet | nul
                   <div className={`text-sm font-bold ${r.status === 'won' ? 'text-emerald-400' : r.status === 'lost' ? 'text-red-400' : r.status === 'refunded' ? 'text-yellow-400' : 'text-slate-400'}`}>
                     {r.status === 'won' ? `+$${formatCurrency(r.profit_loss)}` : r.status === 'lost' ? `-$${formatCurrency(r.amount)}` : r.status === 'refunded' ? 'Refunded' : 'Pending'}
                   </div>
-                  <div className="text-slate-500 text-[10px]">${formatCurrency(r.amount)} invested</div>
+                  <div className="text-slate-500 text-[10px]">${formatCurrency(r.amount)} {t('dash_copy_invested')}</div>
                 </div>
               </div>
             ))}
@@ -836,6 +840,7 @@ const supabase = createClient();
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { t } = useLanguage();
 
   const [authChecked, setAuthChecked] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
@@ -1181,8 +1186,9 @@ export default function DashboardPage() {
           if (lastPopupTradeIdRef.current !== latest.id) {
             lastPopupTradeIdRef.current = latest.id;
             const profitVal = latest.profit ?? latest.profit_loss ?? 0;
+            const knownTrade = openTrades.find((t) => t.id === latest.id);
             setTradeResultPopup({
-              asset_symbol: latest.asset_symbol ?? latest.assets?.symbol ?? '',
+              asset_symbol: knownTrade?.asset_symbol ?? latest.asset_symbol ?? '',
               order_type: latest.order_type as 'buy' | 'sell',
               amount: latest.amount ?? 0,
               result: latest.result as 'win' | 'loss',
@@ -1286,26 +1292,16 @@ export default function DashboardPage() {
       // Calculate WIN/LOSS and show modal
       if (lastPopupTradeIdRef.current !== trade.id) {
         lastPopupTradeIdRef.current = trade.id;
-        const exitPrice = chartPrice;
-        const entryPrice = trade.entry_price ?? 0;
-        let result: 'win' | 'loss';
-        if (trade.order_type === 'buy') {
-          result = exitPrice >= entryPrice ? 'win' : 'loss';
-        } else {
-          result = exitPrice <= entryPrice ? 'win' : 'loss';
-        }
-        const priceDiff = Math.abs(exitPrice - entryPrice);
-        const pctMove = entryPrice > 0 ? priceDiff / entryPrice : 0;
-        const profitLoss = result === 'win' ? Math.round(trade.amount * 0.95 * 100) / 100 : trade.amount;
+        const profitVal = chartPrice - trade.entry_price;
         const knownTrade = openTrades.find((t) => t.id === trade.id);
         setTradeResultPopup({
           asset_symbol: knownTrade?.asset_symbol ?? trade.asset_symbol ?? '',
           order_type: trade.order_type,
           amount: trade.amount,
-          result,
-          profit_loss: profitLoss,
-          entry_price: entryPrice,
-          exit_price: exitPrice,
+          result: profitVal >= 0 ? 'win' : 'loss',
+          profit_loss: Math.abs(profitVal),
+          entry_price: trade.entry_price,
+          exit_price: chartPrice,
         });
       }
 
@@ -1357,9 +1353,9 @@ export default function DashboardPage() {
         const exitPrice = chartPrice;
         let result: 'win' | 'loss';
         if (lastTrade.order_type === 'buy') {
-          result = exitPrice > entryPrice ? 'win' : 'loss';
+          result = exitPrice >= entryPrice ? 'win' : 'loss';
         } else {
-          result = exitPrice < entryPrice ? 'win' : 'loss';
+          result = exitPrice <= entryPrice ? 'win' : 'loss';
         }
         const priceDiff = Math.abs(exitPrice - entryPrice);
         const pctMove = entryPrice > 0 ? priceDiff / entryPrice : 0;
@@ -1515,9 +1511,9 @@ export default function DashboardPage() {
             <div className="px-3 py-2">
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { label: 'Win Rate', value: `${winRate}%` },
-                  { label: 'Profit', value: `${totalProfit >= 0 ? '+' : ''}$${formatCurrency(totalProfit)}`, color: totalProfit >= 0 ? 'text-emerald-400' : 'text-red-400' },
-                  { label: 'Open', value: openPositions.toString(), color: 'text-blue-400' },
+                  { label: t('dash_win_rate'), value: `${winRate}%` },
+                  { label: t('dash_profit'), value: `${totalProfit >= 0 ? '+' : ''}$${formatCurrency(totalProfit)}`, color: totalProfit >= 0 ? 'text-emerald-400' : 'text-red-400' },
+                  { label: t('dash_open'), value: openPositions.toString(), color: 'text-blue-400' },
                 ].map((stat) => (
                   <div key={stat.label} className="flex flex-col gap-0.5">
                     <span className="text-[9px] text-slate-500 uppercase tracking-wider">{stat.label}</span>
@@ -1571,7 +1567,7 @@ export default function DashboardPage() {
                       {activeSymbolDisplay}
                     </span>
                     <span style={{ fontSize: 10, fontWeight: 700, color: '#10b981', letterSpacing: '0.02em', lineHeight: 1 }}>
-                      95% <span style={{ fontWeight: 400, color: 'rgba(255,255,255,0.35)', fontSize: 9 }}>payout</span>
+                      95% <span style={{ fontWeight: 400, color: 'rgba(255,255,255,0.35)', fontSize: 9 }}>{t('dash_payout')}</span>
                     </span>
                   </div>
                   {/* Thin elegant chevron */}
@@ -1672,12 +1668,12 @@ export default function DashboardPage() {
                   />
                 ) : (
                   <div className="flex flex-col items-center justify-center gap-3" style={{ height: 240 }}>
-                    <span className="text-slate-500 text-sm">Select an asset to view chart</span>
+                    <span className="text-slate-500 text-sm">{t('dash_select_asset_hint')}</span>
                     <button
                       onClick={() => setAssetModalOpen(true)}
                       className="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition-colors"
                     >
-                      Select Asset
+                      {t('dash_select_asset_btn')}
                     </button>
                   </div>
                 )}
@@ -1695,16 +1691,16 @@ export default function DashboardPage() {
                   >
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                      <span className="text-xs font-semibold text-white uppercase tracking-wider">Open Trades</span>
+                      <span className="text-xs font-semibold text-white uppercase tracking-wider">{t('dash_open_trades')}</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-500">{openTrades.length} open</span>
+                      <span className="text-xs text-slate-500">{openTrades.length} {t('dash_open_count')}</span>
                       {openTrades.length > 0 && (
                         <svg
                           className={`w-4 h-4 text-slate-400 transition-transform duration-200 ${openTradesMobileExpanded ? 'rotate-180' : ''}`}
                           fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}
                         >
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7 7 7" />
                         </svg>
                       )}
                     </div>
@@ -1725,7 +1721,7 @@ export default function DashboardPage() {
                             ) : (
                               <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7 7 7" /></svg>
                             )}
-                            Close All
+                            {t('dash_close_all')}
                           </button>
                         )}
                       </div>
@@ -1748,21 +1744,21 @@ export default function DashboardPage() {
                                 {closingTradeIds.has(trade.id) ? (
                                   <span className="w-3.5 h-3.5 border border-red-400 border-t-transparent rounded-full animate-spin" />
                                 ) : (
-                                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7 7 7" /></svg>
+                                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7 7 7" /></svg>
                                 )}
                               </button>
                             </div>
                             <div className="grid grid-cols-3 gap-1.5 text-xs">
                               <div>
-                                <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Amount</div>
+                                <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{t('dash_col_amount')}</div>
                                 <div className="text-slate-300 font-medium text-[11px]" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.amount)}</div>
                               </div>
                               <div>
-                                <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Entry</div>
+                                <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{t('dash_col_entry')}</div>
                                 <div className="text-slate-300 font-medium text-[11px]" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.entry_price)}</div>
                               </div>
                               <div>
-                                <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Remaining</div>
+                                <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{t('dash_col_duration')}</div>
                                 <CountdownCell tradeId={trade.id} openedAt={trade.opened_at} durationSeconds={trade.duration_seconds} onExpired={handleTradeRowExpired} />
                               </div>
                             </div>
@@ -1771,88 +1767,88 @@ export default function DashboardPage() {
                       </div>
                     </div>
                   )}
+                </div>
 
-                  {/* Desktop: original full table */}
-                  <div className="hidden sm:block bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden">
-                    <div className="px-3 py-2.5 border-b border-white/10 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-                        <h3 className="text-xs font-semibold text-white uppercase tracking-wider">Open Trades</h3>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {openTrades.length > 0 && (
-                          <button
-                            onClick={() => setShowCloseAllConfirm(true)}
-                            disabled={closeAllLoading || closingTradeIds.size > 0}
-                            className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                          >
-                            {closeAllLoading ? (
-                              <span className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
-                            ) : (
-                              <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7 7 7" /></svg>
-                            )}
-                            Close All
-                          </button>
-                        )}
-                        <span className="text-xs text-slate-500">{openTrades.length} open</span>
-                      </div>
+                {/* Desktop/Tablet open trades table */}
+                <div className="hidden sm:block bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden">
+                  <div className="px-3 py-2.5 border-b border-white/10 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
+                      <h3 className="text-xs font-semibold text-white uppercase tracking-wider">{t('dash_open_trades')}</h3>
                     </div>
-                    {tradesLoading && openTrades.length === 0 ? (
-                      <div className="flex items-center justify-center py-6">
-                        <span className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                      </div>
-                    ) : openTrades.length === 0 ? (
-                      <div className="text-center py-5 text-slate-500 text-sm">No open trades</div>
-                    ) : (
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-xs">
-                          <thead>
-                            <tr className="text-slate-500 border-b border-white/5">
-                              <th className="px-3 py-2 text-left font-medium">Asset</th>
-                              <th className="px-3 py-2 text-left font-medium">Type</th>
-                              <th className="px-3 py-2 text-left font-medium">Amount</th>
-                              <th className="px-3 py-2 text-left font-medium">Entry</th>
-                              <th className="px-3 py-2 text-left font-medium">Duration</th>
-                              <th className="px-3 py-2 text-left font-medium">Remaining</th>
-                              <th className="px-3 py-2 text-left font-medium"></th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {openTrades.map((trade) => (
-                              <tr key={trade.id} className={`border-b border-white/5 hover:bg-white/5 transition-all duration-300 ${fadingTradeIds.has(trade.id) ? 'opacity-0' : 'opacity-100'}`}>
-                                <td className="px-3 py-2.5 font-semibold text-white whitespace-nowrap">{trade.asset_symbol}</td>
-                                <td className="px-3 py-2.5">
-                                  <span className={`px-2 py-0.5 rounded text-xs font-bold ${trade.order_type === 'buy' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
-                                    {trade.order_type.toUpperCase()}
-                                  </span>
-                                </td>
-                                <td className="px-3 py-2.5 text-slate-300" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.amount)}</td>
-                                <td className="px-3 py-2.5 text-slate-300" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${trade.entry_price.toFixed(2)}</td>
-                                <td className="px-3 py-2.5 text-slate-400" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>{formatDuration(trade.duration_seconds)}</td>
-                                <td className="px-3 py-2.5">
-                                  <CountdownCell tradeId={trade.id} openedAt={trade.opened_at} durationSeconds={trade.duration_seconds} onExpired={handleTradeRowExpired} />
-                                </td>
-                                <td className="px-3 py-2.5">
-                                  <button
-                                    onClick={() => handleCloseTrade(trade)}
-                                    disabled={closingTradeIds.has(trade.id) || closeAllLoading}
-                                    title="Close trade"
-                                    className="w-6 h-6 flex items-center justify-center rounded bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                                  >
-                                    {closingTradeIds.has(trade.id) ? (
-                                      <span className="w-3.5 h-3.5 border border-red-400 border-t-transparent rounded-full animate-spin" />
-                                    ) : (
-                                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7 7 7" /></svg>
-                                    )}
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {openTrades.length > 0 && (
+                        <button
+                          onClick={() => setShowCloseAllConfirm(true)}
+                          disabled={closeAllLoading || closingTradeIds.size > 0}
+                          className="flex items-center gap-1 px-2 py-1 rounded text-[10px] font-semibold bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                        >
+                          {closeAllLoading ? (
+                            <span className="w-3 h-3 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7 7 7" /></svg>
+                          )}
+                          {t('dash_close_all')}
+                        </button>
+                      )}
+                      <span className="text-xs text-slate-500">{openTrades.length} {t('dash_open_count')}</span>
+                    </div>
                   </div>
+                  {tradesLoading && openTrades.length === 0 ? (
+                    <div className="flex items-center justify-center py-6">
+                      <span className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  ) : openTrades.length === 0 ? (
+                    <div className="text-center py-5 text-slate-500 text-sm">{t('dash_no_open_trades')}</div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-xs">
+                        <thead>
+                          <tr className="text-slate-500 border-b border-white/5">
+                            <th className="px-3 py-2 text-left font-medium">{t('dash_col_asset')}</th>
+                            <th className="px-3 py-2 text-left font-medium">{t('dash_col_type')}</th>
+                            <th className="px-3 py-2 text-left font-medium">{t('dash_col_amount')}</th>
+                            <th className="px-3 py-2 text-left font-medium">{t('dash_col_entry')}</th>
+                            <th className="px-3 py-2 text-left font-medium">{t('dash_col_duration')}</th>
+                            <th className="px-3 py-2 text-left font-medium">{t('dash_col_remaining')}</th>
+                            <th className="px-3 py-2 text-left font-medium"></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {openTrades.map((trade) => (
+                            <tr key={trade.id} className={`border-b border-white/5 hover:bg-white/5 transition-all duration-300 ${fadingTradeIds.has(trade.id) ? 'opacity-0' : 'opacity-100'}`}>
+                              <td className="px-3 py-2.5 font-semibold text-white whitespace-nowrap">{trade.asset_symbol}</td>
+                              <td className="px-3 py-2.5">
+                                <span className={`px-2 py-0.5 rounded text-xs font-bold ${trade.order_type === 'buy' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+                                  {trade.order_type.toUpperCase()}
+                                </span>
+                              </td>
+                              <td className="px-3 py-2.5 text-slate-300" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.amount)}</td>
+                              <td className="px-3 py-2.5 text-slate-300" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${trade.entry_price.toFixed(2)}</td>
+                              <td className="px-3 py-2.5 text-slate-400" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>{formatDuration(trade.duration_seconds)}</td>
+                              <td className="px-3 py-2.5">
+                                <CountdownCell tradeId={trade.id} openedAt={trade.opened_at} durationSeconds={trade.duration_seconds} onExpired={handleTradeRowExpired} />
+                              </td>
+                              <td className="px-3 py-2.5">
+                                <button
+                                  onClick={() => handleCloseTrade(trade)}
+                                  disabled={closingTradeIds.has(trade.id) || closeAllLoading}
+                                  title="Close trade"
+                                  className="w-6 h-6 flex items-center justify-center rounded bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                >
+                                  {closingTradeIds.has(trade.id) ? (
+                                    <span className="w-3.5 h-3.5 border border-red-400 border-t-transparent rounded-full animate-spin" />
+                                  ) : (
+                                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7 7 7" /></svg>
+                                  )}
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1862,8 +1858,8 @@ export default function DashboardPage() {
               <div className="px-2 sm:px-3 py-3">
                 <div className="bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden">
                   <div className="px-3 py-3 border-b border-white/10 flex items-center justify-between">
-                    <h3 className="text-xs font-semibold text-white uppercase tracking-wider">Trade History</h3>
-                    <span className="text-xs text-slate-500">{tradeHistory.length} trades</span>
+                    <h3 className="text-xs font-semibold text-white uppercase tracking-wider">{t('dash_trade_history')}</h3>
+                    <span className="text-xs text-slate-500">{tradeHistory.length} {t('dash_trades_count')}</span>
                   </div>
 
                   {historyLoading ? (
@@ -1871,14 +1867,14 @@ export default function DashboardPage() {
                       <span className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                     </div>
                   ) : tradeHistory.length === 0 ? (
-                    <div className="text-center py-10 text-slate-500 text-sm">No trade history yet</div>
+                    <div className="text-center py-10 text-slate-500 text-sm">{t('dash_no_history')}</div>
                   ) : (
                     <>
                       <div className="hidden sm:block overflow-x-auto overflow-y-auto max-h-[400px]">
                         <table className="w-full text-xs">
                           <thead className="sticky top-0 bg-[#0d0d0d]">
                             <tr className="text-slate-500 border-b border-white/5">
-                              {['Asset', 'Dir', 'Amount', 'Entry', 'Exit', 'P/L', 'Result', 'Date'].map((h) => (
+                              {[t('dash_col_asset'), t('dash_col_dir'), t('dash_col_amount'), t('dash_col_entry'), t('dash_col_exit'), t('dash_col_pl'), t('dash_col_result'), t('dash_col_date')].map((h) => (
                                 <th key={h} className="px-3 py-3 text-left font-medium whitespace-nowrap">{h}</th>
                               ))}
                             </tr>
@@ -1937,15 +1933,15 @@ export default function DashboardPage() {
                             </div>
                             <div className="grid grid-cols-3 gap-1.5 text-xs">
                               <div>
-                                <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Amount</div>
+                                <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{t('dash_col_amount')}</div>
                                 <div className="text-slate-300 text-[11px]">${formatCurrency(trade.amount)}</div>
                               </div>
                               <div>
-                                <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Entry</div>
+                                <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{t('dash_col_entry')}</div>
                                 <div className="text-slate-300 text-[11px]">${formatCurrency(trade.entry_price)}</div>
                               </div>
                               <div>
-                                <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">Exit</div>
+                                <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{t('dash_col_exit')}</div>
                                 <div className="text-slate-300 text-[11px]">{trade.exit_price != null ? `$${formatCurrency(trade.exit_price)}` : '—'}</div>
                               </div>
                             </div>
@@ -1968,10 +1964,10 @@ export default function DashboardPage() {
                             {historyLoadingMore ? (
                               <>
                                 <span className="w-3.5 h-3.5 border border-slate-400 border-t-transparent rounded-full animate-spin" />
-                                Loading...
+                                {t('dash_loading')}
                               </>
                             ) : (
-                              'Load More'
+                              t('dash_load_more')
                             )}
                           </button>
                         </div>
@@ -1989,12 +1985,12 @@ export default function DashboardPage() {
             {activeNav === 'account' && (
               <div className="px-2 sm:px-3 py-3">
                 <div className="bg-[#0d0d0d] border border-white/10 rounded-xl p-4">
-                  <h3 className="text-xs font-semibold text-white uppercase tracking-wider mb-4">Account</h3>
+                  <h3 className="text-xs font-semibold text-white uppercase tracking-wider mb-4">{t('dash_account_title')}</h3>
                   <div className="flex flex-col gap-3">
                     <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="w-2 h-2 rounded-full bg-blue-400" />
-                        <span className="text-xs text-blue-400 font-medium uppercase tracking-wider">Demo Balance</span>
+                        <span className="text-xs text-blue-400 font-medium uppercase tracking-wider">{t('dash_demo_balance')}</span>
                       </div>
                       <div className="text-2xl font-bold text-white" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.03em' }}>${formatCurrency(wallet?.demoBalance ?? 0)}</div>
                       <div className="text-xs text-slate-500 mt-0.5">USD</div>
@@ -2002,7 +1998,7 @@ export default function DashboardPage() {
                     <div className="bg-orange-500/10 border border-orange-500/20 rounded-lg p-4">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="w-2 h-2 rounded-full bg-orange-400" />
-                        <span className="text-xs text-orange-400 font-medium uppercase tracking-wider">Real Balance</span>
+                        <span className="text-xs text-orange-400 font-medium uppercase tracking-wider">{t('dash_real_balance')}</span>
                       </div>
                       <div className="text-2xl font-bold text-white" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.03em' }}>${formatCurrency(wallet?.realBalance ?? 0)}</div>
                       <div className="text-xs text-slate-500 mt-0.5">USD</div>
@@ -2019,7 +2015,7 @@ export default function DashboardPage() {
             <div className="flex items-center gap-0 border-b border-white/10">
               {/* Duration */}
               <div className="flex-1 flex items-center gap-1.5 px-2 py-1.5 border-r border-white/10">
-                <span className="text-[9px] text-slate-500 uppercase tracking-wider flex-shrink-0">Dur</span>
+                <span className="text-[9px] text-slate-500 uppercase tracking-wider flex-shrink-0">{t('dash_dur')}</span>
                 <button
                   onClick={decrementDuration}
                   disabled={durationIndex <= 0 || isFollowingCopyTrade}
@@ -2037,7 +2033,7 @@ export default function DashboardPage() {
 
               {/* Amount */}
               <div className="flex-1 flex items-center gap-1.5 px-2 py-1.5">
-                <span className="text-[9px] text-slate-500 uppercase tracking-wider flex-shrink-0">Amt</span>
+                <span className="text-[9px] text-slate-500 uppercase tracking-wider flex-shrink-0">{t('dash_amt')}</span>
                 <button
                   onClick={handleAmountDecrement}
                   disabled={amount <= 1 || isFollowingCopyTrade}
@@ -2065,7 +2061,7 @@ export default function DashboardPage() {
             {isFollowingCopyTrade && (
               <div className="px-3 py-1.5 bg-blue-500/10 border-b border-blue-500/20 flex items-center gap-2">
                 <svg className="w-3 h-3 text-blue-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                <span className="text-blue-400 text-[10px] font-medium">You are currently copying Tradiglo trades</span>
+                <span className="text-blue-400 text-[10px] font-medium">{t('dash_copying_trades')}</span>
               </div>
             )}
 
@@ -2087,7 +2083,7 @@ export default function DashboardPage() {
                 ) : (
                   <>
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l-8-8h5V4h6v8h5z"/></svg>
-                    SELL
+                    {t('dash_sell')}
                   </>
                 )}
               </button>
@@ -2107,7 +2103,7 @@ export default function DashboardPage() {
                 ) : (
                   <>
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l8 8h-5v8H9v-8H4z"/></svg>
-                    BUY
+                    {t('dash_buy')}
                   </>
                 )}
               </button>
@@ -2177,20 +2173,20 @@ export default function DashboardPage() {
             <div className="w-12 h-12 rounded-full bg-red-500/15 border border-red-500/30 flex items-center justify-center mx-auto mb-4">
               <svg className="w-6 h-6 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
             </div>
-            <h3 className="text-sm font-bold text-white mb-2">Close all open trades?</h3>
+            <h3 className="text-sm font-bold text-white mb-2">{t('dash_close_all_confirm_title')}</h3>
             <p className="text-xs text-slate-400 mb-5">All {openTrades.length} open trade{openTrades.length !== 1 ? 's' : ''} will be closed at the current chart price.</p>
             <div className="flex gap-2">
               <button
                 onClick={() => setShowCloseAllConfirm(false)}
                 className="flex-1 py-2.5 bg-white/10 border border-white/20 text-slate-300 text-xs font-semibold hover:bg-white/20 transition-all"
               >
-                Cancel
+                {t('dash_cancel')}
               </button>
               <button
                 onClick={handleCloseAll}
                 className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 text-white text-xs font-bold transition-all"
               >
-                Close All
+                {t('dash_close_all')}
               </button>
             </div>
           </div>

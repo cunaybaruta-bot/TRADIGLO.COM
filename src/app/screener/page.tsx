@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from '@/components/Header';
 import TickerTape from '@/components/TickerTape';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface CoinData {
   id: string;
@@ -64,6 +65,7 @@ export default function ScreenerPage() {
   const [sortBy, setSortBy] = useState<keyof CoinData>('market_cap_rank');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
   const [filtersOpen, setFiltersOpen] = useState(true);
+  const { t } = useLanguage();
 
   const fetchCoins = useCallback(async () => {
     setLoading(true);
@@ -130,11 +132,11 @@ export default function ScreenerPage() {
         {/* Page Header */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">Crypto Screener</h1>
-            <p className="text-slate-400 text-sm">Filter {coins.length} cryptocurrencies by price, volume, and movement</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-white mb-1">{t('sc_title')}</h1>
+            <p className="text-slate-400 text-sm">{t('sc_subtitle_prefix')} {coins.length} {t('sc_subtitle_suffix')}</p>
           </div>
           <div className="flex items-center gap-3">
-            <span className="text-xs text-slate-400">{filtered.length} results</span>
+            <span className="text-xs text-slate-400">{filtered.length} {t('sc_results')}</span>
             <button
               onClick={() => setFiltersOpen((o) => !o)}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all ${
@@ -144,19 +146,19 @@ export default function ScreenerPage() {
               <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2a1 1 0 01-.293.707L13 13.414V19a1 1 0 01-.553.894l-4 2A1 1 0 017 21v-7.586L3.293 6.707A1 1 0 013 6V4z" />
               </svg>
-              Filters {activeFilterCount > 0 && <span className="bg-white/20 rounded-full px-1.5 py-0.5 text-xs">{activeFilterCount}</span>}
+              {t('sc_filters_btn')} {activeFilterCount > 0 && <span className="bg-white/20 rounded-full px-1.5 py-0.5 text-xs">{activeFilterCount}</span>}
             </button>
             <button
               onClick={() => setFilters(defaultFilters)}
               className="px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 transition-colors"
             >
-              Reset
+              {t('sc_reset_btn')}
             </button>
             <button
               onClick={fetchCoins}
               className="px-3 py-2 rounded-lg text-xs text-slate-400 hover:text-white bg-white/5 hover:bg-white/10 transition-colors"
             >
-              ↻ Refresh
+              {t('sc_refresh_btn')}
             </button>
           </div>
         </div>
@@ -167,7 +169,7 @@ export default function ScreenerPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {/* Movement */}
               <div>
-                <label className="block text-xs text-slate-400 mb-2 font-medium">Movement</label>
+                <label className="block text-xs text-slate-400 mb-2 font-medium">{t('sc_filter_movement')}</label>
                 <div className="flex gap-2">
                   {(['all', 'gainers', 'losers'] as const).map((m) => (
                     <button
@@ -178,7 +180,7 @@ export default function ScreenerPage() {
                           ? m === 'gainers' ? 'bg-emerald-600 text-white' : m === 'losers' ? 'bg-red-600 text-white' : 'bg-blue-600 text-white' :'bg-white/10 text-slate-300 hover:bg-white/20'
                       }`}
                     >
-                      {m}
+                      {m === 'all' ? t('sc_movement_all') : m === 'gainers' ? t('sc_movement_gainers') : t('sc_movement_losers')}
                     </button>
                   ))}
                 </div>
@@ -186,7 +188,7 @@ export default function ScreenerPage() {
 
               {/* Price Range */}
               <div>
-                <label className="block text-xs text-slate-400 mb-2 font-medium">Price Range (USD)</label>
+                <label className="block text-xs text-slate-400 mb-2 font-medium">{t('sc_filter_price')}</label>
                 <div className="flex gap-2">
                   <input
                     type="number"
@@ -207,7 +209,7 @@ export default function ScreenerPage() {
 
               {/* Volume Range */}
               <div>
-                <label className="block text-xs text-slate-400 mb-2 font-medium">Volume 24h (in Millions)</label>
+                <label className="block text-xs text-slate-400 mb-2 font-medium">{t('sc_filter_volume')}</label>
                 <div className="flex gap-2">
                   <input
                     type="number"
@@ -228,7 +230,7 @@ export default function ScreenerPage() {
 
               {/* 24h Change */}
               <div>
-                <label className="block text-xs text-slate-400 mb-2 font-medium">24h Change (%)</label>
+                <label className="block text-xs text-slate-400 mb-2 font-medium">{t('sc_filter_change')}</label>
                 <div className="flex gap-2">
                   <input
                     type="number"
@@ -249,7 +251,7 @@ export default function ScreenerPage() {
 
               {/* Min Market Cap */}
               <div>
-                <label className="block text-xs text-slate-400 mb-2 font-medium">Min Market Cap (in Millions)</label>
+                <label className="block text-xs text-slate-400 mb-2 font-medium">{t('sc_filter_marketcap')}</label>
                 <input
                   type="number"
                   placeholder="e.g. 100"
@@ -265,7 +267,7 @@ export default function ScreenerPage() {
         {/* Error */}
         {error && (
           <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 mb-6 text-red-400 text-sm">
-            {error} — CoinGecko free API may have rate limits. Please try again in a moment.
+            {error} {t('sc_error_suffix')}
           </div>
         )}
 
@@ -278,20 +280,20 @@ export default function ScreenerPage() {
                   <th className="text-left px-4 py-3 font-medium cursor-pointer hover:text-white" onClick={() => handleSort('market_cap_rank')}>
                     # <SortIcon col="market_cap_rank" />
                   </th>
-                  <th className="text-left px-4 py-3 font-medium">Name</th>
+                  <th className="text-left px-4 py-3 font-medium">{t('sc_col_name')}</th>
                   <th className="text-right px-4 py-3 font-medium cursor-pointer hover:text-white" onClick={() => handleSort('current_price')}>
-                    Price <SortIcon col="current_price" />
+                    {t('sc_col_price')} <SortIcon col="current_price" />
                   </th>
                   <th className="text-right px-4 py-3 font-medium cursor-pointer hover:text-white" onClick={() => handleSort('price_change_percentage_24h')}>
-                    24h % <SortIcon col="price_change_percentage_24h" />
+                    {t('sc_col_24h')} <SortIcon col="price_change_percentage_24h" />
                   </th>
-                  <th className="text-right px-4 py-3 font-medium hidden md:table-cell">24h High</th>
-                  <th className="text-right px-4 py-3 font-medium hidden md:table-cell">24h Low</th>
+                  <th className="text-right px-4 py-3 font-medium hidden md:table-cell">{t('sc_col_high')}</th>
+                  <th className="text-right px-4 py-3 font-medium hidden md:table-cell">{t('sc_col_low')}</th>
                   <th className="text-right px-4 py-3 font-medium cursor-pointer hover:text-white hidden lg:table-cell" onClick={() => handleSort('total_volume')}>
-                    Volume <SortIcon col="total_volume" />
+                    {t('sc_col_volume')} <SortIcon col="total_volume" />
                   </th>
                   <th className="text-right px-4 py-3 font-medium cursor-pointer hover:text-white hidden lg:table-cell" onClick={() => handleSort('market_cap')}>
-                    Market Cap <SortIcon col="market_cap" />
+                    {t('sc_col_marketcap')} <SortIcon col="market_cap" />
                   </th>
                 </tr>
               </thead>
@@ -318,7 +320,7 @@ export default function ScreenerPage() {
                   ? (
                     <tr>
                       <td colSpan={8} className="px-4 py-16 text-center text-slate-400 text-sm">
-                        No coins match your filters. Try adjusting the criteria.
+                        {t('sc_no_match')}
                       </td>
                     </tr>
                   )

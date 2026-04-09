@@ -69,17 +69,17 @@ function LanguageDropdown({ compact = false }: { compact?: boolean }) {
         </svg>
       </button>
       {open && (
-        <div className="absolute right-0 top-full mt-1 w-40 rounded-md border border-white/20 bg-black/95 shadow-xl z-50 py-1">
-          {LANGUAGES.map((lang) => (
+        <div className="absolute right-0 top-full mt-1 w-40 rounded-md border border-white/20 bg-black/95 shadow-xl py-1" style={{ zIndex: 10000 }}>
+          {LANGUAGES.map((l) => (
             <button
-              key={lang.code}
-              onClick={() => handleSelect(lang.code)}
+              key={l.code}
+              onClick={() => handleSelect(l.code)}
               className={`w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-white/10 transition-colors text-left ${
-                current.code === lang.code ? 'text-white bg-white/10' : 'text-slate-300'
+                current.code === l.code ? 'text-white bg-white/10' : 'text-slate-300'
               }`}
             >
-              <span>{lang.flag}</span>
-              <span>{lang.label}</span>
+              <span>{l.flag}</span>
+              <span>{l.label}</span>
             </button>
           ))}
         </div>
@@ -228,7 +228,7 @@ export default function Header() {
           ) : (
             <Link
               href="/auth?tab=signin"
-              className="inline-flex items-center justify-center rounded-md text-xs font-medium min-h-[44px] px-3 bg-blue-600 text-white hover:bg-blue-700 transition-all whitespace-nowrap"
+              className="inline-flex items-center justify-center rounded-md text-xs font-medium px-3 py-1.5 bg-blue-600 text-white hover:bg-blue-700 transition-all whitespace-nowrap"
             >
               {t('nav_sign_in')}
             </Link>

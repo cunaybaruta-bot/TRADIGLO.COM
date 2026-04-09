@@ -4,6 +4,7 @@ import Header from '@/components/Header';
 import TickerTape from '@/components/TickerTape';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 // TradingView Advanced Chart Widget (same as member dashboard)
 function TradingViewChart({ symbol }: { symbol: string }) {
@@ -151,6 +152,7 @@ export default function MarketsPage() {
   const [durationIndex, setDurationIndex] = useState(6);
   const [activeTab, setActiveTab] = useState<'open' | 'history'>('open');
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   // Live price state — fetched from Binance API (same source as TradingView chart)
   const [livePrice, setLivePrice] = useState<number | null>(null);
@@ -364,8 +366,8 @@ export default function MarketsPage() {
       <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div>
-            <h1 className="text-base sm:text-3xl font-bold text-white">Markets</h1>
-            <p className="text-slate-400 mt-0.5 text-xs sm:text-sm">Practice trading with virtual funds</p>
+            <h1 className="text-base sm:text-3xl font-bold text-white">{t('mkt_title')}</h1>
+            <p className="text-slate-400 mt-0.5 text-xs sm:text-sm">{t('mkt_subtitle')}</p>
           </div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full sm:w-auto">
             {/* Demo trades remaining badge */}
@@ -378,7 +380,7 @@ export default function MarketsPage() {
                 <polyline points="12 6 9 17 4 12" />
               </svg>
               <span className="text-purple-300 text-xs font-medium">
-                {tradesRemaining} demo trade{tradesRemaining !== 1 ? 's' : ''} left
+                {tradesRemaining} {tradesRemaining !== 1 ? t('mkt_demo_trades_left_plural') : t('mkt_demo_trades_left')} {t('mkt_demo_trades_suffix')}
               </span>
             </div>
             <div
@@ -390,7 +392,7 @@ export default function MarketsPage() {
               }}
               className="text-right w-full sm:w-auto"
             >
-              <p className="text-purple-200 text-xs font-medium mb-0.5">Demo Account Balance</p>
+              <p className="text-purple-200 text-xs font-medium mb-0.5">{t('mkt_demo_balance')}</p>
               <p className="text-white text-lg sm:text-3xl font-bold">$10,000</p>
             </div>
           </div>
@@ -409,7 +411,7 @@ export default function MarketsPage() {
                 </svg>
               </div>
               <div>
-                <p className="text-slate-400 text-[10px] sm:text-xs">Total Trades</p>
+                <p className="text-slate-400 text-[10px] sm:text-xs">{t('mkt_stat_total_trades')}</p>
                 <p className="text-white text-sm sm:text-xl font-bold">{totalTrades}</p>
               </div>
             </div>
@@ -424,7 +426,7 @@ export default function MarketsPage() {
                 </svg>
               </div>
               <div>
-                <p className="text-slate-400 text-[10px] sm:text-xs">Win Rate</p>
+                <p className="text-slate-400 text-[10px] sm:text-xs">{t('mkt_stat_win_rate')}</p>
                 <p className="text-white text-sm sm:text-xl font-bold">{winRate}%</p>
               </div>
             </div>
@@ -439,7 +441,7 @@ export default function MarketsPage() {
                 </svg>
               </div>
               <div>
-                <p className="text-slate-400 text-[10px] sm:text-xs">Total Profit</p>
+                <p className="text-slate-400 text-[10px] sm:text-xs">{t('mkt_stat_total_profit')}</p>
                 <p className={`text-sm sm:text-xl font-bold ${totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                   {totalProfit >= 0 ? '+' : ''}${totalProfit.toFixed(2)}
                 </p>
@@ -456,7 +458,7 @@ export default function MarketsPage() {
                 </svg>
               </div>
               <div>
-                <p className="text-slate-400 text-[10px] sm:text-xs">Open Positions</p>
+                <p className="text-slate-400 text-[10px] sm:text-xs">{t('mkt_stat_open_positions')}</p>
                 <p className="text-white text-sm sm:text-xl font-bold">{openPositions}</p>
               </div>
             </div>
@@ -470,7 +472,7 @@ export default function MarketsPage() {
           {/* Symbol Header */}
           <div className="flex items-start justify-between px-4 pt-4 pb-3">
             <div>
-              <p className="text-slate-400 text-xs mb-0.5">Trading Symbol</p>
+              <p className="text-slate-400 text-xs mb-0.5">{t('mkt_trading_symbol')}</p>
               <p className="text-white text-sm sm:text-xl font-bold">Bitcoin</p>
               <p className="text-slate-500 text-xs sm:text-sm">BINANCE:BTCUSDT</p>
             </div>
@@ -491,7 +493,7 @@ export default function MarketsPage() {
           <div className="flex items-center justify-between px-4 py-3" style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}>
             <div className="flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-green-500 inline-block" style={{ boxShadow: '0 0 6px #22c55e' }} />
-              <span className="text-green-400 text-xs font-medium">Live Market</span>
+              <span className="text-green-400 text-xs font-medium">{t('mkt_live_market')}</span>
             </div>
             <div className="flex items-center gap-2">
               <span className="text-slate-400 text-xs">BTC/USDT</span>
@@ -511,7 +513,7 @@ export default function MarketsPage() {
             <div className="flex items-center gap-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
               {/* Duration */}
               <div className="flex-1 flex items-center gap-1.5 px-3 py-2" style={{ borderRight: '1px solid rgba(255,255,255,0.08)' }}>
-                <span className="text-[9px] text-slate-500 uppercase tracking-wider flex-shrink-0">Dur</span>
+                <span className="text-[9px] text-slate-500 uppercase tracking-wider flex-shrink-0">{t('dash_dur')}</span>
                 <button
                   onClick={decrementDuration}
                   disabled={durationIndex <= 0}
@@ -534,7 +536,7 @@ export default function MarketsPage() {
 
               {/* Amount */}
               <div className="flex-1 flex items-center gap-1.5 px-3 py-2">
-                <span className="text-[9px] text-slate-500 uppercase tracking-wider flex-shrink-0">Amt</span>
+                <span className="text-[9px] text-slate-500 uppercase tracking-wider flex-shrink-0">{t('dash_amt')}</span>
                 <button
                   onClick={handleAmountDecrement}
                   disabled={investmentAmount <= 1}
@@ -568,11 +570,11 @@ export default function MarketsPage() {
             <div className="flex items-center justify-between px-3 py-1.5" style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5">
-                  <span className="text-slate-500 text-[10px]">Potential Profit</span>
+                  <span className="text-slate-500 text-[10px]">{t('mkt_potential_profit')}</span>
                   <span className="text-green-400 text-[10px] font-semibold">+${potentialProfit}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-slate-500 text-[10px]">Payout</span>
+                  <span className="text-slate-500 text-[10px]">{t('mkt_payout')}</span>
                   <span className="text-white text-[10px] font-semibold">95%</span>
                 </div>
               </div>
@@ -587,7 +589,7 @@ export default function MarketsPage() {
                   style={{ background: '#e53935', borderRadius: '0 0 0 12px' }}
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /></svg>
-                  SELL
+                  {t('dash_sell')}
                 </Link>
                 <Link
                   href="/register"
@@ -595,7 +597,7 @@ export default function MarketsPage() {
                   style={{ background: '#2e7d32', borderRadius: '0 0 12px 0' }}
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l8 8h-5v8H9v-8H4z" /></svg>
-                  BUY
+                  {t('dash_buy')}
                 </Link>
               </div>
             ) : (
@@ -607,7 +609,7 @@ export default function MarketsPage() {
                   style={{ background: '#e53935', borderRadius: '0 0 0 12px' }}
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /></svg>
-                  SELL
+                  {t('dash_sell')}
                 </button>
                 <button
                   onClick={() => placeTrade('UP')}
@@ -616,7 +618,7 @@ export default function MarketsPage() {
                   style={{ background: '#2e7d32', borderRadius: '0 0 12px 0' }}
                 >
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 4l8 8h-5v8H9v-8H4z" /></svg>
-                  BUY
+                  {t('dash_buy')}
                 </button>
               </div>
             )}
@@ -634,7 +636,7 @@ export default function MarketsPage() {
               className="px-5 py-4 text-sm font-medium transition-colors relative"
               style={{ color: activeTab === 'open' ? '#fff' : '#94a3b8' }}
             >
-              Open Positions ({openTrades.length})
+              {t('mkt_open_positions_tab')} ({openTrades.length})
               {activeTab === 'open' && (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: '#7c3aed' }} />
               )}
@@ -644,7 +646,7 @@ export default function MarketsPage() {
               className="px-5 py-4 text-sm font-medium transition-colors relative"
               style={{ color: activeTab === 'history' ? '#fff' : '#94a3b8' }}
             >
-              History ({closedTrades.length})
+              {t('mkt_history_tab')} ({closedTrades.length})
               {activeTab === 'history' && (
                 <span className="absolute bottom-0 left-0 right-0 h-0.5" style={{ background: '#7c3aed' }} />
               )}
@@ -656,12 +658,12 @@ export default function MarketsPage() {
             <>
               {openTrades.length === 0 ? (
                 <div className="py-16 text-center">
-                  <p className="text-slate-500 text-sm">No open positions. Place a trade to get started.</p>
+                  <p className="text-slate-500 text-sm">{t('mkt_no_open_positions')}</p>
                 </div>
               ) : (
                 <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
                   {openTrades.map((trade) => (
-                    <OpenTradeRow key={trade.id} trade={trade} />
+                    <OpenTradeRow key={trade.id} trade={trade} entryLabel={t('mkt_entry')} />
                   ))}
                 </div>
               )}
@@ -673,12 +675,12 @@ export default function MarketsPage() {
             <>
               {closedTrades.length === 0 ? (
                 <div className="py-16 text-center">
-                  <p className="text-slate-500 text-sm">No trade history yet.</p>
+                  <p className="text-slate-500 text-sm">{t('mkt_no_history')}</p>
                 </div>
               ) : (
                 <div className="divide-y" style={{ borderColor: 'rgba(255,255,255,0.05)' }}>
                   {closedTrades.map((trade) => (
-                    <ClosedTradeRow key={trade.id} trade={trade} />
+                    <ClosedTradeRow key={trade.id} trade={trade} investedLabel={t('mkt_invested')} />
                   ))}
                 </div>
               )}
@@ -691,8 +693,8 @@ export default function MarketsPage() {
       <div style={{ background: '#000000' }} className="py-8 sm:py-10">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center mb-6 sm:mb-8">
-            <h2 className="text-xl sm:text-2xl font-bold text-white mb-1.5">Popular Assets</h2>
-            <p className="text-slate-400 text-xs sm:text-sm">Track and trade the most popular stocks, cryptocurrencies, forex pairs, and commodities</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-white mb-1.5">{t('mkt_popular_assets')}</h2>
+            <p className="text-slate-400 text-xs sm:text-sm">{t('mkt_popular_assets_sub')}</p>
           </div>
           <div
             style={{
@@ -732,7 +734,7 @@ export default function MarketsPage() {
 }
 
 // Open Trade Row with countdown
-function OpenTradeRow({ trade }: { trade: DemoTrade }) {
+function OpenTradeRow({ trade, entryLabel }: { trade: DemoTrade; entryLabel: string }) {
   const [timeLeft, setTimeLeft] = useState(() => {
     const elapsed = (Date.now() - trade.openedAt) / 1000;
     return Math.max(0, Math.floor(trade.durationSeconds - elapsed));
@@ -775,7 +777,7 @@ function OpenTradeRow({ trade }: { trade: DemoTrade }) {
         </div>
         {trade.entryPrice !== null && (
           <div className="flex items-center gap-1 mb-1">
-            <span className="text-slate-500 text-[10px]">Entry:</span>
+            <span className="text-slate-500 text-[10px]">{entryLabel}</span>
             <span className="text-slate-300 text-[10px] font-mono font-semibold">
               ${trade.entryPrice.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </span>
@@ -797,7 +799,7 @@ function OpenTradeRow({ trade }: { trade: DemoTrade }) {
 }
 
 // Closed Trade Row
-function ClosedTradeRow({ trade }: { trade: DemoTrade }) {
+function ClosedTradeRow({ trade, investedLabel }: { trade: DemoTrade; investedLabel: string }) {
   const isWin = trade.result === 'win';
   return (
     <div className="px-4 py-3 flex items-center gap-3">
@@ -821,7 +823,7 @@ function ClosedTradeRow({ trade }: { trade: DemoTrade }) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-white text-xs font-semibold">BTC/USDT · {trade.direction}</p>
-        <p className="text-slate-500 text-[10px]">{trade.duration} · ${trade.amount} invested</p>
+        <p className="text-slate-500 text-[10px]">{trade.duration} · ${trade.amount} {investedLabel}</p>
       </div>
       <div className="text-right flex-shrink-0">
         <p className={`text-xs font-bold ${isWin ? 'text-green-400' : 'text-red-400'}`}>

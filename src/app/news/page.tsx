@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from '@/components/Header';
 import TickerTape from '@/components/TickerTape';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 interface NewsArticle {
   source: { id: string | null; name: string };
@@ -53,12 +54,13 @@ export default function NewsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalArticles, setTotalArticles] = useState(0);
+  const { t } = useLanguage();
 
   const categories = [
-    { key: 'crypto', label: 'All Crypto' },
-    { key: 'bitcoin', label: 'Bitcoin' },
-    { key: 'ethereum', label: 'Ethereum' },
-    { key: 'defi', label: 'DeFi' },
+    { key: 'crypto', label: t('news_cat_all') },
+    { key: 'bitcoin', label: t('news_cat_bitcoin') },
+    { key: 'ethereum', label: t('news_cat_ethereum') },
+    { key: 'defi', label: t('news_cat_defi') },
   ] as const;
 
   const fetchNews = useCallback(async (cat: string, page: number) => {
@@ -101,8 +103,8 @@ export default function NewsPage() {
       <div className="container mx-auto px-4 md:px-6 py-8 max-w-7xl">
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">Crypto News</h1>
-          <p className="text-slate-400 text-sm">Latest cryptocurrency and blockchain news, updated automatically</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-white mb-2">{t('news_title')}</h1>
+          <p className="text-slate-400 text-sm">{t('news_subtitle')}</p>
         </div>
 
         {/* Category Filter */}
@@ -154,7 +156,7 @@ export default function NewsPage() {
           <>
             {/* Article count info */}
             <div className="mb-4 text-slate-400 text-sm">
-              Showing page {currentPage} of {totalPages} &mdash; {totalArticles} unique articles
+              {t('news_showing')} {currentPage} {t('news_of')} {totalPages} &mdash; {totalArticles} {t('news_articles')}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -199,7 +201,7 @@ export default function NewsPage() {
                     <div className="flex items-center justify-between mt-auto pt-2 border-t border-white/10">
                       <span className="text-xs text-slate-500">{timeAgo(article.publishedAt)}</span>
                       <span className="text-xs text-blue-400 group-hover:text-blue-300 flex items-center gap-1">
-                        Read more
+                        {t('news_read_more')}
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                         </svg>
@@ -219,7 +221,7 @@ export default function NewsPage() {
                   disabled={currentPage === 1}
                   className="px-3 py-2 rounded-lg text-sm font-medium bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                 >
-                  ‹ Prev
+                  {t('news_prev')}
                 </button>
 
                 {/* Page numbers */}
@@ -248,7 +250,7 @@ export default function NewsPage() {
                   disabled={currentPage === totalPages}
                   className="px-3 py-2 rounded-lg text-sm font-medium bg-white/5 border border-white/10 text-slate-300 hover:bg-white/10 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                 >
-                  Next ›
+                  {t('news_next')}
                 </button>
               </div>
             )}
@@ -258,7 +260,7 @@ export default function NewsPage() {
         {/* Empty */}
         {!loading && !error && articles.length === 0 && (
           <div className="flex flex-col items-center justify-center py-20 text-center">
-            <p className="text-slate-400">No articles found for this category.</p>
+            <p className="text-slate-400">{t('news_no_articles')}</p>
           </div>
         )}
       </div>

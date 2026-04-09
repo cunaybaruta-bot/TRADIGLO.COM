@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { useLanguage, LangCode } from '@/contexts/LanguageContext';
 
 interface Wallet {
   demoBalance: number;
@@ -32,11 +33,26 @@ export default function DashboardTopBar({
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { lang, setLang, t } = useLanguage();
+  const [langOpen, setLangOpen] = useState(false);
+  const langRef = useRef<HTMLDivElement>(null);
+
+  const languages: { code: LangCode; label: string; flag: string }[] = [
+    { code: 'en', label: 'EN', flag: '🇺🇸' },
+    { code: 'ar', label: 'AR', flag: '🇸🇦' },
+    { code: 'zh', label: 'ZH', flag: '🇨🇳' },
+    { code: 'ms', label: 'MS', flag: '🇲🇾' },
+    { code: 'th', label: 'TH', flag: '🇹🇭' },
+    { code: 'vi', label: 'VI', flag: '🇻🇳' },
+  ];
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
         setDropdownOpen(false);
+      }
+      if (langRef.current && !langRef.current.contains(e.target as Node)) {
+        setLangOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
@@ -132,8 +148,36 @@ export default function DashboardTopBar({
             <path d="M16 12h2" />
             <path d="M2 10h20" />
           </svg>
-          <span className="hidden sm:inline">Deposit</span>
+          <span className="hidden sm:inline">{t('dash_deposit')}</span>
         </button>
+
+        {/* Language Selector */}
+        <div className="relative" ref={langRef}>
+          <button
+            onClick={() => setLangOpen((v) => !v)}
+            className="flex items-center gap-1 px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-white text-[10px] font-bold transition-all"
+          >
+            <span>{languages.find((l) => l.code === lang)?.flag}</span>
+            <span className="hidden sm:inline">{lang.toUpperCase()}</span>
+            <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </button>
+          {langOpen && (
+            <div className="absolute right-0 top-9 w-28 rounded-xl border border-white/10 bg-[#111] shadow-2xl overflow-hidden" style={{ backdropFilter: 'blur(12px)', zIndex: 10000 }}>
+              {languages.map((l) => (
+                <button
+                  key={l.code}
+                  onClick={() => { setLang(l.code); setLangOpen(false); }}
+                  className={`flex items-center gap-2 w-full px-3 py-2 text-xs transition-colors ${lang === l.code ? 'text-white bg-white/10 font-bold' : 'text-slate-300 hover:text-white hover:bg-white/8'}`}
+                >
+                  <span>{l.flag}</span>
+                  <span>{l.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Avatar + dropdown */}
         <div className="relative" ref={dropdownRef}>
