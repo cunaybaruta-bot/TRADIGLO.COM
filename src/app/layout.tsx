@@ -17,10 +17,10 @@ export const metadata: Metadata = {
   description: 'TRADIGLO #1 Crypto Trading Platform — Advanced trading tools, lightning-fast execution, and unmatched security.',
   icons: {
     icon: [
-      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/assets/images/Logo_Tradiglo-1775738380029.png', type: 'image/png' },
     ],
-    shortcut: '/favicon.svg',
-    apple: '/favicon.svg',
+    shortcut: '/assets/images/Logo_Tradiglo-1775738380029.png',
+    apple: '/assets/images/Logo_Tradiglo-1775738380029.png',
   },
 };
 
@@ -33,7 +33,7 @@ export default function RootLayout({
     <html lang="en">
       <head>
         <title>TRADIGLO #1 Crypto Trading Platform</title>
-        <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+        <link rel="icon" type="image/png" href="/assets/images/Logo_Tradiglo-1775738380029.png" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Geist+Mono:wght@300..700&display=swap" />
 </head>
