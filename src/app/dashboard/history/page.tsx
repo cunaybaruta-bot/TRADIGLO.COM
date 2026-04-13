@@ -39,6 +39,11 @@ export default function HistoryPage() {
   const [userEmail, setUserEmail] = useState<string>('');
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
 
+  // Wallet state — same as Trade page
+  const [wallet, setWallet] = useState<{ demoBalance: number; realBalance: number } | null>(null);
+  const [walletLoading, setWalletLoading] = useState(true);
+  const [isDemo, setIsDemo] = useState(false);
+
   const [tradeHistory, setTradeHistory] = useState<Trade[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [historyPage, setHistoryPage] = useState(0);
@@ -74,34 +79,86 @@ export default function HistoryPage() {
     checkAuth();
   }, [router]);
 
-  const fetchTradeHistory = useCallback(async () => {
+  // Fetch wallet — same logic as Trade page
+  const fetchWallet = useCallback(async () => {
+    setWalletLoading(true);
+    try {
+      const currentUser = (await supabase.auth.getUser()).data.user;
+      if (!currentUser) return;
+      const { data: wallets } = await supabase.from('wallets').select('*').eq('user_id', currentUser.id);
+      if (wallets && wallets.length > 0) {
+        const demoWallet = wallets.find((w: any) => w.is_demo === true);
+        const realWallet = wallets.find((w: any) => w.is_demo === false);
+        const demoBalance = demoWallet?.balance ?? 0;
+        const realBalance = realWallet?.balance ?? 0;
+        console.log('[History] wallet balance — real:', realBalance, 'demo:', demoBalance);
+        setWallet({ demoBalance, realBalance });
+      } else {
+        setWallet({ demoBalance: 0, realBalance: 0 });
+      }
+    } catch {
+      setWallet({ demoBalance: 0, realBalance: 0 });
+    } finally {
+      setWalletLoading(false);
+    }
+  }, []);
+
+  const fetchTradeHistory = useCallback(async (mode: 'all' | 'demo' | 'real' = 'all') => {
     setHistoryLoading(true);
     setHistoryPage(0);
     setHistoryHasMore(true);
     try {
       const currentUser = (await supabase.auth.getUser()).data.user;
       if (!currentUser) return;
+
+      console.log('[History] fetchTradeHistory — selectedMode:', mode);
+
       let data: any[] | null = null;
-      const { data: rpcData, error: rpcError } = await supabase.rpc('get_trade_history');
-      if (!rpcError && rpcData) {
-        data = rpcData;
-        setHistoryHasMore(false);
-      } else {
-        const { data: directData, error: directError } = await supabase
-          .from('trades').select('*, assets(symbol)')
-          .eq('user_id', currentUser.id).eq('status', 'closed')
-          .order('closed_at', { ascending: false }).range(0, HISTORY_PAGE_SIZE - 1);
+
+      // Try RPC first — but only if no mode filter (RPC may not support is_demo param)
+      if (mode === 'all') {
+        const { data: rpcData, error: rpcError } = await supabase.rpc('get_trade_history');
+        if (!rpcError && rpcData) {
+          data = rpcData;
+          setHistoryHasMore(false);
+        }
+      }
+
+      // If mode filter is active OR RPC failed, use direct query with is_demo filter
+      if (data === null) {
+        let query = supabase
+          .from('trades')
+          .select('*, assets(symbol)')
+          .eq('user_id', currentUser.id)
+          .eq('status', 'closed')
+          .order('closed_at', { ascending: false })
+          .range(0, HISTORY_PAGE_SIZE - 1);
+
+        if (mode === 'demo') {
+          query = query.eq('is_demo', true);
+          console.log('[History] query filter: is_demo = true');
+        } else if (mode === 'real') {
+          query = query.eq('is_demo', false);
+          console.log('[History] query filter: is_demo = false');
+        }
+
+        const { data: directData, error: directError } = await query;
         if (!directError) {
           data = directData;
           setHistoryHasMore((directData?.length ?? 0) === HISTORY_PAGE_SIZE);
         }
       }
+
       const mapped = (data ?? []).map((t: any) => ({
         ...t,
         asset_symbol: t.asset_symbol ?? t.assets?.symbol ?? '',
         profit_loss: t.profit ?? t.profit_loss ?? null,
         result: t.result ?? (t.profit != null ? (t.profit >= 0 ? 'win' : 'loss') : null),
+        // Ensure is_demo is always a boolean
+        is_demo: t.is_demo === true || t.is_demo === 1,
       }));
+
+      console.log('[History] trades received:', mapped.length, '— demo count:', mapped.filter((t: Trade) => t.is_demo).length, '— real count:', mapped.filter((t: Trade) => !t.is_demo).length);
       setTradeHistory(mapped as Trade[]);
     } catch {
       // silent
@@ -118,16 +175,25 @@ export default function HistoryPage() {
       const nextPage = historyPage + 1;
       const from = nextPage * HISTORY_PAGE_SIZE;
       const to = from + HISTORY_PAGE_SIZE - 1;
-      const { data: directData, error: directError } = await supabase
-        .from('trades').select('*, assets(symbol)')
-        .eq('user_id', currentUser.id).eq('status', 'closed')
-        .order('closed_at', { ascending: false }).range(from, to);
+      let query = supabase
+        .from('trades')
+        .select('*, assets(symbol)')
+        .eq('user_id', currentUser.id)
+        .eq('status', 'closed')
+        .order('closed_at', { ascending: false })
+        .range(from, to);
+
+      if (filterMode === 'demo') query = query.eq('is_demo', true);
+      else if (filterMode === 'real') query = query.eq('is_demo', false);
+
+      const { data: directData, error: directError } = await query;
       if (!directError && directData) {
         const mapped = directData.map((t: any) => ({
           ...t,
           asset_symbol: t.asset_symbol ?? t.assets?.symbol ?? '',
           profit_loss: t.profit ?? t.profit_loss ?? null,
           result: t.result ?? (t.profit != null ? (t.profit >= 0 ? 'win' : 'loss') : null),
+          is_demo: t.is_demo === true || t.is_demo === 1,
         }));
         setTradeHistory((prev) => [...prev, ...(mapped as Trade[])]);
         setHistoryPage(nextPage);
@@ -138,19 +204,41 @@ export default function HistoryPage() {
     } finally {
       setHistoryLoadingMore(false);
     }
-  }, [historyPage]);
+  }, [historyPage, filterMode]);
 
+  // Initial load
   useEffect(() => {
     if (!authChecked) return;
-    fetchTradeHistory();
-  }, [authChecked, fetchTradeHistory]);
+    fetchWallet();
+    fetchTradeHistory('all');
+  }, [authChecked, fetchWallet, fetchTradeHistory]);
 
-  // Filtered trades
+  // Realtime wallet subscription — same as Trade page
+  useEffect(() => {
+    if (!authChecked || !userId) return;
+    const walletChannel = supabase
+      .channel('history-wallets')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'wallets', filter: `user_id=eq.${userId}` }, () => {
+        fetchWallet();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(walletChannel); };
+  }, [authChecked, userId, fetchWallet]);
+
+  // Re-fetch trades when filterMode changes
+  useEffect(() => {
+    if (!authChecked) return;
+    console.log('[History] filterMode changed to:', filterMode);
+    fetchTradeHistory(filterMode);
+  }, [filterMode, authChecked, fetchTradeHistory]);
+
+  // Filtered trades (client-side secondary filter for other filters)
   const filteredTrades = useMemo(() => {
     return tradeHistory.filter((t) => {
       if (searchAsset && !t.asset_symbol.toLowerCase().includes(searchAsset.toLowerCase())) return false;
       if (filterResult !== 'all' && t.result !== filterResult) return false;
       if (filterDirection !== 'all' && t.order_type !== filterDirection) return false;
+      // Mode filter is handled server-side, but keep client-side as safety net
       if (filterMode === 'demo' && !t.is_demo) return false;
       if (filterMode === 'real' && t.is_demo) return false;
       if (filterDateFrom) {
@@ -217,9 +305,9 @@ export default function HistoryPage() {
       <DashboardTopBar
         userEmail={userEmail}
         avatarUrl={avatarUrl}
-        wallet={null}
-        walletLoading={false}
-        isDemo={false}
+        wallet={wallet}
+        walletLoading={walletLoading}
+        isDemo={isDemo}
         onToggleDemo={() => {}}
         onDepositClick={() => {}}
       />

@@ -445,7 +445,7 @@ function TradeResultModal({ trade, onClose }: { trade: TradeResult; onClose: () 
               </svg>
             )}
           </div>
-          <div style={{ color: accentColor, fontSize: 11, fontWeight: 800, letterSpacing: '0.22em', textTransform: 'uppercase', marginBottom: 6, opacity: 0.9 }}>
+          <div style={{ color: accentColor, fontSize: 11, fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: 6, opacity: 0.9 }}>
             {isWin ? 'WIN' : 'LOSS'}
           </div>
           <div style={{ color: accentColor, fontSize: 48, fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1, marginBottom: 22 }}>
@@ -1292,14 +1292,19 @@ export default function DashboardPage() {
       // Calculate WIN/LOSS and show modal
       if (lastPopupTradeIdRef.current !== trade.id) {
         lastPopupTradeIdRef.current = trade.id;
-        const profitVal = chartPrice - trade.entry_price;
         const knownTrade = openTrades.find((t) => t.id === trade.id);
+        const isWin = trade.order_type === 'buy'
+          ? chartPrice > trade.entry_price
+          : chartPrice < trade.entry_price;
+        const profitLoss = isWin
+          ? Math.round(trade.amount * 0.95 * 100) / 100
+          : trade.amount;
         setTradeResultPopup({
           asset_symbol: knownTrade?.asset_symbol ?? trade.asset_symbol ?? '',
           order_type: trade.order_type,
           amount: trade.amount,
-          result: profitVal >= 0 ? 'win' : 'loss',
-          profit_loss: Math.abs(profitVal),
+          result: isWin ? 'win' : 'loss',
+          profit_loss: profitLoss,
           entry_price: trade.entry_price,
           exit_price: chartPrice,
         });
