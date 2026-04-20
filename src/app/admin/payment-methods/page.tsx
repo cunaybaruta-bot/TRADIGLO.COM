@@ -15,6 +15,7 @@ interface PaymentMethod {
   min_deposit: number;
   max_deposit: number;
   is_active: boolean;
+  currency: string | null;
 }
 
 interface NewMethodForm {
@@ -27,6 +28,7 @@ interface NewMethodForm {
   instructions: string;
   min_deposit: number;
   max_deposit: number;
+  currency: string;
 }
 
 const TYPE_COLORS: Record<string, string> = {
@@ -47,8 +49,112 @@ const KNOWN_COUNTRIES = [
   'Malaysia', 'Singapore', 'Thailand', 'Vietnam', 'Japan', 'South Korea',
   'Philippines', 'China', 'India', 'Hong Kong', 'Taiwan', 'Pakistan',
   'Bangladesh', 'Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Oman', 'Sri Lanka',
-  'Myanmar', 'United States', 'Global',
+  'Myanmar', 'United States', 'Global', 'Portugal',
 ];
+
+const CURRENCIES = [
+  // Americas
+  { code: 'USD', label: 'USD – US Dollar' },
+  { code: 'CAD', label: 'CAD – Canadian Dollar' },
+  { code: 'BRL', label: 'BRL – Brazilian Real' },
+  { code: 'MXN', label: 'MXN – Mexican Peso' },
+  // Europe
+  { code: 'EUR', label: 'EUR – Euro' },
+  { code: 'GBP', label: 'GBP – British Pound' },
+  { code: 'CHF', label: 'CHF – Swiss Franc' },
+  { code: 'SEK', label: 'SEK – Swedish Krona' },
+  { code: 'NOK', label: 'NOK – Norwegian Krone' },
+  { code: 'DKK', label: 'DKK – Danish Krone' },
+  { code: 'PLN', label: 'PLN – Polish Zloty' },
+  { code: 'CZK', label: 'CZK – Czech Koruna' },
+  { code: 'HUF', label: 'HUF – Hungarian Forint' },
+  { code: 'RON', label: 'RON – Romanian Leu' },
+  // Southeast Asia
+  { code: 'IDR', label: 'IDR – Indonesian Rupiah' },
+  { code: 'MYR', label: 'MYR – Malaysian Ringgit' },
+  { code: 'SGD', label: 'SGD – Singapore Dollar' },
+  { code: 'THB', label: 'THB – Thai Baht' },
+  { code: 'PHP', label: 'PHP – Philippine Peso' },
+  { code: 'VND', label: 'VND – Vietnamese Dong' },
+  // East & South Asia
+  { code: 'JPY', label: 'JPY – Japanese Yen' },
+  { code: 'CNY', label: 'CNY – Chinese Yuan' },
+  { code: 'HKD', label: 'HKD – Hong Kong Dollar' },
+  { code: 'KRW', label: 'KRW – South Korean Won' },
+  { code: 'INR', label: 'INR – Indian Rupee' },
+  { code: 'BDT', label: 'BDT – Bangladeshi Taka' },
+  { code: 'PKR', label: 'PKR – Pakistani Rupee' },
+  { code: 'LKR', label: 'LKR – Sri Lankan Rupee' },
+  { code: 'MMK', label: 'MMK – Myanmar Kyat' },
+  // Middle East & Africa
+  { code: 'AED', label: 'AED – UAE Dirham' },
+  { code: 'SAR', label: 'SAR – Saudi Riyal' },
+  { code: 'QAR', label: 'QAR – Qatari Riyal' },
+  { code: 'KWD', label: 'KWD – Kuwaiti Dinar' },
+  { code: 'BHD', label: 'BHD – Bahraini Dinar' },
+  { code: 'OMR', label: 'OMR – Omani Rial' },
+  { code: 'EGP', label: 'EGP – Egyptian Pound' },
+  { code: 'ZAR', label: 'ZAR – South African Rand' },
+  // Crypto / Stablecoin
+  { code: 'USDT', label: 'USDT – Tether' },
+  { code: 'USDC', label: 'USDC – USD Coin' },
+];
+
+const COUNTRY_DEFAULT_CURRENCY: Record<string, string> = {
+  'Malaysia': 'MYR',
+  'Singapore': 'SGD',
+  'Thailand': 'THB',
+  'Vietnam': 'VND',
+  'Japan': 'JPY',
+  'South Korea': 'KRW',
+  'Philippines': 'PHP',
+  'China': 'CNY',
+  'India': 'INR',
+  'Hong Kong': 'HKD',
+  'Taiwan': 'TWD',
+  'Pakistan': 'PKR',
+  'Bangladesh': 'BDT',
+  'Saudi Arabia': 'SAR',
+  'UAE': 'AED',
+  'Qatar': 'QAR',
+  'Kuwait': 'KWD',
+  'Oman': 'OMR',
+  'Sri Lanka': 'LKR',
+  'Myanmar': 'MMK',
+  'United States': 'USD',
+  'Global': 'USD',
+  // European countries
+  'Portugal': 'EUR',
+  'Spain': 'EUR',
+  'France': 'EUR',
+  'Germany': 'EUR',
+  'Italy': 'EUR',
+  'Netherlands': 'EUR',
+  'Belgium': 'EUR',
+  'Austria': 'EUR',
+  'Greece': 'EUR',
+  'Finland': 'EUR',
+  'Ireland': 'EUR',
+  'Luxembourg': 'EUR',
+  'United Kingdom': 'GBP',
+  'Switzerland': 'CHF',
+  'Sweden': 'SEK',
+  'Norway': 'NOK',
+  'Denmark': 'DKK',
+  'Poland': 'PLN',
+  'Czech Republic': 'CZK',
+  'Hungary': 'HUF',
+  'Romania': 'RON',
+  // Americas
+  'Canada': 'CAD',
+  'Brazil': 'BRL',
+  'Mexico': 'MXN',
+  // Africa
+  'South Africa': 'ZAR',
+  'Egypt': 'EGP',
+  // Bahrain
+  'Bahrain': 'BHD',
+};
 
 const EMPTY_FORM: NewMethodForm = {
   country: '',
@@ -60,6 +166,7 @@ const EMPTY_FORM: NewMethodForm = {
   instructions: '',
   min_deposit: 10,
   max_deposit: 50000,
+  currency: 'USD',
 };
 
 export default function AdminPaymentMethodsPage() {
@@ -177,6 +284,7 @@ export default function AdminPaymentMethodsPage() {
       instructions: addForm.instructions || null,
       min_deposit: addForm.min_deposit,
       max_deposit: addForm.max_deposit,
+      currency: addForm.currency || 'USD',
       is_active: true,
     }).select().single();
     if (error) {
@@ -505,17 +613,38 @@ export default function AdminPaymentMethodsPage() {
             </div>
 
             {/* Modal body */}
-            <div className="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
+            <div className="p-5 space-y-3 max-h-[80vh] overflow-y-auto">
               {/* Country */}
               <div>
                 <label className="block text-slate-400 text-xs font-medium mb-1">Country <span className="text-red-400">*</span></label>
                 <select
                   value={addForm.country}
-                  onChange={(e) => setAddForm((f) => ({ ...f, country: e.target.value }))}
+                  onChange={(e) => {
+                    const country = e.target.value;
+                    const defaultCurrency = COUNTRY_DEFAULT_CURRENCY[country] || 'USD';
+                    setAddForm((f) => ({ ...f, country, currency: defaultCurrency }));
+                  }}
                   className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                 >
                   <option value="">Select country...</option>
                   {allCountries.map((c) => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+
+              {/* Currency — placed right after Country so it's always visible */}
+              <div>
+                <label className="block text-slate-400 text-xs font-medium mb-1">
+                  Currency <span className="text-red-400">*</span>
+                  <span className="ml-2 text-slate-500 font-normal">(auto-filled by country)</span>
+                </label>
+                <select
+                  value={addForm.currency ?? 'USD'}
+                  onChange={(e) => setAddForm((f) => ({ ...f, currency: e.target.value }))}
+                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                >
+                  {CURRENCIES.map((c) => (
+                    <option key={c.code} value={c.code}>{c.label}</option>
+                  ))}
                 </select>
               </div>
 

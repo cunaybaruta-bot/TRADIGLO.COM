@@ -135,7 +135,7 @@ const NAV_ITEMS: { id: AccountSection; label: string; icon: React.ReactNode; acc
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 
-interface ToastState { message: string; type: 'success\' | \'error\' | \'info' }
+interface ToastState { message: string; type: 'success' | 'error' | 'info' }
 
 function Toast({ toast, onClose }: { toast: ToastState; onClose: () => void }) {
   useEffect(() => {
@@ -1002,7 +1002,7 @@ function LevelSection({ totalTrades }: { totalTrades: number }) {
             <div key={name} className="rounded-2xl p-3 text-center transition-all" style={{ background: earned ? 'rgba(245,158,11,0.08)' : 'rgba(255,255,255,0.02)', border: `1px solid ${earned ? 'rgba(245,158,11,0.25)' : 'rgba(255,255,255,0.06)'}`, opacity: earned ? 1 : 0.4 }}>
               <div className="flex items-center justify-center w-10 h-10 rounded-xl mx-auto mb-2" style={{ background: earned ? 'rgba(245,158,11,0.15)' : 'rgba(255,255,255,0.04)', color: earned ? '#f59e0b' : '#475569' }}>{icon}</div>
               <div className="text-xs font-semibold text-white">{name}</div>
-              <div className="text-[10px] text-slate-500 mt-0.5">{desc}</div>
+              <div className="text-[10px] text-slate-500 mt-1">{desc}</div>
             </div>
           ))}
         </div>
@@ -1298,7 +1298,7 @@ function SupportSection() {
     <div className="space-y-4">
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <button onClick={handleOpenChat} className="flex items-center gap-3 p-4 rounded-2xl hover:scale-105 transition-all group text-left" style={{ background: 'rgba(5,5,5,0.9)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.2)' }}><MessageCircle size={20} /></div>
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.2)' }}><MessageCircle size={20} /></div>
           <div><div className="text-sm font-semibold text-white">Live Chat</div><div className="text-xs text-slate-500">Chat directly with support</div></div>
           <ChevronRight size={16} className="ml-auto text-slate-600 group-hover:text-slate-400 transition-colors" />
         </button>
@@ -1604,14 +1604,9 @@ export default function AccountPage() {
         <div className="fixed inset-0 z-50 md:hidden" onClick={() => setMobileSidebarOpen(false)}>
           <div className="absolute inset-0" style={{ background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} />
           <div className="absolute left-0 top-0 bottom-0 w-72 flex flex-col" style={{ background: '#0a0a0a', borderRight: '1px solid rgba(255,255,255,0.08)', animation: 'slideInLeft 0.25s cubic-bezier(0.34,1.56,0.64,1)' }} onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center text-sm font-bold text-blue-300" style={{ background: 'linear-gradient(135deg, #1e3a5f, #1e1b4b)', border: '1px solid rgba(59,130,246,0.3)' }}>
-                  {profile?.avatar_url ? <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover" /> : (profile?.full_name?.[0] || 'U').toUpperCase()}
-                </div>
-                <div><div className="text-sm font-semibold text-white">{profile?.full_name || 'Pengguna'}</div><div className="text-xs text-slate-500">{profile?.email}</div></div>
-              </div>
-              <button onClick={() => setMobileSidebarOpen(false)} className="text-slate-500 hover:text-white transition-colors"><X size={18} /></button>
+            <div className="flex items-center gap-3 mb-6 px-5 py-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.08)' }}>
+              <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: 'rgba(59,130,246,0.15)', border: '1px solid rgba(59,130,246,0.2)' }}><MessageCircle size={20} /></div>
+              <div><div className="text-sm font-semibold text-white">{profile?.full_name || 'Pengguna'}</div><div className="text-xs text-slate-500">{profile?.email}</div></div>
             </div>
             <div className="flex-1 overflow-y-auto p-3 space-y-0.5">
               {NAV_ITEMS.map(item => (

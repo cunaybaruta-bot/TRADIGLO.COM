@@ -146,6 +146,53 @@ interface DemoTrade {
   status: 'open' | 'closed';
 }
 
+// Signup Prompt Modal
+function SignupPromptModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+      <div className="rounded-2xl p-6 sm:p-8 max-w-sm w-full text-center" style={{ background: '#111111', border: '1px solid rgba(124,58,237,0.3)' }}>
+        <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ background: 'rgba(124,58,237,0.15)' }}>
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10" />
+            <line x1="12" y1="8" x2="12" y2="12" />
+            <line x1="12" y1="16" x2="12.01" y2="16" />
+          </svg>
+        </div>
+        <h2 className="text-white text-xl font-bold mb-2">Demo Limit Reached</h2>
+        <p className="text-slate-400 text-sm mb-6">You&apos;ve used all your demo trades. Sign up for free to continue trading with a full demo account.</p>
+        <div className="flex flex-col gap-3">
+          <Link href="/register" className="w-full py-3 rounded-xl text-white font-bold text-sm transition-all hover:opacity-90" style={{ background: 'linear-gradient(135deg, #7c3aed, #5b21b6)' }}>
+            Create Free Account
+          </Link>
+          <button onClick={onClose} className="w-full py-3 rounded-xl text-slate-400 font-medium text-sm hover:text-white transition-colors">
+            Maybe Later
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Trade Toast Notification
+function TradeToast({ trade, onDismiss }: { trade: DemoTrade; onDismiss: () => void }) {
+  useEffect(() => {
+    const timer = setTimeout(onDismiss, 4000);
+    return () => clearTimeout(timer);
+  }, [onDismiss]);
+
+  const isWin = trade.result === 'win';
+  return (
+    <div className="fixed bottom-6 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg" style={{ background: isWin ? 'rgba(22,163,74,0.95)' : 'rgba(220,38,38,0.95)', minWidth: '220px' }}>
+      <div className="text-white font-bold text-lg">{isWin ? '✓' : '✗'}</div>
+      <div>
+        <p className="text-white text-sm font-bold">{isWin ? 'Trade Won!' : 'Trade Lost'}</p>
+        <p className="text-white/80 text-xs">{isWin ? `+$${trade.profit?.toFixed(2)}` : `-$${trade.amount}`} · BTC/USDT</p>
+      </div>
+      <button onClick={onDismiss} className="ml-auto text-white/70 hover:text-white text-lg leading-none">×</button>
+    </div>
+  );
+}
+
 export default function MarketsPage() {
   const [investmentAmount, setInvestmentAmount] = useState(10);
   const [amountInput, setAmountInput] = useState<string>('10');

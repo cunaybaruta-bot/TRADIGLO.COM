@@ -1,4 +1,7 @@
+// @ts-ignore
 import { serve } from "https://deno.land/std@0.192.0/http/server.ts";
+// @ts-ignore
+declare const Deno: { env: { get(key: string): string | undefined } };
 
 serve(async (req) => {
   // ✅ CORS preflight

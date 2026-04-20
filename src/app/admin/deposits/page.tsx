@@ -431,7 +431,7 @@ export default function DepositsPage() {
                   <tr><td colSpan={10} className="text-center text-slate-500 text-sm py-10">No deposits found</td></tr>
                 )}
                 {deposits.map((d) => {
-                  const proofSrcVal = d.proof_image || d.proof_url || null;
+                  const proofSrcVal = d.proof_url || null;
                   const isFirst = firstDepositMap[d.id];
                   return (
                     <tr key={d.id} className="hover:bg-slate-700/20 transition-colors">

@@ -480,7 +480,7 @@ function calcVWAP(candles: CandlestickData[]): (number | null)[] {
   return result;
 }
 
-function calcPivotPoints(candles: CandlestickData[]): { pp: number; r1: number; r2: number; s1: number; s2: number; s3: number } | null {
+function calcPivotPoints(candles: CandlestickData[]): { pp: number; r1: number; r2: number; r3: number; s1: number; s2: number; s3: number } | null {
   if (candles.length < 2) return null;
   const prev = candles[candles.length - 2];
   const high = prev.high as number;
@@ -1999,7 +1999,7 @@ function DrawingDropdown({ tools, activeTool, drawColor, drawings, pendingTrendP
                         ? 'bg-red-600/20 text-red-400 border border-red-600/40' :'bg-indigo-600/20 text-indigo-300 border border-indigo-600/40' :'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
                   }`}
                 >
-                  <span className="text-[13px] ${isActive ? 'text-indigo-400' : 'text-slate-500'} w-4 text-center leading-none">{icon}</span>
+                  <span className={`text-[13px] ${isActive ? 'text-indigo-400' : 'text-slate-500'} w-4 text-center leading-none`}>{icon}</span>
                   <span>{label}</span>
                 </button>
               );

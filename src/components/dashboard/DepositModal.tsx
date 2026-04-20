@@ -62,6 +62,7 @@ const COUNTRY_CURRENCY: Record<string, string> = {
   Kuwait: 'KWD',
   'Sri Lanka': 'LKR',
   Myanmar: 'MMK',
+  Portugal: 'EUR',
 };
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
@@ -127,6 +128,7 @@ const FLAG_EMOJI: Record<string, string> = {
   'Sri Lanka': '🇱🇰',
   Myanmar: '🇲🇲',
   Oman: '🇴🇲',
+  Portugal: '🇵🇹',
 };
 
 export default function DepositModal({ isOpen, onClose, userId, isDemo }: DepositModalProps) {

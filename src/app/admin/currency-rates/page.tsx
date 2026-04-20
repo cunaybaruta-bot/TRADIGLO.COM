@@ -64,6 +64,7 @@ export default function CurrencyRatesPage() {
   const CURRENCY_FLAGS: Record<string, string> = {
     MYR: '🇲🇾', SGD: '🇸🇬', THB: '🇹🇭', VND: '🇻🇳',
     JPY: '🇯🇵', KRW: '🇰🇷', USD: '🇺🇸', IDR: '🇮🇩', PHP: '🇵🇭',
+    EUR: '🇪🇺',
   };
 
   return (
