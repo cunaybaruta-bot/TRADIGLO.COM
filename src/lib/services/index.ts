@@ -1,1 +1,0 @@
-export { syncCoinGeckoAssets } from './assetIngestion';
