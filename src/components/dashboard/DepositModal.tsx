@@ -105,31 +105,114 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const FLAG_EMOJI: Record<string, string> = {
+  // Asia Pacific
   Malaysia: '🇲🇾',
   Singapore: '🇸🇬',
   Thailand: '🇹🇭',
   Vietnam: '🇻🇳',
   Japan: '🇯🇵',
   'South Korea': '🇰🇷',
-  Global: '🌐',
   Indonesia: '🇮🇩',
   Philippines: '🇵🇭',
-  'United States': '🇺🇸',
   China: '🇨🇳',
   India: '🇮🇳',
   'Hong Kong': '🇭🇰',
   Taiwan: '🇹🇼',
   Pakistan: '🇵🇰',
   Bangladesh: '🇧🇩',
-  'Saudi Arabia': '🇸🇦',
-  UAE: '🇦🇪',
-  Qatar: '🇶🇦',
-  Kuwait: '🇰🇼',
   'Sri Lanka': '🇱🇰',
   Myanmar: '🇲🇲',
+  Cambodia: '🇰🇭',
+  Laos: '🇱🇦',
+  Nepal: '🇳🇵',
+  'Brunei Darussalam': '🇧🇳',
+  Brunei: '🇧🇳',
+  Mongolia: '🇲🇳',
+  Maldives: '🇲🇻',
+  Bhutan: '🇧🇹',
+  Afghanistan: '🇦🇫',
+  // Middle East
+  'Saudi Arabia': '🇸🇦',
+  UAE: '🇦🇪',
+  'United Arab Emirates': '🇦🇪',
+  Qatar: '🇶🇦',
+  Kuwait: '🇰🇼',
   Oman: '🇴🇲',
+  Bahrain: '🇧🇭',
+  Jordan: '🇯🇴',
+  Lebanon: '🇱🇧',
+  Iraq: '🇮🇶',
+  Iran: '🇮🇷',
+  Israel: '🇮🇱',
+  Palestine: '🇵🇸',
+  Syria: '🇸🇾',
+  Yemen: '🇾🇪',
+  Turkey: '🇹🇷',
+  // Europe
   Portugal: '🇵🇹',
+  'United Kingdom': '🇬🇧',
+  UK: '🇬🇧',
+  Germany: '🇩🇪',
+  France: '🇫🇷',
+  Spain: '🇪🇸',
+  Italy: '🇮🇹',
+  Netherlands: '🇳🇱',
+  Belgium: '🇧🇪',
+  Switzerland: '🇨🇭',
+  Austria: '🇦🇹',
+  Sweden: '🇸🇪',
+  Norway: '🇳🇴',
+  Denmark: '🇩🇰',
+  Finland: '🇫🇮',
+  Poland: '🇵🇱',
+  Russia: '🇷🇺',
+  Ukraine: '🇺🇦',
+  Greece: '🇬🇷',
+  Romania: '🇷🇴',
+  Hungary: '🇭🇺',
+  'Czech Republic': '🇨🇿',
+  Slovakia: '🇸🇰',
+  Croatia: '🇭🇷',
+  Serbia: '🇷🇸',
+  Bulgaria: '🇧🇬',
+  // Americas
+  'United States': '🇺🇸',
+  USA: '🇺🇸',
+  Canada: '🇨🇦',
+  Mexico: '🇲🇽',
+  Brazil: '🇧🇷',
+  Argentina: '🇦🇷',
+  Colombia: '🇨🇴',
+  Chile: '🇨🇱',
+  Peru: '🇵🇪',
+  Venezuela: '🇻🇪',
+  // Africa
+  Nigeria: '🇳🇬',
+  'South Africa': '🇿🇦',
+  Kenya: '🇰🇪',
+  Ghana: '🇬🇭',
+  Egypt: '🇪🇬',
+  Ethiopia: '🇪🇹',
+  Tanzania: '🇹🇿',
+  Uganda: '🇺🇬',
+  Morocco: '🇲🇦',
+  Tunisia: '🇹🇳',
+  Algeria: '🇩🇿',
+  // Oceania
+  Australia: '🇦🇺',
+  'New Zealand': '🇳🇿',
+  // Global fallback
+  Global: '🌐',
 };
+
+function getCountryFlag(countryName: string): string {
+  if (FLAG_EMOJI[countryName]) return FLAG_EMOJI[countryName];
+  // Try case-insensitive match
+  const lower = countryName.toLowerCase();
+  const match = Object.keys(FLAG_EMOJI).find((k) => k.toLowerCase() === lower);
+  if (match) return FLAG_EMOJI[match];
+  return '🌐';
+}
 
 export default function DepositModal({ isOpen, onClose, userId, isDemo }: DepositModalProps) {
   const [step, setStep] = useState<Step>('country');
@@ -395,7 +478,7 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
             <div>
               <h2 className="text-white font-bold text-base">
                 {step === 'country' && 'Deposit Funds'}
-                {step === 'method' && `${FLAG_EMOJI[selectedCountry] || '🌐'} ${selectedCountry}`}
+                {step === 'method' && `${getCountryFlag(selectedCountry)} ${selectedCountry}`}
                 {step === 'amount' && selectedMethod?.name}
                 {step === 'success' && 'Deposit Submitted'}
               </h2>
@@ -459,7 +542,7 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
                         onClick={() => handleSelectCountry(country)}
                         className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/4 border border-white/8 hover:bg-white/8 hover:border-emerald-500/30 transition-all text-left group"
                       >
-                        <span className="text-2xl flex-shrink-0">{FLAG_EMOJI[country] || '🌐'}</span>
+                        <span className="text-2xl flex-shrink-0">{getCountryFlag(country)}</span>
                         <div className="min-w-0">
                           <div className="text-white text-xs font-semibold truncate">{country}</div>
                           <div className="text-slate-500 text-[10px]">{curr} · {countryMethods.length} methods</div>
@@ -731,7 +814,7 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
               <div className="bg-white/4 border border-white/8 rounded-xl p-4 mb-6 text-left space-y-2.5">
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-500">Country</span>
-                  <span className="text-white font-semibold">{FLAG_EMOJI[selectedCountry] || ''} {selectedCountry}</span>
+                  <span className="text-white font-semibold">{getCountryFlag(selectedCountry)} {selectedCountry}</span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-500">Method</span>
