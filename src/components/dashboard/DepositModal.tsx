@@ -60,6 +60,7 @@ const COUNTRY_CURRENCY: Record<string, string> = {
   UAE: 'AED',
   Qatar: 'QAR',
   Kuwait: 'KWD',
+  Bahrain: 'BHD',
   'Sri Lanka': 'LKR',
   Myanmar: 'MMK',
   Portugal: 'EUR',
