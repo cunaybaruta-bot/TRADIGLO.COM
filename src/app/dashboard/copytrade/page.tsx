@@ -139,7 +139,7 @@ export default function CopyTradePage() {
   const [actionLoading, setActionLoading] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
-  const activeFollowersCount = useRandomFollowers(1221, 12123, 5000);
+  const activeFollowersCount = useRandomFollowers(113847, 238519, 5000);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
