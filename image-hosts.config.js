@@ -31,4 +31,16 @@ export const imageHosts = [
         protocol: 'https',
         hostname: 'static.coingecko.com',
     },
+    {
+        protocol: 'https',
+        hostname: 'logo.clearbit.com',
+    },
+    {
+        protocol: 'https',
+        hostname: 'raw.githubusercontent.com',
+    },
+    {
+        protocol: 'https',
+        hostname: 'www.google.com',
+    },
 ];

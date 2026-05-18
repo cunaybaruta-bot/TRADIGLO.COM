@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import DashboardTopBar from '@/components/dashboard/DashboardTopBar';
 import DepositModal from '@/components/dashboard/DepositModal';
+import { useRealtimeDashboard } from '@/lib/hooks/useRealtimeDashboard';
 
 interface Wallet {
   demoBalance: number;
@@ -142,6 +143,16 @@ export default function ReferralDashboardPage() {
     }
   }, [authChecked, userId, fetchReferralData, fetchWallet]);
 
+  // ── Supabase Realtime: live wallet balance updates ──────────────────────────
+  useRealtimeDashboard({
+    userId,
+    channelPrefix: 'referral-page',
+    onWalletUpdate: (w) => {
+      setWallet({ demoBalance: w.demoBalance, realBalance: w.realBalance });
+      setWalletLoading(false);
+    },
+  });
+
   const referralLink = stats.referralCode
     ? `https://tradiglo.com/register?ref=${stats.referralCode}`
     : '';
@@ -184,9 +195,9 @@ export default function ReferralDashboardPage() {
         <div className="mb-5">
           <button
             onClick={() => router.push('/dashboard')}
-            className="flex items-center gap-1.5 text-slate-400 hover:text-white text-xs mb-3 transition-colors"
+            className="flex items-center gap-1.5 text-slate-500 hover:text-slate-300 text-xs mb-4 transition-colors group"
           >
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
             Back to Trade

@@ -9,6 +9,7 @@ import AssetSelectorModal from '@/components/AssetSelectorModal';
 import DashboardTopBar from '@/components/dashboard/DashboardTopBar';
 import DepositModal from '@/components/dashboard/DepositModal';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useRealtimeDashboard, type PriceMap, mergePriceUpdate } from '@/lib/hooks/useRealtimeDashboard';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -124,10 +125,133 @@ function formatTimeRemaining(seconds: number): string {
 
 // ─── Asset Icon (for button) ──────────────────────────────────────────────────
 
+// Stock symbol → domain map for logo fetching
+const STOCK_LOGO_DOMAINS: Record<string, string> = {
+  AAPL: 'apple.com', MSFT: 'microsoft.com', GOOGL: 'google.com', GOOG: 'google.com',
+  AMZN: 'amazon.com', META: 'meta.com', TSLA: 'tesla.com', NVDA: 'nvidia.com',
+  NFLX: 'netflix.com', BABA: 'alibaba.com', V: 'visa.com', MA: 'mastercard.com',
+  JPM: 'jpmorganchase.com', BAC: 'bankofamerica.com', WMT: 'walmart.com',
+  DIS: 'disney.com', PYPL: 'paypal.com', INTC: 'intel.com', AMD: 'amd.com',
+  CRM: 'salesforce.com', ORCL: 'oracle.com', ADBE: 'adobe.com', CSCO: 'cisco.com',
+  IBM: 'ibm.com', QCOM: 'qualcomm.com', TXN: 'ti.com', AVGO: 'broadcom.com',
+  ABBV: 'abbvie.com', JNJ: 'jnj.com', PFE: 'pfizer.com', MRK: 'merck.com',
+  UNH: 'unitedhealthgroup.com', CVS: 'cvshealth.com', AMGN: 'amgen.com',
+  GILD: 'gilead.com', BMY: 'bms.com', LLY: 'lilly.com', BIIB: 'biogen.com',
+  XOM: 'exxonmobil.com', CVX: 'chevron.com', COP: 'conocophillips.com',
+  GS: 'goldmansachs.com', MS: 'morganstanley.com', C: 'citigroup.com',
+  WFC: 'wellsfargo.com', AXP: 'americanexpress.com', BLK: 'blackrock.com',
+  SPGI: 'spglobal.com', MCO: 'moodys.com', ICE: 'theice.com',
+  KO: 'coca-cola.com', PEP: 'pepsico.com', MCD: 'mcdonalds.com',
+  SBUX: 'starbucks.com', NKE: 'nike.com', HD: 'homedepot.com',
+  LOW: 'lowes.com', TGT: 'target.com', COST: 'costco.com',
+  AMZN2: 'amazon.com', EBAY: 'ebay.com', ETSY: 'etsy.com',
+  UBER: 'uber.com', LYFT: 'lyft.com', ABNB: 'airbnb.com',
+  SNAP: 'snap.com', TWTR: 'twitter.com', PINS: 'pinterest.com',
+  SPOT: 'spotify.com', ROKU: 'roku.com', ZM: 'zoom.us',
+  SHOP: 'shopify.com', SQ: 'squareup.com', COIN: 'coinbase.com',
+  HOOD: 'robinhood.com', SOFI: 'sofi.com', AFRM: 'affirm.com',
+  PLTR: 'palantir.com', SNOW: 'snowflake.com', DDOG: 'datadoghq.com',
+  NET: 'cloudflare.com', CRWD: 'crowdstrike.com', ZS: 'zscaler.com',
+  OKTA: 'okta.com', TWLO: 'twilio.com', DOCU: 'docusign.com',
+  WDAY: 'workday.com', NOW: 'servicenow.com', VEEV: 'veeva.com',
+  PANW: 'paloaltonetworks.com', FTNT: 'fortinet.com', CHKP: 'checkpoint.com',
+  SE: 'sea.com', GRAB: 'grab.com', TCOM: 'trip.com',
+  TSM: 'tsmc.com', ASML: 'asml.com', SAP: 'sap.com',
+  TM: 'toyota.com', SONY: 'sony.com', NVO: 'novonordisk.com',
+  HSBC: 'hsbc.com', BP: 'bp.com', SHEL: 'shell.com',
+  RIO: 'riotinto.com', BHP: 'bhp.com', VALE: 'vale.com',
+  PDD: 'pinduoduo.com', JD: 'jd.com', BIDU: 'baidu.com',
+  NTES: 'netease.com', TME: 'tencentmusic.com',
+  F: 'ford.com', GM: 'gm.com', RIVN: 'rivian.com', LCID: 'lucidmotors.com',
+  BA: 'boeing.com', LMT: 'lockheedmartin.com', RTX: 'rtx.com',
+  CAT: 'caterpillar.com', DE: 'deere.com', GE: 'ge.com',
+  MMM: '3m.com', HON: 'honeywell.com', EMR: 'emerson.com',
+};
+
+// Currency code → ISO 3166-1 alpha-2 country code for flag display
+const CURRENCY_FLAG_MAP: Record<string, string> = {
+  USD: 'us', EUR: 'eu', GBP: 'gb', JPY: 'jp', AUD: 'au', CAD: 'ca',
+  CHF: 'ch', CNY: 'cn', HKD: 'hk', NZD: 'nz', SEK: 'se', NOK: 'no',
+  DKK: 'dk', SGD: 'sg', MXN: 'mx', BRL: 'br', ZAR: 'za', INR: 'in',
+  KRW: 'kr', TRY: 'tr', RUB: 'ru', PLN: 'pl', THB: 'th', IDR: 'id',
+  HUF: 'hu', CZK: 'cz', ILS: 'il', CLP: 'cl', PHP: 'ph', AED: 'ae',
+  SAR: 'sa', MYR: 'my', RON: 'ro', BGN: 'bg', HRK: 'hr', ISK: 'is',
+  EGP: 'eg', PKR: 'pk', VND: 'vn', BDT: 'bd', NGN: 'ng', UAH: 'ua',
+  KWD: 'kw', QAR: 'qa', OMR: 'om', BHD: 'bh', JOD: 'jo', LBP: 'lb',
+  MAD: 'ma', TND: 'tn', GHS: 'gh', KES: 'ke', TZS: 'tz', UGX: 'ug',
+  XOF: 'sn', XAF: 'cm', COP: 'co', PEN: 'pe', ARS: 'ar', UYU: 'uy',
+  PYG: 'py', BOB: 'bo', VES: 've', CRC: 'cr', GTQ: 'gt', HNL: 'hn',
+  NIO: 'ni', DOP: 'do', JMD: 'jm', TTD: 'tt', BBD: 'bb', BSD: 'bs',
+  BZD: 'bz', GYD: 'gy', SRD: 'sr', AWG: 'aw', ANG: 'cw', KYD: 'ky',
+  XCD: 'ag', HTG: 'ht', CUP: 'cu', MOP: 'mo', TWD: 'tw', MMK: 'mm',
+  KHR: 'kh', LAK: 'la', MNT: 'mn', KZT: 'kz', UZS: 'uz', AZN: 'az',
+  GEL: 'ge', AMD: 'am', MDL: 'md', BYN: 'by', LKR: 'lk', NPR: 'np',
+  MVR: 'mv', BTN: 'bt', AFN: 'af', IRR: 'ir', IQD: 'iq', SYP: 'sy',
+  YER: 'ye', LYD: 'ly', DZD: 'dz', SDG: 'sd', ETB: 'et', SOS: 'so',
+  MZN: 'mz', ZMW: 'zm', MWK: 'mw', RWF: 'rw', BIF: 'bi', DJF: 'dj',
+  ERN: 'er', GMD: 'gm', GNF: 'gn', SLL: 'sl', LRD: 'lr', CVE: 'cv',
+  STN: 'st', MRU: 'mr', SCR: 'sc', MUR: 'mu', KMF: 'km', MGA: 'mg',
+  AOA: 'ao', CDF: 'cd', XPF: 'pf', FJD: 'fj', PGK: 'pg', SBD: 'sb',
+  VUV: 'vu', WST: 'ws', TOP: 'to', NZD2: 'nz', KID: 'ki', NRU: 'nr',
+  TVD: 'tv', PLN2: 'pl', HRK2: 'hr', RSD: 'rs', MKD: 'mk', ALL: 'al',
+  BAM: 'ba', NOK2: 'no',
+};
+
+// Commodity symbol → icon config (emoji + gradient background)
+const COMMODITY_ICONS: Record<string, { bg: string; emoji: string }> = {
+  // Precious Metals
+  XAUUSD:   { bg: 'linear-gradient(135deg,#b8860b,#ffd700)', emoji: '🥇' },
+  XAGUSD:   { bg: 'linear-gradient(135deg,#708090,#c0c0c0)', emoji: '🥈' },
+  XPTUSD:   { bg: 'linear-gradient(135deg,#4a4a6a,#a8a9ad)', emoji: '💎' },
+  XPDUSD:   { bg: 'linear-gradient(135deg,#2c3e50,#4ca1af)', emoji: '⚙️' },
+  // Energy
+  USOIL:    { bg: 'linear-gradient(135deg,#1a1a2e,#4a4a6e)', emoji: '🛢️' },
+  UKOIL:    { bg: 'linear-gradient(135deg,#0f3460,#533483)', emoji: '🛢️' },
+  NGAS:     { bg: 'linear-gradient(135deg,#f46b45,#eea849)', emoji: '🔥' },
+  // Grains & Crops
+  WHEAT:    { bg: 'linear-gradient(135deg,#c8a951,#e8d5a3)', emoji: '🌾' },
+  CORN:     { bg: 'linear-gradient(135deg,#f7971e,#ffd200)', emoji: '🌽' },
+  SOYBEAN:  { bg: 'linear-gradient(135deg,#56ab2f,#a8e063)', emoji: '🫘' },
+  RICE:     { bg: 'linear-gradient(135deg,#e8d5a3,#c8a951)', emoji: '🍚' },
+  // Soft Commodities
+  COFFEE:   { bg: 'linear-gradient(135deg,#4b2c20,#8b5e3c)', emoji: '☕' },
+  COCOA:    { bg: 'linear-gradient(135deg,#3d1c02,#7b3f00)', emoji: '🍫' },
+  SUGAR:    { bg: 'linear-gradient(135deg,#e96c6c,#f7c59f)', emoji: '🍬' },
+  COTTON:   { bg: 'linear-gradient(135deg,#c8e6fa,#e8f4fd)', emoji: '🌸' },
+  // Base Metals
+  COPPER:   { bg: 'linear-gradient(135deg,#b5541c,#e07b39)', emoji: '🔶' },
+  ALUMINIUM:{ bg: 'linear-gradient(135deg,#9e9e9e,#e0e0e0)', emoji: '🔩' },
+  ALUMINUM: { bg: 'linear-gradient(135deg,#9e9e9e,#e0e0e0)', emoji: '🔩' },
+  ZINC:     { bg: 'linear-gradient(135deg,#607d8b,#90a4ae)', emoji: '⚙️' },
+  NICKEL:   { bg: 'linear-gradient(135deg,#455a64,#78909c)', emoji: '🔩' },
+  LEAD:     { bg: 'linear-gradient(135deg,#546e7a,#b0bec5)', emoji: '⚙️' },
+  TIN:      { bg: 'linear-gradient(135deg,#78909c,#cfd8dc)', emoji: '🔩' },
+  // Livestock
+  CATTLE:   { bg: 'linear-gradient(135deg,#8d6e63,#d7ccc8)', emoji: '🐄' },
+  HOGS:     { bg: 'linear-gradient(135deg,#f48fb1,#f8bbd0)', emoji: '🐷' },
+};
+
+function getCurrencyFlag(symbol: string): string | null {
+  // Extract base currency from pairs like EUR/USD, EURUSD, EUR-USD
+  const clean = symbol.replace(/[-_]/g, '/').toUpperCase();
+  const parts = clean.split('/');
+  const base = parts[0].replace('USDT', '').replace('USD', '');
+  // Try base currency first, then the full symbol
+  const code = base.length >= 2 ? base : clean.slice(0, 3);
+  const countryCode = CURRENCY_FLAG_MAP[code] || CURRENCY_FLAG_MAP[clean.slice(0, 3)];
+  return countryCode ? `https://flagcdn.com/w40/${countryCode}.png` : null;
+}
+
 function AssetButtonIcon({ symbol, category }: { symbol: string; category: string }) {
   const [imgError, setImgError] = useState(false);
+  const [stockFallback, setStockFallback] = useState(0); // 0=clearbit, 1=google favicon, 2=initials
+  const [flagError, setFlagError] = useState(false);
   const isCrypto = ['crypto', 'cryptocurrency'].includes(category.toLowerCase());
+  const isStock = ['stock', 'stocks', 'equity'].includes(category.toLowerCase());
+  const isCurrency = ['forex', 'currency', 'currencies'].includes(category.toLowerCase());
+  const isCommodity = ['commodity', 'commodities'].includes(category.toLowerCase());
   const iconSymbol = symbol.replace('USDT', '').replace('/USD', '').toLowerCase();
+  const stockKey = symbol.replace('USDT', '').replace('/USD', '').toUpperCase();
 
   if (isCrypto && !imgError) {
     return (
@@ -139,6 +263,107 @@ function AssetButtonIcon({ symbol, category }: { symbol: string; category: strin
         style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'cover' }}
         onError={() => setImgError(true)}
       />
+    );
+  }
+
+  if (isStock) {
+    const domain = STOCK_LOGO_DOMAINS[stockKey];
+    const clearbitUrl = domain ? `https://logo.clearbit.com/${domain}?size=64` : '';
+    const googleUrl = domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : '';
+    const currentSrc = stockFallback === 0 ? clearbitUrl : stockFallback === 1 ? googleUrl : '';
+
+    if (currentSrc && stockFallback < 2) {
+      return (
+        <div style={{
+          width: 20, height: 20, borderRadius: '50%', background: '#1e293b',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          overflow: 'hidden', flexShrink: 0,
+        }}>
+          <img
+            src={currentSrc}
+            alt={stockKey}
+            width={16}
+            height={16}
+            style={{ width: 16, height: 16, objectFit: 'contain' }}
+            onError={() => setStockFallback(prev => prev + 1)}
+          />
+        </div>
+      );
+    }
+
+    // Initials fallback for stocks
+    const initials = stockKey.slice(0, stockKey.length <= 3 ? 3 : 4);
+    return (
+      <div style={{
+        width: 20, height: 20, borderRadius: '50%',
+        background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 5, fontWeight: 700, color: '#fff', flexShrink: 0,
+      }}>
+        {initials}
+      </div>
+    );
+  }
+
+  if (isCurrency) {
+    const flagUrl = getCurrencyFlag(symbol);
+    if (flagUrl && !flagError) {
+      return (
+        <div style={{
+          width: 20, height: 20, borderRadius: '50%', background: '#1e293b',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          overflow: 'hidden', flexShrink: 0,
+        }}>
+          <img
+            src={flagUrl}
+            alt={symbol}
+            width={20}
+            height={14}
+            style={{ width: 20, height: 14, objectFit: 'cover' }}
+            onError={() => setFlagError(true)}
+          />
+        </div>
+      );
+    }
+    // Initials fallback for currencies
+    const currInitials = symbol.replace(/[-_/]/g, '').slice(0, 3).toUpperCase();
+    return (
+      <div style={{
+        width: 20, height: 20, borderRadius: '50%',
+        background: 'linear-gradient(135deg, #3b82f6, #1d4ed8)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 5, fontWeight: 700, color: '#fff', flexShrink: 0,
+      }}>
+        {currInitials}
+      </div>
+    );
+  }
+
+  if (isCommodity) {
+    const key = symbol.replace('/', '').toUpperCase();
+    const config = COMMODITY_ICONS[key];
+    if (config) {
+      return (
+        <div style={{
+          width: 20, height: 20, borderRadius: '50%', background: config.bg,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          flexShrink: 0, fontSize: 11,
+        }}>
+          {config.emoji}
+        </div>
+      );
+    }
+    // Generic commodity fallback
+    const commodityInitials = key.replace('USD', '').slice(0, 3);
+    return (
+      <div style={{
+        width: 20, height: 20, borderRadius: '50%',
+        background: 'linear-gradient(135deg, #10b981, #059669)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: 5, fontWeight: 700, color: '#fff', flexShrink: 0,
+      }}>
+        {commodityInitials}
+      </div>
     );
   }
 
@@ -497,7 +722,7 @@ function TradeResultModal({ trade, onClose }: { trade: TradeResult; onClose: () 
 
 // ─── Bottom Navigation ────────────────────────────────────────────────────────
 
-type NavSection = 'trade' | 'history' | 'copytrade' | 'account' | 'referral';
+type NavSection = 'trade' | 'history' | 'copytrade' | 'account' | 'referral' | 'investment';
 
 function BottomNav({ active, onChange }: { active: NavSection; onChange: (s: NavSection) => void }) {
   const router = useRouter();
@@ -536,6 +761,13 @@ function BottomNav({ active, onChange }: { active: NavSection; onChange: (s: Nav
         <path d="M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
     ) },
+    { id: 'investment', label: 'Invest', icon: (
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5z" />
+        <path d="M2 17l10 5 10-5" />
+        <path d="M2 12l10 5 10-5" />
+      </svg>
+    ) },
     { id: 'account', label: t('dash_nav_account'), icon: (
       <svg className="w-5 h-5" fill="none" viewBox="0 0 100 120" stroke="currentColor" strokeWidth={4.5} strokeLinecap="round" strokeLinejoin="round">
         {/* Innermost loop - core of fingerprint */}
@@ -566,6 +798,8 @@ function BottomNav({ active, onChange }: { active: NavSection; onChange: (s: Nav
       router.push('/dashboard/copytrade');
     } else if (id === 'referral') {
       router.push('/dashboard/referral');
+    } else if (id === 'investment') {
+      router.push('/dashboard/investment');
     } else {
       onChange(id);
     }
@@ -874,6 +1108,9 @@ export default function DashboardPage() {
   const [priceChange, setPriceChange] = useState<number>(0);
   const [priceChangePct, setPriceChangePct] = useState<number>(0);
 
+  // Live price map from Supabase market_prices realtime (keyed by asset_id)
+  const [realtimePrices, setRealtimePrices] = useState<PriceMap>({});
+
   const [isDemo, setIsDemo] = useState(true);
   const [buyLoading, setBuyLoading] = useState(false);
   const [sellLoading, setSellLoading] = useState(false);
@@ -1169,6 +1406,28 @@ export default function DashboardPage() {
   useEffect(() => {
     if (activeNav === 'history' && authChecked) fetchTradeHistory();
   }, [activeNav, authChecked, fetchTradeHistory]);
+
+  // ── Supabase Realtime: live asset prices + wallet updates ───────────────────
+  useRealtimeDashboard({
+    userId,
+    channelPrefix: 'trade-page',
+    onPriceUpdate: (priceData) => {
+      setRealtimePrices((prev) => mergePriceUpdate(prev, priceData));
+      // If this update is for the currently selected asset, use as fallback price
+      if (selectedAsset && priceData.assetId === selectedAsset.id) {
+        setLivePrice((prev) => {
+          if (prev === null) return priceData.price;
+          return prev; // chart WebSocket takes priority
+        });
+        if (priceData.priceChangePct24h !== 0) {
+          setPriceChangePct((prev) => prev === 0 ? priceData.priceChangePct24h : prev);
+        }
+      }
+    },
+    onWalletUpdate: (w) => {
+      setWallet({ demoBalance: w.demoBalance, realBalance: w.realBalance });
+    },
+  });
 
   const handleTradeExpired = useCallback(async () => {
     await supabase.rpc('settle_expired_trades');

@@ -59,10 +59,592 @@ function isCrypto(category: string): boolean {
 
 // ─── Asset Icon ───────────────────────────────────────────────────────────────
 
+// Currency code → flag emoji
+const CURRENCY_FLAGS: Record<string, string> = {
+  AUD: '🇦🇺', CAD: '🇨🇦', CHF: '🇨🇭', CNY: '🇨🇳', CZK: '🇨🇿',
+  DKK: '🇩🇰', EUR: '🇪🇺', GBP: '🇬🇧', HKD: '🇭🇰', HUF: '🇭🇺',
+  IDR: '🇮🇩', ILS: '🇮🇱', INR: '🇮🇳', JPY: '🇯🇵', KRW: '🇰🇷',
+  MXN: '🇲🇽', MYR: '🇲🇾', NOK: '🇳🇴', NZD: '🇳🇿', PHP: '🇵🇭',
+  PLN: '🇵🇱', RON: '🇷🇴', RUB: '🇷🇺', SAR: '🇸🇦', SEK: '🇸🇪',
+  SGD: '🇸🇬', THB: '🇹🇭', TRY: '🇹🇷', TWD: '🇹🇼', USD: '🇺🇸',
+  ZAR: '🇿🇦', BRL: '🇧🇷', AED: '🇦🇪', QAR: '🇶🇦', KWD: '🇰🇼',
+  OMR: '🇴🇲', BHD: '🇧🇭', JOD: '🇯🇴', EGP: '🇪🇬', NGN: '🇳🇬',
+  KES: '🇰🇪', GHS: '🇬🇭', MAD: '🇲🇦', TND: '🇹🇳', DZD: '🇩🇿',
+  PKR: '🇵🇰', BDT: '🇧🇩', LKR: '🇱🇰', VND: '🇻🇳', CLP: '🇨🇱',
+  COP: '🇨🇴', PEN: '🇵🇪', ARS: '🇦🇷', UYU: '🇺🇾', HRK: '🇭🇷',
+  BGN: '🇧🇬', ISK: '🇮🇸', UAH: '🇺🇦', CRC: '🇨🇷', DOP: '🇩🇴',
+};
+
+// Extract currency codes from forex pair symbol (e.g. AUDCAD → AUD, CAD)
+function parseFxPair(symbol: string): [string, string] {
+  const s = symbol.replace('/', '').toUpperCase();
+  return [s.slice(0, 3), s.slice(3, 6)];
+}
+
+// Commodity symbol → icon config
+const COMMODITY_ICONS: Record<string, { bg: string; emoji: string }> = {
+  // Precious Metals
+  XAUUSD:   { bg: 'linear-gradient(135deg,#b8860b,#ffd700)', emoji: '🥇' },
+  XAGUSD:   { bg: 'linear-gradient(135deg,#708090,#c0c0c0)', emoji: '🥈' },
+  XPTUSD:   { bg: 'linear-gradient(135deg,#4a4a6a,#a8a9ad)', emoji: '💎' },
+  XPDUSD:   { bg: 'linear-gradient(135deg,#2c3e50,#4ca1af)', emoji: '⚙️' },
+  // Energy
+  USOIL:    { bg: 'linear-gradient(135deg,#1a1a2e,#4a4a6e)', emoji: '🛢️' },
+  UKOIL:    { bg: 'linear-gradient(135deg,#0f3460,#533483)', emoji: '🛢️' },
+  NGAS:     { bg: 'linear-gradient(135deg,#f46b45,#eea849)', emoji: '🔥' },
+  // Grains & Crops
+  WHEAT:    { bg: 'linear-gradient(135deg,#c8a951,#e8d5a3)', emoji: '🌾' },
+  CORN:     { bg: 'linear-gradient(135deg,#f7971e,#ffd200)', emoji: '🌽' },
+  SOYBEAN:  { bg: 'linear-gradient(135deg,#56ab2f,#a8e063)', emoji: '🫘' },
+  RICE:     { bg: 'linear-gradient(135deg,#e8d5a3,#c8a951)', emoji: '🍚' },
+  // Soft Commodities
+  COFFEE:   { bg: 'linear-gradient(135deg,#4b2c20,#8b5e3c)', emoji: '☕' },
+  COCOA:    { bg: 'linear-gradient(135deg,#3d1c02,#7b3f00)', emoji: '🍫' },
+  SUGAR:    { bg: 'linear-gradient(135deg,#e96c6c,#f7c59f)', emoji: '🍬' },
+  COTTON:   { bg: 'linear-gradient(135deg,#c8e6fa,#e8f4fd)', emoji: '🌸' },
+  // Base Metals
+  COPPER:   { bg: 'linear-gradient(135deg,#b5541c,#e07b39)', emoji: '🔶' },
+  ALUMINIUM:{ bg: 'linear-gradient(135deg,#9e9e9e,#e0e0e0)', emoji: '🔩' },
+  ALUMINUM: { bg: 'linear-gradient(135deg,#9e9e9e,#e0e0e0)', emoji: '🔩' },
+  ZINC:     { bg: 'linear-gradient(135deg,#607d8b,#90a4ae)', emoji: '⚙️' },
+  NICKEL:   { bg: 'linear-gradient(135deg,#455a64,#78909c)', emoji: '🔘' },
+  LEAD:     { bg: 'linear-gradient(135deg,#37474f,#546e7a)', emoji: '🔲' },
+  TIN:      { bg: 'linear-gradient(135deg,#78909c,#b0bec5)', emoji: '🥫' },
+  // Livestock
+  CATTLE:   { bg: 'linear-gradient(135deg,#795548,#a1887f)', emoji: '🐄' },
+  HOGS:     { bg: 'linear-gradient(135deg,#e91e63,#f48fb1)', emoji: '🐷' },
+  // Other
+  LUMBER:   { bg: 'linear-gradient(135deg,#8d6e63,#bcaaa4)', emoji: '🪵' },
+  OJ:       { bg: 'linear-gradient(135deg,#ff8c00,#ffd700)', emoji: '🍊' },
+};
+
+// Stock symbol → logo URL (using Clearbit Logo API + fallback to Google favicon)
+function getStockLogoUrl(symbol: string): string {
+  const STOCK_DOMAINS: Record<string, string> = {
+    AAPL: 'apple.com',
+    MSFT: 'microsoft.com',
+    GOOGL: 'google.com',
+    GOOG: 'google.com',
+    AMZN: 'amazon.com',
+    META: 'meta.com',
+    TSLA: 'tesla.com',
+    NVDA: 'nvidia.com',
+    NFLX: 'netflix.com',
+    BABA: 'alibaba.com',
+    BIDU: 'baidu.com',
+    JD: 'jd.com',
+    TCEHY: 'tencent.com',
+    TSM: 'tsmc.com',
+    SONY: 'sony.com',
+    TOYOTA: 'toyota.com',
+    SHOP: 'shopify.com',
+    SQ: 'squareup.com',
+    PYPL: 'paypal.com',
+    V: 'visa.com',
+    MA: 'mastercard.com',
+    JPM: 'jpmorganchase.com',
+    BAC: 'bankofamerica.com',
+    GS: 'goldmansachs.com',
+    WMT: 'walmart.com',
+    AMGN: 'amgen.com',
+    PFE: 'pfizer.com',
+    JNJ: 'jnj.com',
+    KO: 'coca-cola.com',
+    PEP: 'pepsico.com',
+    MCD: 'mcdonalds.com',
+    SBUX: 'starbucks.com',
+    DIS: 'disney.com',
+    BA: 'boeing.com',
+    GE: 'ge.com',
+    XOM: 'exxonmobil.com',
+    CVX: 'chevron.com',
+    CRM: 'salesforce.com',
+    ORCL: 'oracle.com',
+    INTC: 'intel.com',
+    AMD: 'amd.com',
+    QCOM: 'qualcomm.com',
+    UBER: 'uber.com',
+    LYFT: 'lyft.com',
+    SPOT: 'spotify.com',
+    TWTR: 'twitter.com',
+    SNAP: 'snap.com',
+    PINS: 'pinterest.com',
+    COIN: 'coinbase.com',
+    ABNB: 'airbnb.com',
+    HOOD: 'robinhood.com',
+    PLTR: 'palantir.com',
+    RBLX: 'roblox.com',
+    RIVN: 'rivian.com',
+    LCID: 'lucidmotors.com',
+    NIO: 'nio.com',
+    XPEV: 'xpeng.com',
+    LI: 'lixiang.com',
+    DKNG: 'draftkings.com',
+    PENN: 'pennentertainment.com',
+    ROKU: 'roku.com',
+    ZM: 'zoom.us',
+    DOCU: 'docusign.com',
+    SNOW: 'snowflake.com',
+    DDOG: 'datadoghq.com',
+    NET: 'cloudflare.com',
+    CRWD: 'crowdstrike.com',
+    OKTA: 'okta.com',
+    TWLO: 'twilio.com',
+    SHOP2: 'shopify.com',
+    ETSY: 'etsy.com',
+    EBAY: 'ebay.com',
+    BKNG: 'booking.com',
+    EXPE: 'expedia.com',
+    ABNB2: 'airbnb.com',
+    UAL: 'united.com',
+    DAL: 'delta.com',
+    AAL: 'aa.com',
+    LUV: 'southwest.com',
+    CCL: 'carnival.com',
+    RCL: 'royalcaribbean.com',
+    MAR: 'marriott.com',
+    HLT: 'hilton.com',
+    MGM: 'mgmresorts.com',
+    WYNN: 'wynnresorts.com',
+    LVS: 'sands.com',
+    NKE: 'nike.com',
+    ADDYY: 'adidas.com',
+    LULU: 'lululemon.com',
+    TGT: 'target.com',
+    COST: 'costco.com',
+    HD: 'homedepot.com',
+    LOW: 'lowes.com',
+    CVS: 'cvshealth.com',
+    WBA: 'walgreens.com',
+    UNH: 'unitedhealthgroup.com',
+    ANTM: 'elevancehealth.com',
+    CI: 'cigna.com',
+    HUM: 'humana.com',
+    ABT: 'abbott.com',
+    MDT: 'medtronic.com',
+    SYK: 'stryker.com',
+    ISRG: 'intuitivesurgical.com',
+    TMO: 'thermofisher.com',
+    DHR: 'danaher.com',
+    MRNA: 'modernatx.com',
+    BNTX: 'biontech.com',
+    REGN: 'regeneron.com',
+    GILD: 'gilead.com',
+    BIIB: 'biogen.com',
+    VRTX: 'vrtx.com',
+    LLY: 'lilly.com',
+    BMY: 'bms.com',
+    MRK: 'merck.com',
+    AZN: 'astrazeneca.com',
+    GSK: 'gsk.com',
+    NVS: 'novartis.com',
+    RHHBY: 'roche.com',
+    SNY: 'sanofi.com',
+    BAYRY: 'bayer.com',
+    NSRGY: 'nestle.com',
+    LVMUY: 'lvmh.com',
+    MC: 'lvmh.com',
+    OR: 'loreal.com',
+    CFRUY: 'richemont.com',
+    PPRUY: 'kering.com',
+    BURBY: 'burberry.com',
+    HESAY: 'hermes.com',
+    SAP: 'sap.com',
+    ASML: 'asml.com',
+    SIEGY: 'siemens.com',
+    BMWYY: 'bmw.com',
+    VWAGY: 'vw.com',
+    DDAIF: 'mercedes-benz.com',
+    STLA: 'stellantis.com',
+    F: 'ford.com',
+    GM: 'gm.com',
+    TM: 'toyota.com',
+    HMC: 'honda.com',
+    NSANY: 'nissan.com',
+    HYMTF: 'hyundai.com',
+    KIMTF: 'kia.com',
+    RACE: 'ferrari.com',
+    POAHY: 'porsche.com',
+    // Adobe & AbbVie (explicitly requested)
+    ADBE: 'adobe.com',
+    ABBV: 'abbvie.com',
+    // Additional common stocks
+    IBM: 'ibm.com',
+    CSCO: 'cisco.com',
+    TXN: 'ti.com',
+    NOW: 'servicenow.com',
+    ADSK: 'autodesk.com',
+    INTU: 'intuit.com',
+    PANW: 'paloaltonetworks.com',
+    ZS: 'zscaler.com',
+    FTNT: 'fortinet.com',
+    AMAT: 'appliedmaterials.com',
+    LRCX: 'lamresearch.com',
+    KLAC: 'kla.com',
+    MU: 'micron.com',
+    WDC: 'westerndigital.com',
+    STX: 'seagate.com',
+    HPQ: 'hp.com',
+    HPE: 'hpe.com',
+    DELL: 'dell.com',
+    ACN: 'accenture.com',
+    CTSH: 'cognizant.com',
+    INFY: 'infosys.com',
+    WIT: 'wipro.com',
+    TCS: 'tcs.com',
+    MSCI: 'msci.com',
+    SPGI: 'spglobal.com',
+    MCO: 'moodys.com',
+    ICE: 'theice.com',
+    CME: 'cmegroup.com',
+    NDAQ: 'nasdaq.com',
+    BLK: 'blackrock.com',
+    SCHW: 'schwab.com',
+    MS: 'morganstanley.com',
+    C: 'citi.com',
+    WFC: 'wellsfargo.com',
+    USB: 'usbank.com',
+    PNC: 'pnc.com',
+    TFC: 'truist.com',
+    AXP: 'americanexpress.com',
+    COF: 'capitalone.com',
+    DFS: 'discover.com',
+    SYF: 'synchronyfinancial.com',
+    ALLY: 'ally.com',
+    BRK: 'berkshirehathaway.com',
+    BRKB: 'berkshirehathaway.com',
+    BRKA: 'berkshirehathaway.com',
+    MMM: '3m.com',
+    CAT: 'caterpillar.com',
+    DE: 'deere.com',
+    EMR: 'emerson.com',
+    HON: 'honeywell.com',
+    RTX: 'rtx.com',
+    LMT: 'lockheedmartin.com',
+    NOC: 'northropgrumman.com',
+    GD: 'gd.com',
+    HII: 'huntingtoningalls.com',
+    UPS: 'ups.com',
+    FDX: 'fedex.com',
+    AMTRAK: 'amtrak.com',
+    CSX: 'csx.com',
+    UNP: 'up.com',
+    NSC: 'nscorp.com',
+    NEE: 'nexteraenergy.com',
+    DUK: 'duke-energy.com',
+    SO: 'southerncompany.com',
+    D: 'dominionenergy.com',
+    AEP: 'aep.com',
+    EXC: 'exeloncorp.com',
+    SRE: 'sempra.com',
+    PCG: 'pge.com',
+    ED: 'coned.com',
+    T: 'att.com',
+    VZ: 'verizon.com',
+    TMUS: 't-mobile.com',
+    CMCSA: 'comcast.com',
+    CHTR: 'charter.com',
+    DISH: 'dish.com',
+    SIRI: 'siriusxm.com',
+    NWSA: 'newscorp.com',
+    FOX: 'foxcorporation.com',
+    PARA: 'paramount.com',
+    WBD: 'wbd.com',
+    AMCX: 'amcnetworks.com',
+    VIAC: 'paramount.com',
+    DISCA: 'discovery.com',
+    LBTYA: 'libertyglobal.com',
+    ATVI: 'activision.com',
+    EA: 'ea.com',
+    TTWO: 'take2games.com',
+    NTDOY: 'nintendo.com',
+    SE: 'sea.com',
+    GRAB: 'grab.com',
+    GOTO: 'gotogroup.com',
+    MELI: 'mercadolibre.com',
+    PDD: 'pinduoduo.com',
+    TME: 'tencentmusic.com',
+    BILI: 'bilibili.com',
+    IQ: 'iqiyi.com',
+    WB: 'weibo.com',
+    NTES: 'netease.com',
+    ZTO: 'zto.com',
+    DIDI: 'didiglobal.com',
+    KWEB: 'kraneshares.com',
+    MCHI: 'ishares.com',
+    FXI: 'blackrock.com',
+  };
+
+  const domain = STOCK_DOMAINS[symbol.toUpperCase()];
+  if (domain) {
+    return `https://logo.clearbit.com/${domain}?size=64`;
+  }
+  return '';
+}
+
+// Get Google favicon URL as secondary fallback
+function getGoogleFaviconUrl(symbol: string): string {
+  const STOCK_DOMAINS: Record<string, string> = {
+    AAPL: 'apple.com', MSFT: 'microsoft.com', GOOGL: 'google.com', GOOG: 'google.com',
+    AMZN: 'amazon.com', META: 'meta.com', TSLA: 'tesla.com', NVDA: 'nvidia.com',
+    NFLX: 'netflix.com', BABA: 'alibaba.com', BIDU: 'baidu.com', JD: 'jd.com',
+    TCEHY: 'tencent.com', TSM: 'tsmc.com', SONY: 'sony.com', SHOP: 'shopify.com',
+    PYPL: 'paypal.com', V: 'visa.com', MA: 'mastercard.com', JPM: 'jpmorganchase.com',
+    BAC: 'bankofamerica.com', GS: 'goldmansachs.com', WMT: 'walmart.com',
+    PFE: 'pfizer.com', JNJ: 'jnj.com', KO: 'coca-cola.com', PEP: 'pepsico.com',
+    MCD: 'mcdonalds.com', SBUX: 'starbucks.com', DIS: 'disney.com', BA: 'boeing.com',
+    XOM: 'exxonmobil.com', CVX: 'chevron.com', CRM: 'salesforce.com', ORCL: 'oracle.com',
+    INTC: 'intel.com', AMD: 'amd.com', QCOM: 'qualcomm.com', UBER: 'uber.com',
+    SPOT: 'spotify.com', SNAP: 'snap.com', COIN: 'coinbase.com', ABNB: 'airbnb.com',
+    PLTR: 'palantir.com', ZM: 'zoom.us', SNOW: 'snowflake.com', NET: 'cloudflare.com',
+    CRWD: 'crowdstrike.com', OKTA: 'okta.com', ETSY: 'etsy.com', EBAY: 'ebay.com',
+    NKE: 'nike.com', TGT: 'target.com', COST: 'costco.com', HD: 'homedepot.com',
+    UNH: 'unitedhealthgroup.com', ABT: 'abbott.com', MDT: 'medtronic.com',
+    MRNA: 'modernatx.com', REGN: 'regeneron.com', GILD: 'gilead.com', LLY: 'lilly.com',
+    MRK: 'merck.com', AZN: 'astrazeneca.com', GSK: 'gsk.com', NVS: 'novartis.com',
+    SAP: 'sap.com', ASML: 'asml.com', F: 'ford.com', GM: 'gm.com', TM: 'toyota.com',
+    HMC: 'honda.com', RACE: 'ferrari.com', ADBE: 'adobe.com', ABBV: 'abbvie.com',
+    IBM: 'ibm.com', CSCO: 'cisco.com', TXN: 'ti.com', NOW: 'servicenow.com',
+    ADSK: 'autodesk.com', INTU: 'intuit.com', PANW: 'paloaltonetworks.com',
+    ACN: 'accenture.com', BLK: 'blackrock.com', MS: 'morganstanley.com',
+    C: 'citi.com', WFC: 'wellsfargo.com', AXP: 'americanexpress.com',
+    COF: 'capitalone.com', MMM: '3m.com', CAT: 'caterpillar.com', DE: 'deere.com',
+    HON: 'honeywell.com', RTX: 'rtx.com', LMT: 'lockheedmartin.com',
+    UPS: 'ups.com', FDX: 'fedex.com', T: 'att.com', VZ: 'verizon.com',
+    TMUS: 't-mobile.com', CMCSA: 'comcast.com', ATVI: 'activision.com', EA: 'ea.com',
+    MELI: 'mercadolibre.com', SE: 'sea.com', GRAB: 'grab.com',
+  };
+  const domain = STOCK_DOMAINS[symbol.toUpperCase()];
+  if (domain) {
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+  }
+  return '';
+}
+
+// Stock fallback colors for when logo fails to load
+const STOCK_COLORS: Record<string, [string, string]> = {
+  AAPL:  ['#555', '#888'],
+  MSFT:  ['#0078d4', '#00bcf2'],
+  GOOGL: ['#4285f4', '#34a853'],
+  GOOG:  ['#4285f4', '#34a853'],
+  AMZN:  ['#ff9900', '#ffb347'],
+  META:  ['#1877f2', '#42a5f5'],
+  TSLA:  ['#cc0000', '#ff4444'],
+  NVDA:  ['#76b900', '#a8d800'],
+  NFLX:  ['#e50914', '#ff4444'],
+  BABA:  ['#ff6a00', '#ee0979'],
+  BIDU:  ['#2932e1', '#5b6ef5'],
+  JD:    ['#e1251b', '#ff6b6b'],
+  TCEHY: ['#07c160', '#0a9c4e'],
+  TSM:   ['#003087', '#0057b7'],
+  SONY:  ['#000', '#333'],
+  TOYOTA:['#eb0a1e', '#ff4444'],
+  SHOP:  ['#96bf48', '#5e8e3e'],
+  SQ:    ['#00d64f', '#007a2f'],
+  PYPL:  ['#003087', '#009cde'],
+  V:     ['#1a1f71', '#f7a600'],
+  MA:    ['#eb001b', '#f79e1b'],
+  JPM:   ['#005eb8', '#0072ce'],
+  BAC:   ['#e31837', '#012169'],
+  GS:    ['#6699cc', '#003366'],
+  WMT:   ['#0071ce', '#ffc220'],
+  AMGN:  ['#003087', '#00a3e0'],
+  PFE:   ['#0093d0', '#005587'],
+  JNJ:   ['#cc0000', '#d50032'],
+  KO:    ['#f40009', '#cc0000'],
+  PEP:   ['#004b93', '#0078d4'],
+  MCD:   ['#ffbc0d', '#da291c'],
+  SBUX:  ['#00704a', '#1e3932'],
+  DIS:   ['#113ccf', '#0063e5'],
+  BA:    ['#1d4289', '#0033a0'],
+  GE:    ['#0066b2', '#00a0dc'],
+  XOM:   ['#e01b22', '#c8102e'],
+  CVX:   ['#0066b2', '#004b8d'],
+  CRM:   ['#00a1e0', '#032d60'],
+  ORCL:  ['#c74634', '#f80000'],
+  INTC:  ['#0071c5', '#00aeef'],
+  AMD:   ['#ed1c24', '#f7941d'],
+  QCOM:  ['#3253dc', '#0f2b8f'],
+  UBER:  ['#000', '#333'],
+  LYFT:  ['#ff00bf', '#cc0099'],
+  SPOT:  ['#1db954', '#191414'],
+  TWTR:  ['#1da1f2', '#0d8ecf'],
+  SNAP:  ['#fffc00', '#f5a623'],
+  PINS:  ['#e60023', '#ad081b'],
+  COIN:  ['#0052ff', '#1652f0'],
+  ADBE:  ['#ff0000', '#cc0000'],
+  ABBV:  ['#071d49', '#1a3a6b'],
+  IBM:   ['#1f70c1', '#054ada'],
+  CSCO:  ['#049fd9', '#0070d2'],
+  NOW:   ['#81b5a1', '#293e40'],
+  ADSK:  ['#0696d7', '#0054a6'],
+  INTU:  ['#365ebf', '#2747a0'],
+  PANW:  ['#fa582d', '#c73e1d'],
+  ACN:   ['#a100ff', '#7800c4'],
+  BLK:   ['#000', '#333'],
+  MS:    ['#003087', '#0057b7'],
+  C:     ['#003b70', '#0066b2'],
+  WFC:   ['#cc0000', '#d50032'],
+  AXP:   ['#016fcf', '#0057b7'],
+  COF:   ['#d03027', '#a8201a'],
+  MMM:   ['#ff0000', '#cc0000'],
+  CAT:   ['#ffcd11', '#e8a900'],
+  DE:    ['#367c2b', '#2a5e20'],
+  HON:   ['#e2231a', '#b51a13'],
+  RTX:   ['#003087', '#0057b7'],
+  LMT:   ['#1c3f6e', '#0f2a4a'],
+  UPS:   ['#351c15', '#5c2d0e'],
+  FDX:   ['#4d148c', '#ff6600'],
+  T:     ['#00a8e0', '#0057b7'],
+  VZ:    ['#cd040b', '#a00009'],
+  TMUS:  ['#e20074', '#b5005c'],
+  CMCSA: ['#000', '#333'],
+  ATVI:  ['#000', '#333'],
+  EA:    ['#ff4747', '#cc0000'],
+  MELI:  ['#ffe600', '#ccb800'],
+  SE:    ['#ee4d2d', '#c73e1d'],
+};
+
+function CurrencyIcon({ symbol, size }: { symbol: string; size: number }) {
+  const [base, quote] = parseFxPair(symbol);
+  const baseFlag = CURRENCY_FLAGS[base] ?? '💱';
+  const quoteFlag = CURRENCY_FLAGS[quote] ?? '💱';
+
+  return (
+    <div style={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
+      {/* Base currency flag */}
+      <div style={{
+        position: 'absolute', left: 0, top: 0,
+        width: size * 0.72, height: size * 0.72,
+        borderRadius: '50%',
+        background: 'rgba(30,41,59,0.95)',
+        border: '1.5px solid rgba(255,255,255,0.15)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: size * 0.38,
+        zIndex: 2,
+        boxShadow: '0 1px 4px rgba(0,0,0,0.5)',
+      }}>
+        {baseFlag}
+      </div>
+      {/* Quote currency flag */}
+      <div style={{
+        position: 'absolute', right: 0, bottom: 0,
+        width: size * 0.72, height: size * 0.72,
+        borderRadius: '50%',
+        background: 'rgba(15,23,42,0.95)',
+        border: '1.5px solid rgba(255,255,255,0.1)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        fontSize: size * 0.38,
+        zIndex: 1,
+        boxShadow: '0 1px 4px rgba(0,0,0,0.5)',
+      }}>
+        {quoteFlag}
+      </div>
+    </div>
+  );
+}
+
+function CommodityIcon({ symbol, size }: { symbol: string; size: number }) {
+  const key = symbol.replace('/', '').toUpperCase();
+  const config = COMMODITY_ICONS[key];
+
+  if (config) {
+    return (
+      <div style={{
+        width: size, height: size, borderRadius: '50%',
+        background: config.bg,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+        border: '1.5px solid rgba(255,255,255,0.12)',
+        fontSize: size * 0.52,
+        lineHeight: 1,
+      }}>
+        {config.emoji}
+      </div>
+    );
+  }
+
+  // Generic commodity fallback
+  const initials = key.replace('USD', '').slice(0, 3);
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: '50%',
+      background: 'linear-gradient(135deg,#064e3b,#10b981)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: size * 0.3, fontWeight: 700, color: '#fff',
+      flexShrink: 0,
+      boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+      border: '1.5px solid rgba(16,185,129,0.3)',
+    }}>
+      {initials}
+    </div>
+  );
+}
+
+function StockIcon({ symbol, size }: { symbol: string; size: number }) {
+  // 0 = try Clearbit, 1 = try Google favicon, 2 = show ticker badge
+  const [fallbackLevel, setFallbackLevel] = useState(0);
+  const key = symbol.replace('USDT', '').replace('/USD', '').toUpperCase();
+  const clearbitUrl = getStockLogoUrl(key);
+  const googleFaviconUrl = getGoogleFaviconUrl(key);
+  const colors = STOCK_COLORS[key] ?? ['#1e293b', '#334155'];
+  const initials = key.slice(0, key.length <= 3 ? 3 : 4);
+
+  const currentSrc = fallbackLevel === 0 ? clearbitUrl : fallbackLevel === 1 ? googleFaviconUrl : '';
+
+  if (currentSrc && fallbackLevel < 2) {
+    return (
+      <div style={{
+        width: size, height: size, borderRadius: 8,
+        background: '#fff',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        flexShrink: 0,
+        boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+        border: '1px solid rgba(255,255,255,0.15)',
+        overflow: 'hidden',
+        padding: fallbackLevel === 1 ? 2 : 3,
+      }}>
+        <img
+          src={currentSrc}
+          alt={key}
+          width={size - 6}
+          height={size - 6}
+          style={{ width: size - 6, height: size - 6, objectFit: 'contain', borderRadius: 5 }}
+          onError={() => setFallbackLevel(prev => prev + 1)}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div style={{
+      width: size, height: size, borderRadius: 8,
+      background: `linear-gradient(135deg,${colors[0]},${colors[1]})`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      flexShrink: 0,
+      boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
+      border: '1.5px solid rgba(255,255,255,0.1)',
+    }}>
+      <span style={{
+        color: '#fff',
+        fontSize: initials.length <= 2 ? size * 0.36 : initials.length === 3 ? size * 0.3 : size * 0.24,
+        fontWeight: 800,
+        letterSpacing: '-0.02em',
+        lineHeight: 1,
+      }}>
+        {initials}
+      </span>
+    </div>
+  );
+}
+
 function AssetIcon({ symbol, category, size = 28 }: { symbol: string; category: string; size?: number }) {
   const [imgError, setImgError] = useState(false);
   const iconSymbol = getCryptoIconSymbol(symbol);
+  const cat = category.toLowerCase();
 
+  // Crypto: use real coin images
   if (isCrypto(category) && !imgError) {
     return (
       <img
@@ -76,29 +658,77 @@ function AssetIcon({ symbol, category, size = 28 }: { symbol: string; category: 
     );
   }
 
-  // Fallback: colored circle with initials
-  const colors: Record<string, string> = {
-    forex: '#3b82f6',
-    currency: '#3b82f6',
-    currencies: '#3b82f6',
-    stock: '#f59e0b',
-    stocks: '#f59e0b',
-    equity: '#f59e0b',
-    commodity: '#10b981',
-    commodities: '#10b981',
-  };
-  const bg = colors[category.toLowerCase()] ?? '#6366f1';
-  const initials = symbol.replace('USDT', '').replace('/USD', '').slice(0, 2).toUpperCase();
+  // Currencies: overlapping flag icons
+  if (cat === 'forex' || cat === 'currency' || cat === 'currencies') {
+    return <CurrencyIcon symbol={symbol} size={size} />;
+  }
 
+  // Commodities: emoji + gradient
+  if (cat === 'commodity' || cat === 'commodities') {
+    return <CommodityIcon symbol={symbol} size={size} />;
+  }
+
+  // Stocks: rounded square with ticker
+  if (cat === 'stock' || cat === 'stocks' || cat === 'equity') {
+    return <StockIcon symbol={symbol} size={size} />;
+  }
+
+  // Generic fallback
+  const initials = symbol.replace('USDT', '').replace('/USD', '').slice(0, 2).toUpperCase();
   return (
     <div style={{
       width: size, height: size, borderRadius: '50%',
-      background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: '#6366f1',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
       fontSize: size * 0.35, fontWeight: 700, color: '#fff', flexShrink: 0,
     }}>
       {initials}
     </div>
   );
+}
+
+// ─── TwelveData symbol mapping ────────────────────────────────────────────────
+
+function toTwelveDataSymbol(symbol: string): string {
+  const s = symbol.toUpperCase();
+
+  const COMMODITY_MAP: Record<string, string> = {
+    XAUUSD: 'XAU/USD', XAGUSD: 'XAG/USD', PLATINUM: 'XPT/USD', PALLADIUM: 'XPD/USD',
+    USOIL: 'WTI/USD', UKOIL: 'BRENT/USD', NATGAS: 'NATGAS/USD',
+    COPPER: 'XCU/USD', ALUMINUM: 'XAL/USD', ZINC: 'XZN/USD', NICKEL: 'XNI/USD',
+    WHEAT: 'WHEAT/USD', CORN: 'CORN/USD', SOYBEAN: 'SOYBEAN/USD',
+    SUGAR: 'SUGAR/USD', COFFEE: 'COFFEE/USD', COCOA: 'COCOA/USD',
+    COTTON: 'COTTON/USD', LUMBER: 'LUMBER/USD',
+  };
+  if (COMMODITY_MAP[s]) return COMMODITY_MAP[s];
+
+  // TwelveData uses plain ticker symbols for stocks (e.g. GOOGL, not GOOGL:NASDAQ)
+  const STOCK_TICKERS = new Set([
+    'AAPL','MSFT','GOOGL','GOOG','AMZN','META','TSLA','NVDA','NFLX',
+    'INTC','AMD','QCOM','CSCO','ADBE','CRM','PYPL','SHOP','SNAP',
+    'UBER','LYFT','ZM','COIN','RBLX','HOOD','PLTR','AFRM',
+    'RIVN','LCID','MSTR','AVGO','TXN','MU','PANW','CRWD',
+    'OKTA','DDOG','SNOW','INTU','ADSK','COST','SBUX','AMGN',
+    'GILD','REGN','BIIB','MRNA','ISRG','ASML','ARM','SMCI',
+    'TMUS','CMCSA','CHTR','PARA','AAL','MAR','DPZ','PEP',
+    'NDAQ','CME','CBOE','WDAY','VEEV','ZS','NET','MDB','CFLT',
+    'JPM','BAC','WFC','C','GS','MS','BLK','AXP','COF','USB','PNC',
+    'JNJ','PFE','MRK','ABT','ABBV','BMY','LLY','UNH','CVS','HUM',
+    'XOM','CVX','COP','SLB','EOG','OXY','HAL',
+    'BA','LMT','RTX','NOC','GD','CAT','DE','HON','MMM','GE','EMR',
+    'UPS','FDX','DAL','UAL','LUV','CCL','RCL','HLT','MGM',
+    'WMT','TGT','HD','LOW','NKE','KO','MCD','CMG',
+    'T','VZ','DIS','NEE','DUK','SO','PG','CL','KMB',
+    'V','MA','FIS','GPN','BABA','NIO','TSM',
+    'IBM','HPQ','DELL','ACN','NOW','SPGI','MCO','ICE',
+    'SONY','TM','SAP',
+  ]);
+  if (STOCK_TICKERS.has(s)) return s;
+
+  // Currencies: convert 6-char XXXYYY → XXX/YYY
+  if (s.length === 6 && /^[A-Z]{6}$/.test(s)) return s.slice(0, 3) + '/' + s.slice(3);
+  if (s.includes('/')) return s;
+  return s;
 }
 
 // ─── Main Modal ───────────────────────────────────────────────────────────────
@@ -215,7 +845,9 @@ export default function AssetSelectorModal({
       }
 
       for (const batch of batches) {
-        const symbols = batch.map((a) => a.symbol).join(',');
+        // Map each asset symbol to the correct TwelveData symbol
+        const mappedSymbols = batch.map((a) => toTwelveDataSymbol(a.symbol));
+        const symbols = mappedSymbols.join(',');
         try {
           const res = await fetch(
             `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbols)}&apikey=${apiKey}`
@@ -223,10 +855,10 @@ export default function AssetSelectorModal({
           if (!res.ok) continue;
           const json = await res.json();
 
-          // Handle single vs multiple response
+          // Handle single vs multiple response — key by mapped symbol, update by original symbol
           const entries = batch.length === 1
             ? [{ symbol: batch[0].symbol, data: json }]
-            : batch.map((a) => ({ symbol: a.symbol, data: json[a.symbol] }));
+            : batch.map((a, i) => ({ symbol: a.symbol, data: json[mappedSymbols[i]] }));
 
           for (const { symbol, data } of entries) {
             if (!data || data.status === 'error') continue;

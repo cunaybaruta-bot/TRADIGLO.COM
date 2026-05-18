@@ -36,6 +36,32 @@ export default function RootLayout({
         <link rel="icon" type="image/png" href="/assets/images/Logo_Tradiglo-1775738380029.png" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Geist+Mono:wght@300..700&display=swap" />
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function() {
+            var _origError = window.onerror;
+            window.onerror = function(msg, src, line, col, err) {
+              if (err && err.name === 'ChunkLoadError') {
+                var reloadKey = 'chunk_reload_' + (err.request || '');
+                if (!sessionStorage.getItem(reloadKey)) {
+                  sessionStorage.setItem(reloadKey, '1');
+                  window.location.reload();
+                  return true;
+                }
+              }
+              if (_origError) return _origError(msg, src, line, col, err);
+            };
+            window.addEventListener('unhandledrejection', function(e) {
+              var err = e && e.reason;
+              if (err && err.name === 'ChunkLoadError') {
+                var reloadKey = 'chunk_reload_' + (err.request || '');
+                if (!sessionStorage.getItem(reloadKey)) {
+                  sessionStorage.setItem(reloadKey, '1');
+                  window.location.reload();
+                }
+              }
+            });
+          })();
+        ` }} />
 </head>
       <body style={{ fontFamily: "'Inter', sans-serif" }}>
         <AuthProvider>

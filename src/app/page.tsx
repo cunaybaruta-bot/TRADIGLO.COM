@@ -3,6 +3,7 @@ import HeroSection from '@/components/HeroSection';
 import TickerTape from '@/components/TickerTape';
 import MarketsTable from '@/components/MarketsTable';
 import Footer from '@/components/Footer';
+import ActivityPopup from '@/components/ActivityPopup';
 
 export default function HomePage() {
   return (
@@ -14,6 +15,7 @@ export default function HomePage() {
         <MarketsTable />
       </main>
       <Footer />
+      <ActivityPopup />
     </div>
   );
 }

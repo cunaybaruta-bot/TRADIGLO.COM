@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { User, Shield, Wallet, BarChart2, Trophy, Clock, Settings, Headphones, ChevronRight, ArrowLeft, LogOut, Camera, Edit2, Check, X, Eye, EyeOff, TrendingUp, TrendingDown, Award, Star, Zap, MessageCircle, Send, ChevronDown, Bell, Monitor, Smartphone, AlertCircle, CheckCircle, Info, RotateCcw, CreditCard, DollarSign, Upload, ArrowDownCircle, ArrowUpCircle, List, Copy, Link2, Users, BadgeCheck, Cpu, ShieldCheck, UserCheck, UserX, AlertTriangle, Fingerprint, Activity, Menu } from 'lucide-react';
+import { User, Shield, Wallet, BarChart2, Trophy, Clock, Settings, Headphones, ChevronRight, LogOut, Camera, Edit2, Check, X, Eye, EyeOff, TrendingUp, TrendingDown, Award, Star, Zap, MessageCircle, Send, ChevronDown, Bell, Monitor, Smartphone, AlertCircle, CheckCircle, Info, RotateCcw, CreditCard, DollarSign, Upload, ArrowDownCircle, ArrowUpCircle, List, Copy, Link2, Users, BadgeCheck, Cpu, ShieldCheck, UserCheck, UserX, AlertTriangle, Fingerprint, Activity, Menu } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { useRealtimeDashboard } from '@/lib/hooks/useRealtimeDashboard';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -135,7 +136,7 @@ const NAV_ITEMS: { id: AccountSection; label: string; icon: React.ReactNode; acc
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 
-interface ToastState { message: string; type: 'success' | 'error' | 'info' }
+interface ToastState { message: string; type: 'success\' | \'error\' | \'info' }
 
 function Toast({ toast, onClose }: { toast: ToastState; onClose: () => void }) {
   useEffect(() => {
@@ -1444,6 +1445,15 @@ export default function AccountPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  // ── Supabase Realtime: live wallet balance via shared hook ──────────────────
+  useRealtimeDashboard({
+    userId: userId || null,
+    channelPrefix: 'account-page',
+    onWalletUpdate: (w) => {
+      setWallet({ demoBalance: w.demoBalance, realBalance: w.realBalance });
+    },
+  });
+
   useEffect(() => {
     if (!userId) return;
     const walletSub = supabase.channel(`wallet-${userId}`)
@@ -1534,8 +1544,11 @@ export default function AccountPage() {
 
       <header className="sticky top-0 z-40 flex items-center justify-between px-4 h-14 flex-shrink-0" style={{ background: 'rgba(5,5,5,0.9)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="flex items-center gap-3">
-          <button onClick={() => router.push('/dashboard')} className="flex items-center gap-1.5 text-slate-500 hover:text-white transition-all hover:scale-105 active:scale-95">
-            <ArrowLeft size={17} /><span className="text-xs font-medium hidden sm:block">Dashboard</span>
+          <button onClick={() => router.push('/dashboard')} className="flex items-center gap-1.5 text-slate-500 hover:text-slate-300 text-xs transition-colors group">
+            <svg className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            <span className="hidden sm:block">Back to Trade</span>
           </button>
           <div className="w-px h-5" style={{ background: 'rgba(255,255,255,0.08)' }} />
           <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: '0.06em', fontSize: 14 }} className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 select-none">TRADIGLO</span>

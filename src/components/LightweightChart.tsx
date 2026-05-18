@@ -120,17 +120,71 @@ function toBinanceSymbol(symbol: string): string {
 
 function toTwelveDataSymbol(symbol: string): string {
   const s = symbol.toUpperCase();
+
+  // ── Commodities: use TwelveData-supported symbols ──────────────────────────
   const COMMODITY_MAP: Record<string, string> = {
-    XAUUSD: 'XAU/USD', XAGUSD: 'XAG/USD', USOIL: 'WTI/USD', UKOIL: 'BRENT/USD',
-    NATGAS: 'NATGAS', COPPER: 'COPPER', PLATINUM: 'XPT/USD', PALLADIUM: 'XPD/USD',
-    WHEAT: 'ZW', CORN: 'ZC', SUGAR: 'SB1!', COFFEE: 'KC1!', COCOA: 'CC1!',
-    COTTON: 'CT1!', SOYBEAN: 'ZS', LUMBER: 'LBS1!', ALUMINUM: 'ALI1!', ZINC: 'ZNC1!', NICKEL: 'NI1!',
+    // Precious metals
+    XAUUSD: 'XAU/USD',
+    XAGUSD: 'XAG/USD',
+    PLATINUM: 'XPT/USD',
+    PALLADIUM: 'XPD/USD',
+    // Energy
+    USOIL: 'WTI/USD',
+    UKOIL: 'BRENT/USD',
+    NATGAS: 'NATGAS/USD',
+    // Base metals — TwelveData uses these forex-style symbols
+    COPPER: 'XCU/USD',
+    ALUMINUM: 'XAL/USD',
+    ZINC: 'XZN/USD',
+    NICKEL: 'XNI/USD',
+    // Agricultural — TwelveData commodity symbols
+    WHEAT: 'WHEAT/USD',
+    CORN: 'CORN/USD',
+    SOYBEAN: 'SOYBEAN/USD',
+    SUGAR: 'SUGAR/USD',
+    COFFEE: 'COFFEE/USD',
+    COCOA: 'COCOA/USD',
+    COTTON: 'COTTON/USD',
+    LUMBER: 'LUMBER/USD',
   };
   if (COMMODITY_MAP[s]) return COMMODITY_MAP[s];
-  const STOCK_EXCHANGE_MAP: Record<string, string> = { BABA: 'BABA:NYSE', NIO: 'NIO:NYSE', TSM: 'TSM:NYSE' };
-  if (STOCK_EXCHANGE_MAP[s]) return STOCK_EXCHANGE_MAP[s];
+
+  // ── Stocks: TwelveData uses plain ticker symbols (e.g. GOOGL, not GOOGL:NASDAQ) ──
+  const STOCK_TICKERS = new Set([
+    'AAPL','MSFT','GOOGL','GOOG','AMZN','META','TSLA','NVDA','NFLX',
+    'INTC','AMD','QCOM','CSCO','ADBE','CRM','PYPL','SHOP','SNAP',
+    'UBER','LYFT','ZM','ZOOM','COIN','RBLX','HOOD','PLTR','AFRM',
+    'RIVN','LCID','MSTR','AVGO','TXN','MU','LRCX','KLAC','AMAT',
+    'MRVL','PANW','CRWD','OKTA','DDOG','SNOW','INTU','ADSK','ANSS',
+    'IDXX','ILMN','REGN','BIIB','GILD','AMGN','ISRG','ALGN','DXCM',
+    'MRNA','BNTX','SGEN','COST','SBUX','MDLZ','MNST','KHC','WBA',
+    'FAST','ODFL','CTAS','PAYX','VRSK','CPRT',
+    'JPM','BAC','WFC','C','GS','MS','BLK','AXP','COF','USB','PNC','TFC',
+    'JNJ','PFE','MRK','ABT','ABBV','BMY','LLY','UNH','CVS','CI','HUM','MCK',
+    'XOM','CVX','COP','SLB','EOG','PXD','OXY','VLO','MPC','PSX','HAL','BKR',
+    'BA','LMT','RTX','NOC','GD','LHX','HII',
+    'CAT','DE','HON','MMM','GE','EMR','ETN','PH',
+    'UPS','FDX','DAL','UAL','AAL','LUV','CCL','RCL',
+    'MAR','HLT','H','MGM',
+    'WMT','TGT','HD','LOW','NKE','VFC','PVH','RL',
+    'KO','PEP','MCD','YUM','DPZ','CMG','DRI','DNUT',
+    'T','VZ','TMUS','CMCSA','CHTR','DIS','PARA','WBD','NWSA','FOX','FOXA',
+    'NEE','DUK','SO','D','AEP','EXC','SRE','PCG',
+    'PG','CL','KMB','CHD','CLX','EL','ULTA','COTY',
+    'V','MA','FIS','FISV','SQ','ACIW','WEX','GPN',
+    'BABA','NIO','TSM','SONY','TM','HMC','NSANY','SAP','ASML','ARM','SMCI',
+    'IBM','HPQ','DELL','ACN','NOW','WDAY','VEEV','HUBS','TWLO','ZS','NET',
+    'FSLY','ESTC','MDB','CFLT',
+    'SPGI','MCO','ICE','CME','NDAQ','CBOE','MSCI',
+    'BRK','BRKB','BRKA',
+  ]);
+  if (STOCK_TICKERS.has(s)) return s;
+
+  // ── Currencies: convert 6-char XXXYYY → XXX/YYY ──────────────────────────
   if (s.length === 6 && /^[A-Z]{6}$/.test(s)) return s.slice(0, 3) + '/' + s.slice(3);
   if (s.includes('/')) return s;
+
+  // Fallback: return as-is
   return s;
 }
 
@@ -161,6 +215,7 @@ async function fetchBinanceKlines(binanceSymbol: string, interval: string, limit
 
 // Realistic base prices for common forex pairs and other non-crypto assets
 const FOREX_BASE_PRICES: Record<string, number> = {
+  // Forex pairs
   'AUD/CAD': 0.8950, 'AUD/CHF': 0.5720, 'AUD/JPY': 98.50, 'AUD/NZD': 1.0820,
   'AUD/USD': 0.6480, 'EUR/AUD': 1.6550, 'EUR/CAD': 1.5620, 'EUR/CHF': 0.9420,
   'EUR/GBP': 0.8560, 'EUR/JPY': 162.40, 'EUR/NZD': 1.7980, 'EUR/USD': 1.0850,
@@ -168,7 +223,30 @@ const FOREX_BASE_PRICES: Record<string, number> = {
   'GBP/NZD': 2.1020, 'GBP/USD': 1.2680, 'NZD/CAD': 0.8270, 'NZD/CHF': 0.5280,
   'NZD/JPY': 90.80, 'NZD/USD': 0.5980, 'USD/CAD': 1.3620, 'USD/CHF': 0.8840,
   'USD/JPY': 149.80, 'USD/MXN': 17.20, 'USD/SGD': 1.3420, 'USD/ZAR': 18.60,
-  'XAU/USD': 2320.0, 'XAG/USD': 27.50, 'WTI/USD': 82.50, 'BRENT/USD': 86.20,
+  // Precious metals
+  'XAU/USD': 3300.0, 'XAG/USD': 32.50, 'XPT/USD': 980.0, 'XPD/USD': 1050.0,
+  // Energy
+  'WTI/USD': 78.50, 'BRENT/USD': 82.20, 'NATGAS/USD': 2.85,
+  // Base metals
+  'XCU/USD': 4.50, 'XAL/USD': 2450.0, 'XZN/USD': 2800.0, 'XNI/USD': 16500.0,
+  // Agricultural
+  'WHEAT/USD': 540.0, 'CORN/USD': 440.0, 'SOYBEAN/USD': 1180.0,
+  'SUGAR/USD': 19.50, 'COFFEE/USD': 185.0, 'COCOA/USD': 8500.0,
+  'COTTON/USD': 78.0, 'LUMBER/USD': 520.0,
+  // Stocks — accurate prices (May 2026) used as synthetic fallback when TwelveData is unavailable
+  'AAPL': 213.0, 'MSFT': 450.0, 'GOOGL': 393.0, 'GOOG': 393.0,
+  'AMZN': 215.0, 'META': 620.0, 'TSLA': 340.0, 'NVDA': 135.0,
+  'NFLX': 1180.0, 'AMD': 110.0, 'INTC': 20.0, 'ADBE': 390.0,
+  'CRM': 310.0, 'AVGO': 240.0, 'QCOM': 160.0, 'TXN': 190.0,
+  'MU': 110.0, 'PANW': 190.0, 'CRWD': 420.0, 'SNOW': 160.0,
+  'JPM': 260.0, 'BAC': 45.0, 'WFC': 75.0, 'GS': 620.0,
+  'MS': 130.0, 'V': 360.0, 'MA': 560.0,
+  'ABBV': 210.0, 'JNJ': 160.0, 'PFE': 24.0, 'LLY': 900.0,
+  'UNH': 310.0, 'MRK': 95.0,
+  'XOM': 115.0, 'CVX': 155.0,
+  'WMT': 100.0, 'HD': 390.0, 'KO': 70.0, 'DIS': 105.0,
+  'BABA': 120.0, 'TSM': 195.0, 'NIO': 4.20,
+  'BA': 195.0, 'CAT': 380.0,
 };
 
 function generateSyntheticCandles(symbol: string, interval: string, limit: number): CandlestickData[] {
@@ -184,13 +262,16 @@ function generateSyntheticCandles(symbol: string, interval: string, limit: numbe
   const candleSecs = intervalSeconds[interval] ?? 86400;
 
   let candles: CandlestickData[] = [];
-  let price = basePrice;
+  // Start slightly below basePrice so the walk ends near basePrice
+  let price = basePrice * 0.98;
   const volatility = basePrice * 0.0008; // 0.08% per candle
 
   for (let i = limit - 1; i >= 0; i--) {
     const time = (now - i * candleSecs) as Time;
     const open = price;
-    const change = (Math.random() - 0.5) * 2 * volatility;
+    // Mean-reversion: gently pull price back toward basePrice
+    const meanReversion = (basePrice - price) * 0.02;
+    const change = meanReversion + (Math.random() - 0.5) * 2 * volatility;
     const close = Math.max(open * 0.98, open + change);
     const high = Math.max(open, close) + Math.random() * volatility * 0.5;
     const low = Math.min(open, close) - Math.random() * volatility * 0.5;

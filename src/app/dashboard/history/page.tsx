@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import DashboardTopBar from '@/components/dashboard/DashboardTopBar';
+import { useRealtimeDashboard } from '@/lib/hooks/useRealtimeDashboard';
 
 const supabase = createClient();
 const HISTORY_PAGE_SIZE = 50;
@@ -213,17 +214,15 @@ export default function HistoryPage() {
     fetchTradeHistory('all');
   }, [authChecked, fetchWallet, fetchTradeHistory]);
 
-  // Realtime wallet subscription — same as Trade page
-  useEffect(() => {
-    if (!authChecked || !userId) return;
-    const walletChannel = supabase
-      .channel('history-wallets')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'wallets', filter: `user_id=eq.${userId}` }, () => {
-        fetchWallet();
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(walletChannel); };
-  }, [authChecked, userId, fetchWallet]);
+  // Realtime wallet subscription — replaced by useRealtimeDashboard hook
+  useRealtimeDashboard({
+    userId,
+    channelPrefix: 'history-page',
+    onWalletUpdate: (w) => {
+      setWallet({ demoBalance: w.demoBalance, realBalance: w.realBalance });
+      setWalletLoading(false);
+    },
+  });
 
   // Re-fetch trades when filterMode changes
   useEffect(() => {
@@ -316,12 +315,13 @@ export default function HistoryPage() {
         {/* Header */}
         <div className="flex items-center gap-3 mb-4">
           <button
-            onClick={() => router.back()}
-            className="flex items-center justify-center w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition-colors"
+            onClick={() => router.push('/dashboard')}
+            className="flex items-center gap-1.5 text-slate-500 hover:text-slate-300 text-xs transition-colors group"
           >
-            <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <svg className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
             </svg>
+            Back to Trade
           </button>
           <h1 className="text-sm font-semibold text-white uppercase tracking-wider">Trade History</h1>
           <span className="text-xs text-slate-500 ml-auto">
