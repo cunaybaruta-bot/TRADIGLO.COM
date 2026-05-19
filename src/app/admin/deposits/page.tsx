@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { CheckCircleIcon, XCircleIcon, EyeIcon, GiftIcon } from '@heroicons/react/24/outline';
@@ -204,6 +204,14 @@ function ApproveModal({
 }
 
 export default function DepositsPage() {
+  return (
+    <Suspense fallback={<div className="text-slate-400 text-sm py-10 text-center">Loading...</div>}>
+      <DepositsContent />
+    </Suspense>
+  );
+}
+
+function DepositsContent() {
   const searchParams = useSearchParams();
   const urlStatus = searchParams.get('status');
 

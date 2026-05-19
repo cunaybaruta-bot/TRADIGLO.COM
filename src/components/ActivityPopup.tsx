@@ -44,18 +44,39 @@ function generateAccount(): string {
   return `${prefix}${'*'.repeat(4)}${suffix}`;
 }
 
-function generateAmount(): number {
-  const tier = Math.random();
-  if (tier < 0.35) {
-    return Math.floor(Math.random() * 2500 * 100 + 500 * 100) / 100;
-  } else if (tier < 0.60) {
-    return Math.floor(Math.random() * 12000 * 100 + 3000 * 100) / 100;
-  } else if (tier < 0.80) {
-    return Math.floor(Math.random() * 35000 * 100 + 15000 * 100) / 100;
-  } else if (tier < 0.93) {
-    return Math.floor(Math.random() * 150000 * 100 + 50000 * 100) / 100;
+function generateAmount(type: 'profit' | 'withdrawal'): number {
+  if (type === 'profit') {
+    // Profit: max ~$50,000 — well below leaderboard top profit (~$200k)
+    const tier = Math.random();
+    if (tier < 0.40) {
+      // $500 – $3,000
+      return Math.floor(Math.random() * 2500 * 100 + 500 * 100) / 100;
+    } else if (tier < 0.70) {
+      // $3,000 – $12,000
+      return Math.floor(Math.random() * 9000 * 100 + 3000 * 100) / 100;
+    } else if (tier < 0.90) {
+      // $12,000 – $28,000
+      return Math.floor(Math.random() * 16000 * 100 + 12000 * 100) / 100;
+    } else {
+      // $28,000 – $50,000
+      return Math.floor(Math.random() * 22000 * 100 + 28000 * 100) / 100;
+    }
   } else {
-    return Math.floor(Math.random() * 650000 * 100 + 200000 * 100) / 100;
+    // Withdrawal: max ~$25,000 — well below leaderboard top withdrawal (~$85k)
+    const tier = Math.random();
+    if (tier < 0.40) {
+      // $200 – $2,000
+      return Math.floor(Math.random() * 1800 * 100 + 200 * 100) / 100;
+    } else if (tier < 0.70) {
+      // $2,000 – $8,000
+      return Math.floor(Math.random() * 6000 * 100 + 2000 * 100) / 100;
+    } else if (tier < 0.90) {
+      // $8,000 – $18,000
+      return Math.floor(Math.random() * 10000 * 100 + 8000 * 100) / 100;
+    } else {
+      // $18,000 – $25,000
+      return Math.floor(Math.random() * 7000 * 100 + 18000 * 100) / 100;
+    }
   }
 }
 
@@ -77,7 +98,7 @@ function generateNotification(): ActivityNotification {
     type,
     name: generateName(),
     account: generateAccount(),
-    amount: generateAmount(),
+    amount: generateAmount(type),
     asset: assets[Math.floor(Math.random() * assets.length)],
     timeAgo: timeOptions[Math.floor(Math.random() * timeOptions.length)],
   };
