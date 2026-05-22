@@ -99,15 +99,15 @@ export default function AdminDashboard() {
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
     const [
-      { count: usersCount },
-      { data: activeTraderData },
-      { data: depositsData },
-      { data: withdrawalsData },
-      { count: activeTradesCount },
-      { data: profitData },
-      { data: recentDep },
-      { data: recentWith },
-      { data: recentTrd },
+      usersResult,
+      activeTraderResult,
+      depositsResult,
+      withdrawalsResult,
+      activeTradesResult,
+      profitResult,
+      recentDepResult,
+      recentWithResult,
+      recentTrdResult,
     ] = await Promise.all([
       supabase.from('users').select('*', { count: 'exact', head: true }),
       supabase.from('trades').select('user_id').gte('opened_at', sevenDaysAgo.toISOString()),
@@ -119,6 +119,16 @@ export default function AdminDashboard() {
       supabase.from('withdrawals').select('id, user_id, amount, status, created_at, users(email)').order('created_at', { ascending: false }).limit(5),
       supabase.from('trades').select('id, user_id, order_type, amount, result, profit, opened_at, assets(symbol), users(email)').order('opened_at', { ascending: false }).limit(5),
     ]);
+
+    const usersCount = usersResult.count;
+    const activeTraderData = activeTraderResult.data;
+    const depositsData = depositsResult.data;
+    const withdrawalsData = withdrawalsResult.data;
+    const activeTradesCount = activeTradesResult.count;
+    const profitData = profitResult.data;
+    const recentDep = recentDepResult.data;
+    const recentWith = recentWithResult.data;
+    const recentTrd = recentTrdResult.data;
 
     const uniqueTraders = new Set(activeTraderData?.map((t) => t.user_id) || []);
     const totalDep = depositsData?.reduce((s, d) => s + Number(d.amount), 0) || 0;
@@ -147,12 +157,17 @@ export default function AdminDashboard() {
       const start = new Date(d.getFullYear(), d.getMonth(), d.getDate()).toISOString();
       const end = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59).toISOString();
 
-      const [{ data: depDay }, { data: withDay }, { data: tradeDay }, { data: profitDay }] = await Promise.all([
+      const [depDayResult, withDayResult, tradeDayResult, profitDayResult] = await Promise.all([
         supabase.from('deposits').select('amount').gte('created_at', start).lte('created_at', end),
         supabase.from('withdrawals').select('amount').gte('created_at', start).lte('created_at', end),
         supabase.from('trades').select('amount').gte('opened_at', start).lte('opened_at', end),
         supabase.from('trades').select('profit').eq('result', 'win').gte('opened_at', start).lte('opened_at', end),
       ]);
+
+      const depDay = depDayResult.data;
+      const withDay = withDayResult.data;
+      const tradeDay = tradeDayResult.data;
+      const profitDay = profitDayResult.data;
 
       days.push({
         label: d.toLocaleDateString('default', { weekday: 'short' }),

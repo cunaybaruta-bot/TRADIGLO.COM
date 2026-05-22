@@ -24,14 +24,7 @@ export default function ControlCenterPage() {
 
   const fetchData = useCallback(async () => {
     const supabase = createClient();
-    const [
-      { data: trades },
-      { data: deposits },
-      { data: withdrawals },
-      { count: pendDep },
-      { count: pendWith },
-      { count: openTrd },
-    ] = await Promise.all([
+    const results = await Promise.all([
       supabase.from('trades').select('id, user_id, amount, status, opened_at, users(email)').order('opened_at', { ascending: false }).limit(10),
       supabase.from('deposits').select('id, user_id, amount, status, created_at, users(email)').order('created_at', { ascending: false }).limit(10),
       supabase.from('withdrawals').select('id, user_id, amount, status, created_at, users(email)').order('created_at', { ascending: false }).limit(10),
@@ -39,6 +32,13 @@ export default function ControlCenterPage() {
       supabase.from('withdrawals').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
       supabase.from('trades').select('*', { count: 'exact', head: true }).eq('status', 'open'),
     ]);
+
+    const trades = results[0].data;
+    const deposits = results[1].data;
+    const withdrawals = results[2].data;
+    const pendDep = results[3].count;
+    const pendWith = results[4].count;
+    const openTrd = results[5].count;
 
     const combined: ActivityLog[] = [
       ...(trades || []).map((t: any) => ({ ...t, action: `Trade ${t.status}`, type: 'trade' as const, created_at: t.opened_at })),

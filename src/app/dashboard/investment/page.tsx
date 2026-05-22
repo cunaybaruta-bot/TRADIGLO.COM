@@ -56,80 +56,51 @@ interface Wallet {
   realBalance: number;
 }
 
-// ─── Data ─────────────────────────────────────────────────────────────────────
+// ─── Duration seconds map ─────────────────────────────────────────────────────
 
-const DURATION_OPTIONS: DurationOption[] = [
-  { id: '3h',  label: '3 Hours',  factor: 1.0, seconds: 10800  },
-  { id: '6h',  label: '6 Hours',  factor: 1.4, seconds: 21600  },
-  { id: '12h', label: '12 Hours', factor: 2.0, seconds: 43200  },
-  { id: '1d',  label: '1 Day',    factor: 3.2, seconds: 86400  },
-];
+const DURATION_SECONDS: Record<string, number> = {
+  '3h':  10800,
+  '6h':  21600,
+  '12h': 43200,
+  '1d':  86400,
+};
 
-const TIERS: TierOption[] = [
-  {
-    id: 'basic',
-    label: 'Basic',
+// ─── Tier visual config (static — only colors/styles, not data) ───────────────
+
+const TIER_VISUAL: Record<Tier, Omit<TierOption, 'id' | 'label' | 'packages'>> = {
+  basic: {
     color: '#10b981',
     borderColor: 'rgba(16,185,129,0.4)',
     bgColor: 'rgba(16,185,129,0.07)',
     glowColor: 'rgba(16,185,129,0.3)',
     gradient: 'linear-gradient(135deg, rgba(16,185,129,0.14) 0%, rgba(5,150,105,0.06) 100%)',
     badgeBg: 'rgba(16,185,129,0.18)',
-    packages: [
-      { capital: 100,   baseProfit: 2500  },
-      { capital: 300,   baseProfit: 5000  },
-      { capital: 500,   baseProfit: 10000 },
-      { capital: 1000,  baseProfit: 25000 },
-    ],
   },
-  {
-    id: 'silver',
-    label: 'Silver',
+  silver: {
     color: '#cbd5e1',
     borderColor: 'rgba(203,213,225,0.35)',
     bgColor: 'rgba(203,213,225,0.07)',
     glowColor: 'rgba(203,213,225,0.25)',
     gradient: 'linear-gradient(135deg, rgba(203,213,225,0.12) 0%, rgba(148,163,184,0.06) 100%)',
     badgeBg: 'rgba(203,213,225,0.15)',
-    packages: [
-      { capital: 2000,  baseProfit: 40000  },
-      { capital: 3000,  baseProfit: 65000  },
-      { capital: 5000,  baseProfit: 100000 },
-    ],
   },
-  {
-    id: 'gold',
-    label: 'Gold',
+  gold: {
     color: '#f59e0b',
     borderColor: 'rgba(245,158,11,0.4)',
     bgColor: 'rgba(245,158,11,0.07)',
     glowColor: 'rgba(245,158,11,0.3)',
     gradient: 'linear-gradient(135deg, rgba(245,158,11,0.14) 0%, rgba(217,119,6,0.06) 100%)',
     badgeBg: 'rgba(245,158,11,0.18)',
-    packages: [
-      { capital: 5000,  baseProfit: 85000  },
-      { capital: 7000,  baseProfit: 115000 },
-      { capital: 10000, baseProfit: 160000 },
-      { capital: 15000, baseProfit: 215000 },
-    ],
   },
-  {
-    id: 'diamond',
-    label: 'Diamond',
+  diamond: {
     color: '#38bdf8',
     borderColor: 'rgba(56,189,248,0.4)',
     bgColor: 'rgba(56,189,248,0.07)',
     glowColor: 'rgba(56,189,248,0.3)',
     gradient: 'linear-gradient(135deg, rgba(56,189,248,0.14) 0%, rgba(14,165,233,0.06) 100%)',
     badgeBg: 'rgba(56,189,248,0.18)',
-    packages: [
-      { capital: 20000, baseProfit: 1000000  },
-      { capital: 25000, baseProfit: 1250000  },
-      { capital: 30000, baseProfit: 2100000  },
-      { capital: 60000, baseProfit: 2450000  },
-    ],
   },
-];
+};
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -170,7 +141,6 @@ const FOLLOWERS_BASE: Record<Tier, { min: number; max: number }> = {
   diamond: { min: 7841,   max: 23567  },
 };
 
-// Stable per-tier seed so the initial value never jumps on re-render
 const FOLLOWERS_SEED: Record<Tier, number> = {
   basic:   96714,
   silver:  60537,
@@ -180,39 +150,25 @@ const FOLLOWERS_SEED: Record<Tier, number> = {
 
 function useFollowers(tier: Tier): number {
   const range = FOLLOWERS_BASE[tier];
-  // Use a stable seed as initial value — no random on first render (avoids hydration mismatch)
   const [count, setCount] = useState<number>(FOLLOWERS_SEED[tier]);
 
   useEffect(() => {
-    // Small, gradual tick: ±50 to ±150 per update — never a big jump
     const tick = () => {
       setCount(prev => {
-        const magnitude = 50 + Math.floor(Math.random() * 101); // 50–150
+        const magnitude = 50 + Math.floor(Math.random() * 101);
         const direction = Math.random() < 0.5 ? 1 : -1;
-        const delta = magnitude * direction;
-        const next = prev + delta;
-        // Clamp within range
+        const next = prev + magnitude * direction;
         return Math.min(Math.max(next, range.min), range.max);
       });
     };
 
     const timerRef: { current: ReturnType<typeof setTimeout> | null } = { current: null };
-
-    // Slow interval: 5–9 seconds between each small change
     const scheduleNext = () => {
       const delay = 5000 + Math.random() * 4000;
-      return setTimeout(() => {
-        tick();
-        timerRef.current = scheduleNext();
-      }, delay);
+      return setTimeout(() => { tick(); timerRef.current = scheduleNext(); }, delay);
     };
-
     timerRef.current = scheduleNext();
-
-    return () => {
-      if (timerRef.current !== null) clearTimeout(timerRef.current);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    return () => { if (timerRef.current !== null) clearTimeout(timerRef.current); };
   }, [tier]);
 
   return count;
@@ -234,9 +190,7 @@ function TierFollowersBadge({ tier, color }: { tier: Tier; color: string }) {
         <path strokeLinecap="round" strokeLinejoin="round" d="M23 21v-2a4 4 0 0 0-3-3.87" />
         <path strokeLinecap="round" strokeLinejoin="round" d="M16 3.13a4 4 0 0 1 0 7.75" />
       </svg>
-      <span className="text-sm font-bold tabular-nums" style={{ color: `${color}cc` }}>
-        {fmtFollowers(count)}
-      </span>
+      <span className="text-sm font-bold tabular-nums" style={{ color: `${color}cc` }}>{fmtFollowers(count)}</span>
       <span className="text-xs text-slate-500">followers</span>
     </div>
   );
@@ -329,164 +283,94 @@ function ProfitBreakdown({
   previewNet: number;
 }) {
   return (
-    <div
-      className="rounded-2xl overflow-hidden"
-      style={{
-        background: 'linear-gradient(160deg, #0a0f1e 0%, #060b18 60%, #080d1a 100%)',
-        border: `1px solid ${currentTier.borderColor}`,
-        boxShadow: `0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03), inset 0 1px 0 rgba(255,255,255,0.05)`,
-      }}
-    >
-      {/* Header strip */}
-      <div
-        className="px-4 py-3 flex items-center justify-between"
-        style={{
-          background: `linear-gradient(90deg, ${currentTier.color}18 0%, transparent 100%)`,
-          borderBottom: `1px solid ${currentTier.color}22`,
-        }}
-      >
+    <div className="rounded-2xl overflow-hidden" style={{
+      background: 'linear-gradient(160deg, #0a0f1e 0%, #060b18 60%, #080d1a 100%)',
+      border: `1px solid ${currentTier.borderColor}`,
+      boxShadow: `0 8px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03), inset 0 1px 0 rgba(255,255,255,0.05)`,
+    }}>
+      <div className="px-4 py-3 flex items-center justify-between" style={{
+        background: `linear-gradient(90deg, ${currentTier.color}18 0%, transparent 100%)`,
+        borderBottom: `1px solid ${currentTier.color}22`,
+      }}>
         <div className="flex items-center gap-2.5">
-          <div
-            className="w-6 h-6 rounded-lg flex items-center justify-center"
-            style={{ background: currentTier.badgeBg, border: `1px solid ${currentTier.borderColor}` }}
-          >
+          <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: currentTier.badgeBg, border: `1px solid ${currentTier.borderColor}` }}>
             <span style={{ color: currentTier.color }}><TierIcon tier={currentTier.id} /></span>
           </div>
-          <span
-            className="text-[11px] font-bold uppercase tracking-[0.15em]"
-            style={{ color: currentTier.color, fontFamily: "'DM Sans', sans-serif", letterSpacing: '0.15em' }}
-          >
-            Profit Breakdown
-          </span>
+          <span className="text-[11px] font-bold uppercase tracking-[0.15em]" style={{ color: currentTier.color }}>Profit Breakdown</span>
         </div>
-        <span
-          className="text-[9px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider"
-          style={{ background: `${currentTier.color}18`, color: currentTier.color, border: `1px solid ${currentTier.color}30` }}
-        >
+        <span className="text-[9px] px-2 py-0.5 rounded-full font-semibold uppercase tracking-wider" style={{ background: `${currentTier.color}18`, color: currentTier.color, border: `1px solid ${currentTier.color}30` }}>
           {currentDur.label}
         </span>
       </div>
 
-      {/* Body */}
       <div className="px-4 py-4 flex flex-col gap-0">
-        {/* Capital row */}
-        <div
-          className="flex justify-between items-center py-2.5 px-3 rounded-xl mb-1"
-          style={{ background: 'rgba(255,255,255,0.025)' }}
-        >
+        <div className="flex justify-between items-center py-2.5 px-3 rounded-xl mb-1" style={{ background: 'rgba(255,255,255,0.025)' }}>
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-slate-600" />
-            <span className="text-[11px] text-slate-400" style={{ fontFamily: "'DM Sans', sans-serif" }}>Capital Invested</span>
+            <span className="text-[11px] text-slate-400">Capital Invested</span>
           </div>
-          <span className="text-[12px] font-bold text-slate-200" style={{ fontFamily: "'DM Sans', sans-serif" }}>{fmtFull(selectedCapital)}</span>
+          <span className="text-[12px] font-bold text-slate-200">{fmtFull(selectedCapital)}</span>
         </div>
 
-        {/* Duration row */}
-        <div
-          className="flex justify-between items-center py-2.5 px-3 rounded-xl mb-2"
-          style={{ background: 'rgba(255,255,255,0.025)' }}
-        >
+        <div className="flex justify-between items-center py-2.5 px-3 rounded-xl mb-2" style={{ background: 'rgba(255,255,255,0.025)' }}>
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-slate-600" />
-            <span className="text-[11px] text-slate-400" style={{ fontFamily: "'DM Sans', sans-serif" }}>Duration</span>
+            <span className="text-[11px] text-slate-400">Duration</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="text-[12px] font-bold text-slate-200" style={{ fontFamily: "'DM Sans', sans-serif" }}>{currentDur.label}</span>
-            <span
-              className="text-[9px] px-1.5 py-0.5 rounded-md font-bold"
-              style={{ background: `${currentTier.color}18`, color: `${currentTier.color}cc`, fontFamily: "'DM Sans', sans-serif" }}
-            >
-              x{currentDur.factor}
-            </span>
+            <span className="text-[12px] font-bold text-slate-200">{currentDur.label}</span>
+            <span className="text-[9px] px-1.5 py-0.5 rounded-md font-bold" style={{ background: `${currentTier.color}18`, color: `${currentTier.color}cc` }}>x{currentDur.factor}</span>
           </div>
         </div>
 
-        {/* Divider */}
         <div className="relative flex items-center mb-2">
           <div className="flex-1 h-px" style={{ background: `linear-gradient(90deg, transparent, ${currentTier.color}30, transparent)` }} />
-          <span className="mx-2 text-[9px] text-slate-700 uppercase tracking-widest" style={{ fontFamily: "'DM Sans', sans-serif" }}>returns</span>
+          <span className="mx-2 text-[9px] text-slate-700 uppercase tracking-widest">returns</span>
           <div className="flex-1 h-px" style={{ background: `linear-gradient(90deg, transparent, ${currentTier.color}30, transparent)` }} />
         </div>
 
-        {/* Gross Profit */}
-        <div
-          className="flex justify-between items-center py-2.5 px-3 rounded-xl mb-1"
-          style={{ background: `${currentTier.color}0d`, border: `1px solid ${currentTier.color}18` }}
-        >
+        <div className="flex justify-between items-center py-2.5 px-3 rounded-xl mb-1" style={{ background: `${currentTier.color}0d`, border: `1px solid ${currentTier.color}18` }}>
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full" style={{ background: currentTier.color }} />
-            <span className="text-[11px] text-slate-400" style={{ fontFamily: "'DM Sans', sans-serif" }}>Gross Profit</span>
+            <span className="text-[11px] text-slate-400">Gross Profit</span>
           </div>
-          <span className="text-[13px] font-extrabold" style={{ color: currentTier.color, fontFamily: "'DM Sans', sans-serif" }}>
-            +{fmtFull(previewGrossProfit)}
-          </span>
+          <span className="text-[13px] font-extrabold" style={{ color: currentTier.color }}>+{fmtFull(previewGrossProfit)}</span>
         </div>
 
-        {/* Platform Fee */}
-        <div
-          className="flex justify-between items-center py-2.5 px-3 rounded-xl mb-2"
-          style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.12)' }}
-        >
+        <div className="flex justify-between items-center py-2.5 px-3 rounded-xl mb-2" style={{ background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.12)' }}>
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-            <span className="text-[11px] text-slate-400" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-              Platform Fee
-              <span className="ml-1.5 text-[9px] text-slate-700 font-normal">(20%)</span>
-            </span>
+            <span className="text-[11px] text-slate-400">Platform Fee <span className="ml-1.5 text-[9px] text-slate-700 font-normal">(20%)</span></span>
           </div>
-          <span className="text-[13px] font-extrabold text-rose-400" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-            -{fmtFull(previewFee)}
-          </span>
+          <span className="text-[13px] font-extrabold text-rose-400">-{fmtFull(previewFee)}</span>
         </div>
 
-        {/* Net Profit highlight */}
-        <div
-          className="flex justify-between items-center py-3 px-3 rounded-xl mb-3"
-          style={{
-            background: 'linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(5,150,105,0.06) 100%)',
-            border: '1px solid rgba(16,185,129,0.25)',
-            boxShadow: '0 0 20px rgba(16,185,129,0.08)',
-          }}
-        >
+        <div className="flex justify-between items-center py-3 px-3 rounded-xl mb-3" style={{
+          background: 'linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(5,150,105,0.06) 100%)',
+          border: '1px solid rgba(16,185,129,0.25)',
+          boxShadow: '0 0 20px rgba(16,185,129,0.08)',
+        }}>
           <div className="flex items-center gap-2">
             <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-            <span className="text-[12px] font-bold text-white" style={{ fontFamily: "'DM Sans', sans-serif" }}>Net Profit</span>
+            <span className="text-[12px] font-bold text-white">Net Profit</span>
           </div>
-          <span className="text-[18px] font-black text-emerald-400" style={{ fontFamily: "'DM Sans', sans-serif", letterSpacing: '-0.02em' }}>
-            {fmtFull(previewNet)}
-          </span>
+          <span className="text-[18px] font-black text-emerald-400">{fmtFull(previewNet)}</span>
         </div>
 
-        {/* Total Return — premium panel */}
-        <div
-          className="rounded-xl p-4 relative overflow-hidden"
-          style={{
-            background: 'linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(5,150,105,0.08) 50%, rgba(16,185,129,0.05) 100%)',
-            border: '1px solid rgba(16,185,129,0.3)',
-            boxShadow: '0 4px 24px rgba(16,185,129,0.12), inset 0 1px 0 rgba(255,255,255,0.06)',
-          }}
-        >
-          {/* Glow orb */}
-          <div
-            className="absolute -top-6 -right-6 w-24 h-24 rounded-full pointer-events-none"
-            style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%)' }}
-          />
+        <div className="rounded-xl p-4 relative overflow-hidden" style={{
+          background: 'linear-gradient(135deg, rgba(16,185,129,0.15) 0%, rgba(5,150,105,0.08) 50%, rgba(16,185,129,0.05) 100%)',
+          border: '1px solid rgba(16,185,129,0.3)',
+          boxShadow: '0 4px 24px rgba(16,185,129,0.12), inset 0 1px 0 rgba(255,255,255,0.06)',
+        }}>
+          <div className="absolute -top-6 -right-6 w-24 h-24 rounded-full pointer-events-none" style={{ background: 'radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%)' }} />
           <div className="relative flex justify-between items-center">
             <div>
-              <p className="text-[9px] text-emerald-500/70 uppercase tracking-[0.18em] font-semibold mb-1" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-                Total Return
-              </p>
-              <p className="text-[10px] text-slate-500" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-                Capital + Net Profit
-              </p>
+              <p className="text-[9px] text-emerald-500/70 uppercase tracking-[0.18em] font-semibold mb-1">Total Return</p>
+              <p className="text-[10px] text-slate-500">Capital + Net Profit</p>
             </div>
             <div className="text-right">
-              <p className="text-[22px] font-black text-emerald-300 leading-none" style={{ fontFamily: "'DM Sans', sans-serif", letterSpacing: '-0.03em' }}>
-                {fmtFull(selectedCapital + previewNet)}
-              </p>
-              <p className="text-[10px] text-emerald-500/60 mt-0.5" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-                +{(((selectedCapital + previewNet) / selectedCapital - 1) * 100).toFixed(0)}% ROI
-              </p>
+              <p className="text-[22px] font-black text-emerald-300 leading-none">{fmtFull(selectedCapital + previewNet)}</p>
+              <p className="text-[10px] text-emerald-500/60 mt-0.5">+{(((selectedCapital + previewNet) / selectedCapital - 1) * 100).toFixed(0)}% ROI</p>
             </div>
           </div>
         </div>
@@ -497,12 +381,7 @@ function ProfitBreakdown({
 
 // ─── Join Button ──────────────────────────────────────────────────────────────
 
-function JoinButton({
-  selectedCapital,
-  joining,
-  currentTier,
-  onJoin,
-}: {
+function JoinButton({ selectedCapital, joining, currentTier, onJoin }: {
   selectedCapital: number | null;
   joining: boolean;
   currentTier: TierOption;
@@ -524,104 +403,38 @@ function JoinButton({
         border: '1px solid rgba(255,255,255,0.08)',
       }}
     >
-      {/* Subtle top sheen */}
       {isReady && (
-        <div
-          className="absolute inset-x-0 top-0 h-[1px] pointer-events-none"
-          style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%)' }}
-        />
+        <div className="absolute inset-x-0 top-0 h-[1px] pointer-events-none" style={{ background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.35) 50%, transparent 100%)' }} />
+      )}
+      {isReady && (
+        <div className="absolute inset-0 pointer-events-none" style={{ background: `linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.09) 50%, transparent 70%)`, animation: 'shimmer 2.8s ease-in-out infinite' }} />
       )}
 
-      {/* Shimmer sweep */}
-      {isReady && (
-        <div
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            background: `linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.09) 50%, transparent 70%)`,
-            animation: 'shimmer 2.8s ease-in-out infinite',
-          }}
-        />
-      )}
-
-      <div
-        className="relative flex items-center px-5 py-[14px]"
-        style={{ fontFamily: "'DM Sans', sans-serif" }}
-      >
+      <div className="relative flex items-center px-5 py-[14px]">
         {joining ? (
           <div className="flex items-center justify-center w-full gap-3">
-            <span
-              className="w-[18px] h-[18px] rounded-full border-2 border-t-transparent animate-spin flex-shrink-0"
-              style={{ borderColor: 'rgba(0,0,0,0.5)', borderTopColor: 'transparent' }}
-            />
+            <span className="w-[18px] h-[18px] rounded-full border-2 border-t-transparent animate-spin flex-shrink-0" style={{ borderColor: 'rgba(0,0,0,0.5)', borderTopColor: 'transparent' }} />
             <span className="text-[13px] font-semibold text-black/70 tracking-wide">Processing…</span>
           </div>
         ) : isReady ? (
           <>
-            {/* Left: Icon */}
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mr-3.5"
-              style={{
-                background: 'rgba(0,0,0,0.18)',
-                border: '1px solid rgba(0,0,0,0.12)',
-                boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
-              }}
-            >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="rgba(0,0,0,0.75)"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
+            <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mr-3.5" style={{ background: 'rgba(0,0,0,0.18)', border: '1px solid rgba(0,0,0,0.12)', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.75)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
-
-            {/* Center: Text */}
             <div className="flex flex-col text-left flex-1 min-w-0">
-              <span
-                className="text-[14px] font-bold leading-snug tracking-[0.01em]"
-                style={{ color: 'rgba(0,0,0,0.85)' }}
-              >
-                Join {currentTier.label} Package
-              </span>
-              <span
-                className="text-[11px] font-medium leading-snug mt-[1px]"
-                style={{ color: 'rgba(0,0,0,0.50)' }}
-              >
-                {fmtFull(selectedCapital!)} &nbsp;&bull;&nbsp; Activate Now
-              </span>
+              <span className="text-[14px] font-bold leading-snug tracking-[0.01em]" style={{ color: 'rgba(0,0,0,0.85)' }}>Join {currentTier.label} Package</span>
+              <span className="text-[11px] font-medium leading-snug mt-[1px]" style={{ color: 'rgba(0,0,0,0.50)' }}>{fmtFull(selectedCapital!)} &nbsp;&bull;&nbsp; Activate Now</span>
             </div>
-
-            {/* Right: Arrow */}
-            <div
-              className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ml-3"
-              style={{
-                background: 'rgba(0,0,0,0.12)',
-                border: '1px solid rgba(0,0,0,0.08)',
-              }}
-            >
-              <svg
-                width="13"
-                height="13"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="rgba(0,0,0,0.60)"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              >
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 ml-3" style={{ background: 'rgba(0,0,0,0.12)', border: '1px solid rgba(0,0,0,0.08)', boxShadow: '0 1px 3px rgba(0,0,0,0.15)' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(0,0,0,0.60)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M9 18l6-6-6-6" />
               </svg>
             </div>
           </>
         ) : (
-          <span className="w-full text-center text-[13px] font-semibold text-slate-500 tracking-wide py-0.5">
-            Select a Package to Continue
-          </span>
+          <span className="w-full text-center text-[13px] font-semibold text-slate-500 tracking-wide py-0.5">Select a Package to Continue</span>
         )}
       </div>
     </button>
@@ -648,6 +461,11 @@ export default function InvestmentPackagePage() {
   const [historyPackages, setHistoryPackages] = useState<InvestmentPackage[]>([]);
   const [packagesLoading, setPackagesLoading] = useState(true);
 
+  // ── Dynamic tier/duration configs from Supabase ───────────────────────────
+  const [tiers, setTiers] = useState<TierOption[]>([]);
+  const [durationOptions, setDurationOptions] = useState<DurationOption[]>([]);
+  const [configsLoading, setConfigsLoading] = useState(true);
+
   const [selectedTier, setSelectedTier] = useState<Tier>('basic');
   const [selectedCapital, setSelectedCapital] = useState<number | null>(null);
   const [selectedDuration, setSelectedDuration] = useState<Duration>('3h');
@@ -655,6 +473,65 @@ export default function InvestmentPackagePage() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   const [tab, setTab] = useState<'packages' | 'active' | 'history'>('packages');
+
+  // ── Load tier/duration configs from Supabase ──────────────────────────────
+
+  const loadConfigs = useCallback(async () => {
+    setConfigsLoading(true);
+    try {
+      const [tierRes, durRes] = await Promise.all([
+        supabase
+          .from('investment_tier_configs')
+          .select('*')
+          .eq('is_enabled', true)
+          .order('sort_order', { ascending: true }),
+        supabase
+          .from('investment_duration_configs')
+          .select('*')
+          .eq('is_enabled', true)
+          .order('sort_order', { ascending: true }),
+      ]);
+
+      if (tierRes.data && tierRes.data.length > 0) {
+        // Group packages by tier
+        const tierMap: Record<string, PackageOption[]> = {};
+        for (const row of tierRes.data) {
+          if (!tierMap[row.tier]) tierMap[row.tier] = [];
+          tierMap[row.tier].push({ capital: Number(row.capital_usd), baseProfit: Number(row.base_profit) });
+        }
+
+        const tierOrder: Tier[] = ['basic', 'silver', 'gold', 'diamond'];
+        const builtTiers: TierOption[] = tierOrder
+          .filter(t => tierMap[t] && tierMap[t].length > 0)
+          .map(t => ({
+            id: t,
+            label: t.charAt(0).toUpperCase() + t.slice(1),
+            ...TIER_VISUAL[t],
+            packages: tierMap[t],
+          }));
+
+        setTiers(builtTiers);
+        if (builtTiers.length > 0) setSelectedTier(builtTiers[0].id);
+      }
+
+      if (durRes.data && durRes.data.length > 0) {
+        const builtDurs: DurationOption[] = durRes.data.map(r => ({
+          id: r.duration_id as Duration,
+          label: r.label,
+          factor: Number(r.factor),
+          seconds: DURATION_SECONDS[r.duration_id] ?? 10800,
+        }));
+        setDurationOptions(builtDurs);
+        if (builtDurs.length > 0) setSelectedDuration(builtDurs[0].id);
+      }
+    } catch {
+      // silently fall back — page still renders
+    } finally {
+      setConfigsLoading(false);
+    }
+  }, [supabase]);
+
+  useEffect(() => { loadConfigs(); }, [loadConfigs]);
 
   // ── Auth ──────────────────────────────────────────────────────────────────
 
@@ -698,7 +575,6 @@ export default function InvestmentPackagePage() {
     setPackagesLoading(true);
     try {
       await supabase.rpc('settle_expired_investment_packages');
-
       const { data } = await supabase
         .from('investment_packages')
         .select('*')
@@ -720,7 +596,6 @@ export default function InvestmentPackagePage() {
     }
   }, [authChecked, userId, fetchWallet, fetchPackages]);
 
-  // ── Supabase Realtime: live wallet balance updates ──────────────────────────
   useRealtimeDashboard({
     userId,
     channelPrefix: 'investment-page',
@@ -735,9 +610,13 @@ export default function InvestmentPackagePage() {
   const handleJoin = async () => {
     if (!userId || selectedCapital === null) return;
 
-    const tier = TIERS.find(t => t.id === selectedTier)!;
-    const pkg = tier.packages.find(p => p.capital === selectedCapital)!;
-    const dur = DURATION_OPTIONS.find(d => d.id === selectedDuration)!;
+    const tier = tiers.find(t => t.id === selectedTier);
+    if (!tier) return;
+    const pkg = tier.packages.find(p => p.capital === selectedCapital);
+    if (!pkg) return;
+    const dur = durationOptions.find(d => d.id === selectedDuration);
+    if (!dur) return;
+
     const grossProfit = getProfit(pkg.baseProfit, dur.factor);
     const realBalance = wallet?.realBalance ?? 0;
 
@@ -783,18 +662,19 @@ export default function InvestmentPackagePage() {
 
   // ── Derived ───────────────────────────────────────────────────────────────
 
-  const currentTier = TIERS.find(t => t.id === selectedTier)!;
-  const currentDur = DURATION_OPTIONS.find(d => d.id === selectedDuration)!;
-  const selectedPkg = currentTier.packages.find(p => p.capital === selectedCapital);
-  const previewGrossProfit = selectedPkg ? getProfit(selectedPkg.baseProfit, currentDur.factor) : null;
+  const currentTier = tiers.find(t => t.id === selectedTier) ?? tiers[0];
+  const currentDur = durationOptions.find(d => d.id === selectedDuration) ?? durationOptions[0];
+  const selectedPkg = currentTier?.packages.find(p => p.capital === selectedCapital);
+  const previewGrossProfit = selectedPkg && currentDur ? getProfit(selectedPkg.baseProfit, currentDur.factor) : null;
   const previewFee = previewGrossProfit ? Math.round(previewGrossProfit * 0.2) : null;
   const previewNet = previewGrossProfit && previewFee ? previewGrossProfit - previewFee : null;
 
   // ── Render ────────────────────────────────────────────────────────────────
 
+  const isLoading = configsLoading;
+
   return (
     <div className="min-h-screen text-white flex flex-col" style={{ background: 'linear-gradient(160deg, #060810 0%, #080b12 50%, #060810 100%)' }}>
-      {/* DM Sans font */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap');
         @keyframes shimmer {
@@ -886,171 +766,177 @@ export default function InvestmentPackagePage() {
         {/* ── PACKAGES TAB ── */}
         {tab === 'packages' && (
           <div className="flex flex-col gap-5">
-
-            {/* Tier Selector */}
-            <div className="grid grid-cols-4 gap-2">
-              {TIERS.map(tier => (
-                <button
-                  key={tier.id}
-                  onClick={() => { setSelectedTier(tier.id); setSelectedCapital(null); }}
-                  className="relative py-3 rounded-xl text-xs font-bold transition-all overflow-hidden"
-                  style={{
-                    border: `1px solid ${selectedTier === tier.id ? tier.color : 'rgba(255,255,255,0.07)'}`,
-                    background: selectedTier === tier.id ? tier.gradient : 'rgba(255,255,255,0.03)',
-                    color: selectedTier === tier.id ? tier.color : '#475569',
-                    boxShadow: selectedTier === tier.id ? `0 0 16px ${tier.glowColor}, inset 0 1px 0 rgba(255,255,255,0.05)` : 'none',
-                  }}
-                >
-                  <div className="flex flex-col items-center gap-1">
-                    <span style={{ color: selectedTier === tier.id ? tier.color : '#475569' }}>
-                      <TierIcon tier={tier.id} />
-                    </span>
-                    <span>{tier.label}</span>
-                  </div>
-                  {selectedTier === tier.id && (
-                    <div className="absolute bottom-0 left-0 right-0 h-0.5 rounded-b-xl" style={{ background: tier.color, opacity: 0.6 }} />
-                  )}
-                </button>
-              ))}
-            </div>
-
-            {/* Tier Info Banner */}
-            <div
-              className="rounded-xl p-4"
-              style={{
-                background: currentTier.gradient,
-                border: `1px solid ${currentTier.borderColor}`,
-                boxShadow: `0 4px 20px ${currentTier.glowColor}`,
-              }}
-            >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: currentTier.badgeBg, border: `1px solid ${currentTier.borderColor}` }}>
-                    <span style={{ color: currentTier.color }}>
-                      <TierIcon tier={currentTier.id} />
-                    </span>
-                  </div>
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-widest" style={{ color: currentTier.color }}>
-                      {currentTier.label} Tier
-                    </p>
-                    <p className="text-[10px] text-slate-500 mt-0.5">
-                      From {fmt(currentTier.packages[0].capital)} &middot; {currentTier.packages.length} options
-                    </p>
-                    <div className="mt-1.5">
-                      <TierFollowersBadge tier={currentTier.id} color={currentTier.color} />
-                    </div>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-[9px] text-slate-600 uppercase tracking-wider">Max Profit</p>
-                  <p className="text-sm font-extrabold" style={{ color: currentTier.color }}>
-                    {fmt(getProfit(currentTier.packages[currentTier.packages.length - 1].baseProfit, 3.2))}
-                  </p>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <div className="flex flex-col items-center gap-3">
+                  <div className="w-6 h-6 border-2 border-sky-500 border-t-transparent rounded-full animate-spin" />
+                  <p className="text-slate-500 text-xs">Loading packages…</p>
                 </div>
               </div>
-            </div>
+            ) : tiers.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-3">
+                <p className="text-slate-500 text-sm">No investment packages available</p>
+                <p className="text-slate-600 text-xs">Please check back later</p>
+              </div>
+            ) : (
+              <>
+                {/* Tier Selector */}
+                <div className="grid grid-cols-4 gap-2">
+                  {tiers.map(tier => (
+                    <button
+                      key={tier.id}
+                      onClick={() => { setSelectedTier(tier.id); setSelectedCapital(null); }}
+                      className="relative py-3 rounded-xl text-xs font-bold transition-all overflow-hidden"
+                      style={{
+                        border: `1px solid ${selectedTier === tier.id ? tier.color : 'rgba(255,255,255,0.07)'}`,
+                        background: selectedTier === tier.id ? tier.gradient : 'rgba(255,255,255,0.03)',
+                        color: selectedTier === tier.id ? tier.color : '#475569',
+                        boxShadow: selectedTier === tier.id ? `0 0 16px ${tier.glowColor}, inset 0 1px 0 rgba(255,255,255,0.05)` : 'none',
+                      }}
+                    >
+                      <div className="flex flex-col items-center gap-1">
+                        <span style={{ color: selectedTier === tier.id ? tier.color : '#475569' }}>
+                          <TierIcon tier={tier.id} />
+                        </span>
+                        <span>{tier.label}</span>
+                      </div>
+                      {selectedTier === tier.id && (
+                        <div className="absolute bottom-0 left-0 right-0 h-0.5 rounded-b-xl" style={{ background: tier.color, opacity: 0.6 }} />
+                      )}
+                    </button>
+                  ))}
+                </div>
 
-            {/* Capital Selection */}
-            <div>
-              <p className="text-[10px] text-slate-600 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
-                <span className="w-3 h-px bg-slate-700 inline-block" />
-                Select Capital Amount
-                <span className="w-3 h-px bg-slate-700 inline-block" />
-              </p>
-              <div className="grid grid-cols-2 gap-2">
-                {currentTier.packages.map(pkg => (
-                  <button
-                    key={pkg.capital}
-                    onClick={() => setSelectedCapital(pkg.capital)}
-                    className="rounded-xl p-3.5 text-left transition-all relative overflow-hidden"
-                    style={{
-                      border: `1px solid ${selectedCapital === pkg.capital ? currentTier.color : 'rgba(255,255,255,0.07)'}`,
-                      background: selectedCapital === pkg.capital
-                        ? currentTier.gradient
-                        : 'rgba(255,255,255,0.03)',
-                      boxShadow: selectedCapital === pkg.capital ? `0 0 14px ${currentTier.glowColor}` : 'none',
-                    }}
-                  >
-                    {selectedCapital === pkg.capital && (
-                      <div className="absolute top-2 right-2 w-4 h-4 rounded-full flex items-center justify-center" style={{ background: currentTier.color }}>
-                        <svg className="w-2.5 h-2.5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
+                {currentTier && (
+                  <>
+                    {/* Tier Info Banner */}
+                    <div className="rounded-xl p-4" style={{
+                      background: currentTier.gradient,
+                      border: `1px solid ${currentTier.borderColor}`,
+                      boxShadow: `0 4px 20px ${currentTier.glowColor}`,
+                    }}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: currentTier.badgeBg, border: `1px solid ${currentTier.borderColor}` }}>
+                            <span style={{ color: currentTier.color }}><TierIcon tier={currentTier.id} /></span>
+                          </div>
+                          <div>
+                            <p className="text-xs font-bold uppercase tracking-widest" style={{ color: currentTier.color }}>{currentTier.label} Tier</p>
+                            <p className="text-[10px] text-slate-500 mt-0.5">From {fmt(currentTier.packages[0].capital)} &middot; {currentTier.packages.length} options</p>
+                            <div className="mt-1.5">
+                              <TierFollowersBadge tier={currentTier.id} color={currentTier.color} />
+                            </div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[9px] text-slate-600 uppercase tracking-wider">Max Profit</p>
+                          <p className="text-sm font-extrabold" style={{ color: currentTier.color }}>
+                            {fmt(getProfit(currentTier.packages[currentTier.packages.length - 1].baseProfit, durationOptions[durationOptions.length - 1]?.factor ?? 3.2))}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Capital Selection */}
+                    <div>
+                      <p className="text-[10px] text-slate-600 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
+                        <span className="w-3 h-px bg-slate-700 inline-block" />
+                        Select Capital Amount
+                        <span className="w-3 h-px bg-slate-700 inline-block" />
+                      </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        {currentTier.packages.map(pkg => (
+                          <button
+                            key={pkg.capital}
+                            onClick={() => setSelectedCapital(pkg.capital)}
+                            className="rounded-xl p-3.5 text-left transition-all relative overflow-hidden"
+                            style={{
+                              border: `1px solid ${selectedCapital === pkg.capital ? currentTier.color : 'rgba(255,255,255,0.07)'}`,
+                              background: selectedCapital === pkg.capital ? currentTier.gradient : 'rgba(255,255,255,0.03)',
+                              boxShadow: selectedCapital === pkg.capital ? `0 0 14px ${currentTier.glowColor}` : 'none',
+                            }}
+                          >
+                            {selectedCapital === pkg.capital && (
+                              <div className="absolute top-2 right-2 w-4 h-4 rounded-full flex items-center justify-center" style={{ background: currentTier.color }}>
+                                <svg className="w-2.5 h-2.5 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                              </div>
+                            )}
+                            <p className="text-sm font-extrabold text-white">{fmtFull(pkg.capital)}</p>
+                            <p className="text-[10px] mt-1 font-medium" style={{ color: currentTier.color }}>
+                              up to {fmt(getProfit(pkg.baseProfit, durationOptions[durationOptions.length - 1]?.factor ?? 3.2))} profit
+                            </p>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Duration Selection */}
+                    {durationOptions.length > 0 && (
+                      <div>
+                        <p className="text-[10px] text-slate-600 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
+                          <span className="w-3 h-px bg-slate-700 inline-block" />
+                          Select Duration
+                          <span className="w-3 h-px bg-slate-700 inline-block" />
+                        </p>
+                        <div className="grid grid-cols-4 gap-2">
+                          {durationOptions.map(dur => (
+                            <button
+                              key={dur.id}
+                              onClick={() => setSelectedDuration(dur.id)}
+                              className="rounded-xl py-3 text-center transition-all relative overflow-hidden"
+                              style={{
+                                border: `1px solid ${selectedDuration === dur.id ? currentTier.color : 'rgba(255,255,255,0.07)'}`,
+                                background: selectedDuration === dur.id ? currentTier.gradient : 'rgba(255,255,255,0.03)',
+                                boxShadow: selectedDuration === dur.id ? `0 0 12px ${currentTier.glowColor}` : 'none',
+                              }}
+                            >
+                              <p className="text-xs font-bold" style={{ color: selectedDuration === dur.id ? currentTier.color : '#64748b' }}>{dur.label}</p>
+                              <p className="text-[9px] mt-0.5 font-semibold" style={{ color: selectedDuration === dur.id ? `${currentTier.color}99` : '#334155' }}>x{dur.factor}</p>
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     )}
-                    <p className="text-sm font-extrabold text-white">{fmtFull(pkg.capital)}</p>
-                    <p className="text-[10px] mt-1 font-medium" style={{ color: currentTier.color }}>
-                      up to {fmt(getProfit(pkg.baseProfit, 3.2))} profit
-                    </p>
-                  </button>
-                ))}
-              </div>
-            </div>
 
-            {/* Duration Selection */}
-            <div>
-              <p className="text-[10px] text-slate-600 uppercase tracking-widest mb-2.5 flex items-center gap-1.5">
-                <span className="w-3 h-px bg-slate-700 inline-block" />
-                Select Duration
-                <span className="w-3 h-px bg-slate-700 inline-block" />
-              </p>
-              <div className="grid grid-cols-4 gap-2">
-                {DURATION_OPTIONS.map(dur => (
-                  <button
-                    key={dur.id}
-                    onClick={() => setSelectedDuration(dur.id)}
-                    className="rounded-xl py-3 text-center transition-all relative overflow-hidden"
-                    style={{
-                      border: `1px solid ${selectedDuration === dur.id ? currentTier.color : 'rgba(255,255,255,0.07)'}`,
-                      background: selectedDuration === dur.id ? currentTier.gradient : 'rgba(255,255,255,0.03)',
-                      boxShadow: selectedDuration === dur.id ? `0 0 12px ${currentTier.glowColor}` : 'none',
-                    }}
-                  >
-                    <p className="text-xs font-bold" style={{ color: selectedDuration === dur.id ? currentTier.color : '#64748b' }}>
-                      {dur.label}
-                    </p>
-                    <p className="text-[9px] mt-0.5 font-semibold" style={{ color: selectedDuration === dur.id ? `${currentTier.color}99` : '#334155' }}>
-                      x{dur.factor}
-                    </p>
-                  </button>
-                ))}
-              </div>
-            </div>
+                    {/* Profit Preview */}
+                    {selectedCapital !== null && previewGrossProfit !== null && previewFee !== null && previewNet !== null && currentDur && (
+                      <ProfitBreakdown
+                        selectedCapital={selectedCapital}
+                        currentTier={currentTier}
+                        currentDur={currentDur}
+                        previewGrossProfit={previewGrossProfit}
+                        previewFee={previewFee}
+                        previewNet={previewNet}
+                      />
+                    )}
 
-            {/* Profit Preview — redesigned */}
-            {selectedCapital !== null && previewGrossProfit !== null && previewFee !== null && previewNet !== null && (
-              <ProfitBreakdown
-                selectedCapital={selectedCapital}
-                currentTier={currentTier}
-                currentDur={currentDur}
-                previewGrossProfit={previewGrossProfit}
-                previewFee={previewFee}
-                previewNet={previewNet}
-              />
+                    {/* Warning */}
+                    <div className="rounded-xl p-3.5" style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.18)' }}>
+                      <div className="flex items-start gap-2.5">
+                        <div className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'rgba(245,158,11,0.15)' }}>
+                          <svg className="w-3 h-3 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                          </svg>
+                        </div>
+                        <p className="text-[10px] text-amber-400/70 leading-relaxed">
+                          Investment packages <strong className="text-amber-400">cannot be cancelled</strong> once joined. Capital is locked until the duration expires. A 20% platform fee is deducted from gross profit.
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Join Button */}
+                    <JoinButton
+                      selectedCapital={selectedCapital}
+                      joining={joining}
+                      currentTier={currentTier}
+                      onJoin={handleJoin}
+                    />
+                  </>
+                )}
+              </>
             )}
-
-            {/* Warning */}
-            <div className="rounded-xl p-3.5" style={{ background: 'rgba(245,158,11,0.05)', border: '1px solid rgba(245,158,11,0.18)' }}>
-              <div className="flex items-start gap-2.5">
-                <div className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 mt-0.5" style={{ background: 'rgba(245,158,11,0.15)' }}>
-                  <svg className="w-3 h-3 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                  </svg>
-                </div>
-                <p className="text-[10px] text-amber-400/70 leading-relaxed">
-                  Investment packages <strong className="text-amber-400">cannot be cancelled</strong> once joined. Capital is locked until the duration expires. A 20% platform fee is deducted from gross profit.
-                </p>
-              </div>
-            </div>
-
-            {/* Join Button — redesigned */}
-            <JoinButton
-              selectedCapital={selectedCapital}
-              joining={joining}
-              currentTier={currentTier}
-              onJoin={handleJoin}
-            />
           </div>
         )}
 
@@ -1069,34 +955,20 @@ export default function InvestmentPackagePage() {
                   </svg>
                 </div>
                 <p className="text-sm text-slate-500 font-medium">No active investments</p>
-                <button onClick={() => setTab('packages')} className="text-xs text-sky-400 hover:text-sky-300 transition-colors font-semibold">
-                  Browse packages &rarr;
-                </button>
+                <button onClick={() => setTab('packages')} className="text-xs text-sky-400 hover:text-sky-300 transition-colors font-semibold">Browse packages &rarr;</button>
               </div>
             ) : (
               activePackages.map(pkg => {
-                const tier = TIERS.find(t => t.id === pkg.tier)!;
+                const tier = tiers.find(t => t.id === pkg.tier) ?? { ...TIER_VISUAL[pkg.tier as Tier], id: pkg.tier as Tier, label: pkg.tier, packages: [] };
                 return (
-                  <div
-                    key={pkg.id}
-                    className="rounded-xl p-4"
-                    style={{
-                      background: tier.gradient,
-                      border: `1px solid ${tier.borderColor}`,
-                      boxShadow: `0 4px 20px ${tier.glowColor}`,
-                    }}
-                  >
+                  <div key={pkg.id} className="rounded-xl p-4" style={{ background: tier.gradient, border: `1px solid ${tier.borderColor}`, boxShadow: `0 4px 20px ${tier.glowColor}` }}>
                     <div className="flex items-center justify-between mb-4">
                       <div className="flex items-center gap-2">
                         <div className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: tier.badgeBg, border: `1px solid ${tier.borderColor}` }}>
                           <span style={{ color: tier.color }}><TierIcon tier={tier.id} /></span>
                         </div>
-                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: tier.color }}>
-                          {tier.label}
-                        </span>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(255,255,255,0.07)', color: '#64748b' }}>
-                          {pkg.duration}
-                        </span>
+                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: tier.color }}>{tier.label}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold" style={{ background: 'rgba(255,255,255,0.07)', color: '#64748b' }}>{pkg.duration}</span>
                       </div>
                       <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full" style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.25)' }}>
                         <div className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
@@ -1166,31 +1038,18 @@ export default function InvestmentPackagePage() {
               </div>
             ) : (
               historyPackages.map(pkg => {
-                const tier = TIERS.find(t => t.id === pkg.tier)!;
+                const tier = tiers.find(t => t.id === pkg.tier) ?? { ...TIER_VISUAL[pkg.tier as Tier], id: pkg.tier as Tier, label: pkg.tier, packages: [] };
                 return (
-                  <div
-                    key={pkg.id}
-                    className="rounded-xl p-4"
-                    style={{
-                      background: 'linear-gradient(135deg, rgba(15,23,42,0.8) 0%, rgba(10,15,30,0.8) 100%)',
-                      border: '1px solid rgba(255,255,255,0.08)',
-                    }}
-                  >
+                  <div key={pkg.id} className="rounded-xl p-4" style={{ background: 'linear-gradient(135deg, rgba(15,23,42,0.8) 0%, rgba(10,15,30,0.8) 100%)', border: '1px solid rgba(255,255,255,0.08)' }}>
                     <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <div className="w-5 h-5 rounded-md flex items-center justify-center" style={{ background: tier.badgeBg }}>
                           <span style={{ color: tier.color }}><TierIcon tier={tier.id} /></span>
                         </div>
-                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: tier.color }}>
-                          {tier.label}
-                        </span>
-                        <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.06)', color: '#475569' }}>
-                          {pkg.duration}
-                        </span>
+                        <span className="text-xs font-bold uppercase tracking-wider" style={{ color: tier.color }}>{tier.label}</span>
+                        <span className="text-[10px] px-2 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.06)', color: '#475569' }}>{pkg.duration}</span>
                       </div>
-                      <span className="text-[10px] px-2.5 py-1 rounded-full font-semibold" style={{ background: 'rgba(255,255,255,0.06)', color: '#64748b', border: '1px solid rgba(255,255,255,0.08)' }}>
-                        Completed
-                      </span>
+                      <span className="text-[10px] px-2.5 py-1 rounded-full font-semibold" style={{ background: 'rgba(255,255,255,0.06)', color: '#64748b', border: '1px solid rgba(255,255,255,0.08)' }}>Completed</span>
                     </div>
                     <div className="grid grid-cols-3 gap-2">
                       <div className="rounded-lg p-2.5" style={{ background: 'rgba(255,255,255,0.03)' }}>

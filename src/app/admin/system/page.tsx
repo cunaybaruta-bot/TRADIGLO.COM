@@ -22,12 +22,12 @@ export default function SystemMonitoringPage() {
     const supabase = createClient();
 
     const [
-      { count: users },
-      { count: trades },
-      { count: deposits },
-      { count: withdrawals },
-      { count: assets },
-      { count: wallets },
+      { count: userCount },
+      { count: tradeCount },
+      { count: depositCount },
+      { count: withdrawalCount },
+      { count: assetCount },
+      { count: walletCount },
     ] = await Promise.all([
       supabase.from('users').select('*', { count: 'exact', head: true }),
       supabase.from('trades').select('*', { count: 'exact', head: true }),
@@ -39,7 +39,7 @@ export default function SystemMonitoringPage() {
 
     const responseTime = Date.now() - start;
 
-    setDbStats({ users: users || 0, trades: trades || 0, deposits: deposits || 0, withdrawals: withdrawals || 0, assets: assets || 0, wallets: wallets || 0 });
+    setDbStats({ users: userCount || 0, trades: tradeCount || 0, deposits: depositCount || 0, withdrawals: withdrawalCount || 0, assets: assetCount || 0, wallets: walletCount || 0 });
 
     setMetrics([
       { label: 'Supabase Connection', value: 'Connected', status: 'healthy', detail: 'PostgreSQL database online' },

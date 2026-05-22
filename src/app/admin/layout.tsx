@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { HomeIcon, UsersIcon, WalletIcon, ArrowDownTrayIcon, ArrowUpTrayIcon, ChartBarIcon, UserGroupIcon, CpuChipIcon, CubeIcon, DocumentChartBarIcon, ShieldExclamationIcon, CommandLineIcon, ServerIcon, Cog6ToothIcon, BellIcon, ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon, ChevronDownIcon, ChevronRightIcon, GiftIcon, LifebuoyIcon } from '@heroicons/react/24/outline';
+import { HomeIcon, UsersIcon, WalletIcon, ArrowDownTrayIcon, ArrowUpTrayIcon, ChartBarIcon, UserGroupIcon, CpuChipIcon, CubeIcon, DocumentChartBarIcon, ShieldExclamationIcon, CommandLineIcon, ServerIcon, Cog6ToothIcon, BellIcon, ArrowRightOnRectangleIcon, Bars3Icon, XMarkIcon, ChevronDownIcon, ChevronRightIcon, GiftIcon, LifebuoyIcon, BanknotesIcon } from '@heroicons/react/24/outline';
 import { NotificationProvider } from '@/contexts/NotificationContext';
 import NotificationBell from '@/components/admin/NotificationBell';
 
@@ -76,6 +76,17 @@ const navItems: NavItem[] = [
       { href: '/admin/trades', label: 'Open Trades' },
       { href: '/admin/trades/history', label: 'Trade History' },
       { href: '/admin/trades/analytics', label: 'Trade Analytics' },
+    ],
+  },
+  {
+    href: '/admin/investment',
+    label: 'Investment Control',
+    icon: BanknotesIcon,
+    subItems: [
+      { href: '/admin/investment', label: 'Overview & Stats' },
+      { href: '/admin/investment/packages', label: 'Package Management' },
+      { href: '/admin/investment/members', label: 'Member Investments' },
+      { href: '/admin/investment/settlements', label: 'Profit & Settlements' },
     ],
   },
   {

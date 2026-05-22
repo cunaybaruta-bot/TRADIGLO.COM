@@ -9,7 +9,9 @@ export function createClient() {
         getAll() {
           if (typeof document === 'undefined') return [];
           return document.cookie.split(';').map((cookie) => {
-            const [name, ...rest] = cookie.trim().split('=');
+            const parts = cookie.trim().split('=');
+            const name = parts[0];
+            const rest = parts.slice(1);
             return { name, value: decodeURIComponent(rest.join('=')) };
           });
         },

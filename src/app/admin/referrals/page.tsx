@@ -321,7 +321,7 @@ export default function AdminReferralsPage() {
             <div className="flex items-center justify-between mb-3">
               <span className="text-slate-400 text-xs">{label}</span>
               <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center`}>
-                <StatIcon className={`w-4 h-4 ${color}`} />
+                {StatIcon && <StatIcon className={`w-4 h-4 ${color}`} />}
               </div>
             </div>
             <div className={`text-white text-xl font-bold ${color}`}>{value}</div>

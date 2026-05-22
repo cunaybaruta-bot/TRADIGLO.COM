@@ -63,7 +63,10 @@ export default function ReportsPage() {
       tradesQ = tradesQ.lte('opened_at', end.toISOString());
     }
 
-    const [{ data: deps }, { data: withs }, { data: trades }] = await Promise.all([depositsQ, withdrawalsQ, tradesQ]);
+    const [depositsResult, withdrawalsResult, tradesResult] = await Promise.all([depositsQ, withdrawalsQ, tradesQ]);
+    const deps = depositsResult.data;
+    const withs = withdrawalsResult.data;
+    const trades = tradesResult.data;
 
     const depCompleted = deps?.filter((d) => d.status === 'completed') || [];
     const depPending = deps?.filter((d) => d.status === 'pending') || [];
@@ -105,11 +108,14 @@ export default function ReportsPage() {
       const label = d.toLocaleString('default', { month: 'short' });
       const start = new Date(d.getFullYear(), d.getMonth(), 1).toISOString();
       const end = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59).toISOString();
-      const [{ data: mDep }, { data: mWith }, { data: mTrades }] = await Promise.all([
+      const [mDepResult, mWithResult, mTradesResult] = await Promise.all([
         supabase.from('deposits').select('amount').gte('created_at', start).lte('created_at', end),
         supabase.from('withdrawals').select('amount').gte('created_at', start).lte('created_at', end),
         supabase.from('trades').select('profit').eq('result', 'win').gte('opened_at', start).lte('opened_at', end),
       ]);
+      const mDep = mDepResult.data;
+      const mWith = mWithResult.data;
+      const mTrades = mTradesResult.data;
       months.push({
         month: label,
         deposits: mDep?.reduce((s, d) => s + Number(d.amount), 0) || 0,

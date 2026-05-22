@@ -22,11 +22,15 @@ export default function AIIntelligencePage() {
 
   const fetchData = useCallback(async () => {
     const supabase = createClient();
-    const [{ data: assets }, { data: trades }, { data: prices }] = await Promise.all([
+    const [assetsResult, tradesResult, pricesResult] = await Promise.all([
       supabase.from('assets').select('id, symbol, name').eq('is_active', true).limit(20),
       supabase.from('trades').select('asset_id, result, order_type, amount').not('result', 'is', null).limit(1000),
       supabase.from('market_prices').select('asset_id, price').order('updated_at', { ascending: false }),
     ]);
+
+    const assets = assetsResult.data;
+    const trades = tradesResult.data;
+    const prices = pricesResult.data;
 
     if (assets && trades) {
       const priceMap = new Map(prices?.map((p) => [p.asset_id, p.price]) || []);

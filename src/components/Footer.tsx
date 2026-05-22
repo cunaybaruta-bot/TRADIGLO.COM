@@ -1,6 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useLanguage } from '../contexts/LanguageContext';
 
 export default function Footer() {
@@ -82,17 +83,21 @@ export default function Footer() {
             {/* Trust Badge */}
             <div className="mt-2 flex flex-row items-center gap-2 flex-wrap">
               <div style={{ width: '110px', height: '52px', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <img
+                <Image
                   src="/assets/images/SOC-1773106822143.png"
                   alt="SOC 2 Type 1 Trust Badge"
-                  style={{ width: '110px', height: '52px', objectFit: 'fill', display: 'block' }}
+                  width={110}
+                  height={52}
+                  style={{ objectFit: 'fill', display: 'block' }}
                 />
               </div>
               <div style={{ width: '110px', height: '52px', flexShrink: 0, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <img
+                <Image
                   src="/assets/images/SENSIBA-1773106731051.jpg"
                   alt="Sensiba SOC 2 Type 2 Trust Badge"
-                  style={{ width: '110px', height: '52px', objectFit: 'fill', display: 'block' }}
+                  width={110}
+                  height={52}
+                  style={{ objectFit: 'fill', display: 'block' }}
                 />
               </div>
             </div>
