@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import DashboardTopBar from '@/components/dashboard/DashboardTopBar';
 import { useRealtimeDashboard } from '@/lib/hooks/useRealtimeDashboard';
+import DepositModal from '@/components/dashboard/DepositModal';
 
 const supabase = createClient();
 const HISTORY_PAGE_SIZE = 50;
@@ -44,6 +45,8 @@ export default function HistoryPage() {
   const [wallet, setWallet] = useState<{ demoBalance: number; realBalance: number } | null>(null);
   const [walletLoading, setWalletLoading] = useState(true);
   const [isDemo, setIsDemo] = useState(false);
+
+  const [depositOpen, setDepositOpen] = useState(false);
 
   const [tradeHistory, setTradeHistory] = useState<Trade[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
@@ -308,7 +311,7 @@ export default function HistoryPage() {
         walletLoading={walletLoading}
         isDemo={isDemo}
         onToggleDemo={() => {}}
-        onDepositClick={() => {}}
+        onDepositClick={() => setDepositOpen(true)}
       />
 
       <div className="flex-1 px-3 py-3 max-w-5xl mx-auto w-full">
@@ -602,6 +605,15 @@ export default function HistoryPage() {
           )}
         </div>
       </div>
+
+      {depositOpen && userId && (
+        <DepositModal
+          userId={userId}
+          isOpen={depositOpen}
+          onClose={() => setDepositOpen(false)}
+          isDemo={isDemo}
+        />
+      )}
     </div>
   );
 }

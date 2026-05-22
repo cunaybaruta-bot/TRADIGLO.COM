@@ -203,7 +203,7 @@ const FLAG_EMOJI: Record<string, string> = {
   Australia: '🇦🇺',
   'New Zealand': '🇳🇿',
   // Global fallback
-  Global: '🌐',
+  Global: '🌍',
 };
 
 function getCountryFlag(countryName: string): string {
@@ -212,7 +212,7 @@ function getCountryFlag(countryName: string): string {
   const lower = countryName.toLowerCase();
   const match = Object.keys(FLAG_EMOJI).find((k) => k.toLowerCase() === lower);
   if (match) return FLAG_EMOJI[match];
-  return '🌐';
+  return '🌍';
 }
 
 export default function DepositModal({ isOpen, onClose, userId, isDemo }: DepositModalProps) {
@@ -346,6 +346,14 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
     reader.readAsDataURL(file);
   };
 
+  if (!isOpen) return null;
+
+  const STEPS: Step[] = ['country', 'method', 'amount'];
+  const stepIndex = STEPS.indexOf(step);
+
+  const MIN_DEPOSIT_USD = 100;
+  const isBelowMinDeposit = amountNum > 0 && rate ? amountUsd < MIN_DEPOSIT_USD : false;
+
   const handleSubmit = async () => {
     if (!selectedMethod) return;
     const val = parseFloat(amount);
@@ -420,13 +428,7 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
     else if (step === 'amount') setStep('method');
   };
 
-  if (!isOpen) return null;
-
-  const STEPS: Step[] = ['country', 'method', 'amount'];
-  const stepIndex = STEPS.indexOf(step);
-
-  const MIN_DEPOSIT_USD = 100;
-  const isBelowMinDeposit = amountNum > 0 && rate ? amountUsd < MIN_DEPOSIT_USD : false;
+  const methodsForCountryFiltered = methods.filter((m) => (m.country || 'Global') === selectedCountry && m.type === activeType);
 
   return (
     <div

@@ -201,11 +201,20 @@ export default function LeaderboardPage() {
     const supabase = createClient();
     supabase
       .from('wallets')
-      .select('demo_balance, real_balance')
+      .select('balance, is_demo')
       .eq('user_id', userId)
-      .single()
       .then(({ data }) => {
-        if (data) setWallet({ demoBalance: data.demo_balance ?? 0, realBalance: data.real_balance ?? 0 });
+        if (data && data.length > 0) {
+          const demoWallet = data.find((w: any) => w.is_demo === true);
+          const realWallet = data.find((w: any) => w.is_demo === false);
+          setWallet({ demoBalance: demoWallet?.balance ?? 0, realBalance: realWallet?.balance ?? 0 });
+        } else {
+          setWallet({ demoBalance: 0, realBalance: 0 });
+        }
+        setWalletLoading(false);
+      })
+      .catch(() => {
+        setWallet({ demoBalance: 0, realBalance: 0 });
         setWalletLoading(false);
       });
   }, [authChecked, userId]);
