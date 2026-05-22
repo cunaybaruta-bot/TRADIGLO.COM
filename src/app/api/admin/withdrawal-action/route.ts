@@ -143,7 +143,7 @@ export async function POST(req: NextRequest) {
     // Fetch withdrawal info for email notification
     const { data: withdrawal, error: fetchErr } = await supabase
       .from('withdrawals')
-      .select('id, amount, user_id, status, users(email, full_name)')
+      .select('id, amount, user_id, status, users!withdrawals_user_id_fkey(email, full_name)')
       .eq('id', id)
       .single();
 
@@ -165,7 +165,7 @@ export async function POST(req: NextRequest) {
 
     if (rpcErr) {
       console.error('[withdrawal-action] RPC error:', rpcErr);
-      // Fallback: direct update
+      // Fallback: direct update + manual balance deduction
       const { error: updateErr } = await supabase
         .from('withdrawals')
         .update({
@@ -180,6 +180,24 @@ export async function POST(req: NextRequest) {
       if (updateErr) {
         console.error('[withdrawal-action] direct update error:', updateErr);
         return NextResponse.json({ error: updateErr.message }, { status: 500 });
+      }
+
+      // If approved, also deduct balance in fallback path
+      if (action === 'approved') {
+        const { data: wallet } = await supabase
+          .from('wallets')
+          .select('id, balance')
+          .eq('user_id', withdrawal.user_id)
+          .eq('is_demo', false)
+          .single();
+
+        if (wallet) {
+          const newBalance = Math.max(0, Number(wallet.balance) - Number(withdrawal.amount));
+          await supabase
+            .from('wallets')
+            .update({ balance: newBalance, updated_at: new Date().toISOString() })
+            .eq('id', wallet.id);
+        }
       }
     } else if (rpcResult && !(rpcResult as any).success) {
       return NextResponse.json({ error: (rpcResult as any).error || 'Processing failed' }, { status: 400 });

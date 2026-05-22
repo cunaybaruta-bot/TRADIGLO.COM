@@ -8,22 +8,30 @@ export function createClient() {
       cookies: {
         getAll() {
           if (typeof document === 'undefined') return [];
-          return document.cookie.split(';').map((cookie) => {
-            const parts = cookie.trim().split('=');
-            const name = parts[0];
-            const rest = parts.slice(1);
-            return { name, value: decodeURIComponent(rest.join('=')) };
-          });
+          try {
+            return document.cookie.split(';').map((cookie) => {
+              const parts = cookie.trim().split('=');
+              const name = parts[0];
+              const rest = parts.slice(1);
+              return { name, value: decodeURIComponent(rest.join('=')) };
+            });
+          } catch {
+            return [];
+          }
         },
         setAll(cookiesToSet: Array<{ name: string; value: string; options?: any }>) {
           if (typeof document === 'undefined') return;
-          cookiesToSet.forEach(({ name, value, options }) => {
-            let cookieString = `${name}=${encodeURIComponent(value)}; Path=${options?.path || '/'}; Secure; SameSite=None`;
-            if (options?.maxAge) cookieString += `; max-age=${options.maxAge}`;
-            if (options?.domain) cookieString += `; domain=${options.domain}`;
-            if (options?.expires) cookieString += `; expires=${options.expires}`;
-            document.cookie = cookieString;
-          });
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              let cookieString = `${name}=${encodeURIComponent(value)}; Path=${options?.path || '/'}; Secure; SameSite=None`;
+              if (options?.maxAge) cookieString += `; max-age=${options.maxAge}`;
+              if (options?.domain) cookieString += `; domain=${options.domain}`;
+              if (options?.expires) cookieString += `; expires=${options.expires}`;
+              document.cookie = cookieString;
+            });
+          } catch {
+            // silently ignore cookie errors during SSR or restricted environments
+          }
         },
       },
     }

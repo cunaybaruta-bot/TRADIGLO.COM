@@ -253,7 +253,7 @@ export default function AdminReferralsPage() {
     setDrillDown({ id: referrerId, email: referrerEmail, rows });
   };
 
-  const statCards = [
+  const statCards: { label: string; value: string; icon: React.ElementType; color: string; bg: string; border: string }[] = [
     {
       label: 'Total Affiliates',
       value: stats.totalReferrals.toLocaleString(),

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import ReactDOM from 'react-dom';
 import { createClient } from '@/lib/supabase/client';
 import {
   CheckCircleIcon,
@@ -55,9 +56,9 @@ interface DetailModalProps {
 function DetailModal({ withdrawal, onClose, onAction }: DetailModalProps) {
   const userEmail = (withdrawal.users as any)?.email || withdrawal.user_id.slice(0, 16) + '...';
   const userName = (withdrawal.users as any)?.full_name;
-  return (
+  return ReactDOM.createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
       style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)' }}
       onClick={onClose}
     >
@@ -147,7 +148,8 @@ function DetailModal({ withdrawal, onClose, onAction }: DetailModalProps) {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -164,101 +166,123 @@ function ActionModal({ withdrawal, action, onConfirm, onClose, processing }: Act
   const isApprove = action === 'approved';
   const userEmail = (withdrawal.users as any)?.email || withdrawal.user_id.slice(0, 16) + '...';
 
-  return (
+  return ReactDOM.createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)' }}
+      className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+      style={{ background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(8px)' }}
       onClick={onClose}
     >
       <div
-        className="bg-[#0a0f1e] border border-white/10 rounded-2xl p-6 w-full max-w-md shadow-2xl shadow-black/60"
+        className="bg-[#0d1117] border border-white/10 rounded-xl w-full max-w-md shadow-2xl shadow-black/70 overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-3 mb-5">
-          <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${isApprove ? 'bg-emerald-500/15 border border-emerald-500/30' : 'bg-red-500/15 border border-red-500/30'}`}>
+        {/* Header */}
+        <div className="px-4 pt-4 pb-3 flex items-center gap-3">
+          <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
+            isApprove
+              ? 'bg-blue-500/15 border border-blue-500/30' :'bg-red-500/15 border border-red-500/30'
+          }`}>
             {isApprove
-              ? <CheckCircleIcon className="w-5 h-5 text-emerald-400" />
-              : <XCircleIcon className="w-5 h-5 text-red-400" />
+              ? <ArrowUpTrayIcon className="w-4 h-4 text-blue-400" />
+              : <XCircleIcon className="w-4 h-4 text-red-400" />
             }
           </div>
           <div>
-            <h3 className="text-white font-bold text-base">
+            <h3 className="text-white font-bold text-sm leading-tight">
               {isApprove ? 'Approve Withdrawal' : 'Reject Withdrawal'}
             </h3>
             <p className="text-slate-500 text-xs mt-0.5">{userEmail}</p>
           </div>
         </div>
 
-        <div className="bg-white/5 rounded-xl border border-white/8 p-4 mb-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-slate-500 text-[11px] uppercase tracking-wider mb-1">Amount</p>
-              <p className="text-orange-400 text-2xl font-bold">${Number(withdrawal.amount).toFixed(2)}</p>
+        <div className="px-4 pb-4 space-y-2">
+          {/* Amount + Method + Destination Card */}
+          <div className="bg-white/[0.04] border border-white/10 rounded-lg overflow-hidden">
+            <div className="flex items-start justify-between px-3 pt-2.5 pb-2">
+              <div>
+                <p className="text-slate-500 text-[10px] uppercase tracking-widest font-semibold mb-0.5">Amount</p>
+                <p className="text-orange-400 text-xl font-extrabold leading-none">
+                  ${Number(withdrawal.amount).toFixed(2)}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-slate-500 text-[10px] uppercase tracking-widest font-semibold mb-0.5">Method</p>
+                <p className="text-white text-sm font-semibold">{withdrawal.payment_method || '—'}</p>
+              </div>
             </div>
-            <div className="text-right">
-              <p className="text-slate-500 text-[11px] uppercase tracking-wider mb-1">Method</p>
-              <p className="text-slate-300 text-sm font-medium">{withdrawal.payment_method || '—'}</p>
-            </div>
+            {withdrawal.destination_address && (
+              <div className="border-t border-white/8 px-3 py-2">
+                <p className="text-slate-500 text-[10px] uppercase tracking-widest font-semibold mb-1">Destination</p>
+                <div className="bg-black/30 border border-white/8 rounded-md px-2.5 py-1.5">
+                  <p className="text-slate-300 text-xs font-mono break-all leading-relaxed">
+                    {withdrawal.destination_address}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
-          {withdrawal.destination_address && (
-            <div className="mt-3 pt-3 border-t border-white/8">
-              <p className="text-slate-500 text-[11px] uppercase tracking-wider mb-1">Destination</p>
-              <p className="text-slate-300 text-xs font-mono truncate bg-black/30 px-2 py-1.5 rounded-lg">{withdrawal.destination_address}</p>
+
+          {/* Warning box for approve */}
+          {isApprove && (
+            <div className="flex items-start gap-2 bg-amber-500/8 border border-amber-500/25 rounded-lg px-3 py-2">
+              <ExclamationTriangleIcon className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+              <p className="text-amber-300 text-xs leading-relaxed">
+                Approving will automatically deduct{' '}
+                <strong className="text-amber-200 font-bold">${Number(withdrawal.amount).toFixed(2)}</strong>{' '}
+                from the member&apos;s real balance.
+              </p>
             </div>
           )}
-        </div>
 
-        {isApprove && (
-          <div className="flex items-start gap-2.5 bg-amber-500/8 border border-amber-500/20 rounded-xl p-3.5 mb-4">
-            <ExclamationTriangleIcon className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-            <p className="text-amber-300 text-xs leading-relaxed">
-              Approving will automatically deduct <strong className="text-amber-200">${Number(withdrawal.amount).toFixed(2)}</strong> from the member&apos;s real balance.
-            </p>
+          {/* Admin Note */}
+          <div>
+            <label className="flex items-center gap-2 text-[10px] text-slate-400 uppercase tracking-widest font-semibold mb-1">
+              Admin Note
+              {!isApprove
+                ? <span className="text-red-400 normal-case tracking-normal text-xs font-normal">* required</span>
+                : <span className="text-slate-600 normal-case tracking-normal text-xs font-normal">— optional</span>
+              }
+            </label>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              placeholder={isApprove ? 'Add a note for the member (optional)...' : 'Reason for rejection (required)...'}
+              rows={2}
+              className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 resize-none transition-all"
+            />
           </div>
-        )}
 
-        <div className="mb-5">
-          <label className="text-[11px] text-slate-400 uppercase tracking-wider mb-2 block font-semibold">
-            Admin Note {!isApprove && <span className="text-red-400 normal-case tracking-normal">*required</span>}
-            {isApprove && <span className="text-slate-600 normal-case tracking-normal font-normal ml-1">— optional</span>}
-          </label>
-          <textarea
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder={isApprove ? 'Add a note for the member (optional)...' : 'Reason for rejection (required)...'}
-            rows={3}
-            className="w-full bg-white/5 border border-white/8 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 resize-none transition-all"
-          />
-        </div>
-
-        <div className="flex gap-3">
-          <button
-            onClick={onClose}
-            disabled={processing}
-            className="flex-1 py-2.5 rounded-xl text-sm font-medium text-slate-400 bg-white/5 border border-white/8 hover:text-white hover:bg-white/10 transition-all disabled:opacity-50"
-          >
-            Cancel
-          </button>
-          <button
-            onClick={() => onConfirm(withdrawal.id, action, note)}
-            disabled={processing || (!isApprove && !note.trim())}
-            className={`flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg ${
-              isApprove
-                ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20'
-                : 'bg-red-600 hover:bg-red-500 shadow-red-500/20'
-            }`}
-          >
-            {processing ? (
-              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            ) : isApprove ? (
-              <><CheckCircleIcon className="w-4 h-4" /> Approve & Deduct Balance</>
-            ) : (
-              <><XCircleIcon className="w-4 h-4" /> Reject Withdrawal</>
-            )}
-          </button>
+          {/* Action Buttons */}
+          <div className="flex gap-2 pt-0.5">
+            <button
+              onClick={onClose}
+              disabled={processing}
+              className="flex-1 py-2 rounded-lg text-sm font-semibold text-slate-400 bg-white/[0.04] border border-white/10 hover:text-white hover:bg-white/10 transition-all disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={() => onConfirm(withdrawal.id, action, note)}
+              disabled={processing || (!isApprove && !note.trim())}
+              className={`flex-1 py-2 rounded-lg text-sm font-bold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg ${
+                isApprove
+                  ? 'bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 shadow-blue-500/20'
+                  : 'bg-red-600 hover:bg-red-500 shadow-red-500/25'
+              }`}
+            >
+              {processing ? (
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : isApprove ? (
+                'Approve & Deduct Balance'
+              ) : (
+                'Reject Withdrawal'
+              )}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 

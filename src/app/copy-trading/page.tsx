@@ -108,7 +108,7 @@ function generateFallbackTradeHistory(): { monthly: MonthlyRecord[]; yearly: Yea
   return { monthly, yearly };
 }
 
-const MIN_BALANCE = 1499;
+const MIN_BALANCE = 1000;
 
 const COMPARISON_DATA_BASE = [
   { platform: 'Industry Average', winRate: '60–70%', highlight: false },
@@ -333,23 +333,6 @@ export default function CopyTradingPage() {
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                     {t('ct_deposit_btn')}
                   </Link>
-                )}
-              </div>
-            )}
-
-            {/* Balance status */}
-            {user && !balanceLoading && realBalance !== null && (
-              <div className={`mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium ${meetsRequirement ? 'bg-emerald-500/10 border border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border border-red-500/20 text-red-400'}`}>
-                {meetsRequirement ? (
-                  <>
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    {t('ct_balance_qualifies')}{realBalance.toLocaleString()} {t('ct_balance_qualifies_suffix')}
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                    {t('ct_need_more')}{(MIN_BALANCE - (realBalance ?? 0)).toLocaleString()} {t('ct_need_more_suffix')}{MIN_BALANCE.toLocaleString()}
-                  </>
                 )}
               </div>
             )}

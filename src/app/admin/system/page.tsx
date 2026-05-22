@@ -22,12 +22,12 @@ export default function SystemMonitoringPage() {
     const supabase = createClient();
 
     const [
-      { count: userCount },
-      { count: tradeCount },
-      { count: depositCount },
-      { count: withdrawalCount },
-      { count: assetCount },
-      { count: walletCount },
+      { count: userCount = 0 },
+      { count: tradeCount = 0 },
+      { count: depositCount = 0 },
+      { count: withdrawalCount = 0 },
+      { count: assetCount = 0 },
+      { count: walletCount = 0 },
     ] = await Promise.all([
       supabase.from('users').select('*', { count: 'exact', head: true }),
       supabase.from('trades').select('*', { count: 'exact', head: true }),
