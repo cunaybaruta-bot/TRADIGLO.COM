@@ -1788,11 +1788,11 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* SCROLLABLE CONTENT */}
-          <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ paddingBottom: 160 }}>
+          {/* CHART + SCROLLABLE CONTENT */}
+          <div className="flex-1 flex flex-col overflow-hidden">
 
-            {/* CHART AREA */}
-            <div className="bg-[#0d0d0d] border-b border-white/10">
+            {/* CHART AREA — fixed, does not scroll */}
+            <div className="bg-[#0d0d0d] border-b border-white/10 flex-shrink-0">
 
               {/* ── Chart Top Bar: Asset Selector Button + Price ── */}
               <div className="flex items-center gap-1.5 px-2 sm:px-4 py-2 border-b border-white/10 overflow-hidden">
@@ -1944,9 +1944,9 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* LEADERBOARD BANNER */}
+            {/* FIXED: Leaderboard banner — does not scroll */}
             {activeNav === 'trade' && (
-              <div className="px-2 sm:px-3 pt-3">
+              <div className="flex-shrink-0 px-2 sm:px-3 pt-3">
                 <button
                   onClick={() => router.push('/dashboard/leaderboard')}
                   className="w-full relative overflow-hidden rounded-xl border border-yellow-500/30 flex items-center gap-3 px-3 py-2.5 transition-all hover:border-yellow-500/50 group"
@@ -1995,11 +1995,12 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* OPEN TRADES TABLE */}
+            {/* FIXED: Open Trades header + SCROLLABLE trade list */}
             {activeNav === 'trade' && (
-              <div className="px-2 sm:px-3 pt-3 pb-2">
-                {/* Mobile: collapsed bar */}
-                <div className="sm:hidden">
+              <div className="flex-1 flex flex-col overflow-hidden px-2 sm:px-3 pt-3 pb-2 min-h-0">
+
+                {/* Mobile: collapsed toggle bar — fixed, does not scroll */}
+                <div className="sm:hidden flex-shrink-0">
                   <button
                     onClick={() => openTrades.length > 0 && setOpenTradesMobileExpanded(prev => !prev)}
                     className={`w-full flex items-center justify-between px-3 py-2 rounded-xl border transition-all ${openTrades.length > 0 ? 'bg-[#0d0d0d] border-white/10 cursor-pointer' : 'bg-[#0d0d0d] border-white/10 cursor-default'}`}
@@ -2021,10 +2022,10 @@ export default function DashboardPage() {
                     </div>
                   </button>
 
-                  {/* Expanded content on mobile */}
+                  {/* Expanded content on mobile — scrollable */}
                   {openTradesMobileExpanded && openTrades.length > 0 && (
-                    <div className="mt-1 bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden">
-                      <div className="px-3 py-2 border-b border-white/10 flex items-center justify-end">
+                    <div className="mt-1 bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden flex flex-col" style={{ maxHeight: 'calc(100vh - 420px)' }}>
+                      <div className="px-3 py-2 border-b border-white/10 flex items-center justify-end flex-shrink-0">
                         {openTrades.length > 0 && (
                           <button
                             onClick={() => setShowCloseAllConfirm(true)}
@@ -2040,7 +2041,7 @@ export default function DashboardPage() {
                           </button>
                         )}
                       </div>
-                      <div className="flex flex-col divide-y divide-white/5">
+                      <div className="flex flex-col divide-y divide-white/5 overflow-y-auto">
                         {openTrades.map((trade) => (
                           <div key={trade.id} className={`px-3 py-2.5 flex flex-col gap-1.5 transition-all duration-300 ${fadingTradeIds.has(trade.id) ? 'opacity-0' : 'opacity-100'}`}>
                             <div className="flex items-center justify-between">
@@ -2084,9 +2085,10 @@ export default function DashboardPage() {
                   )}
                 </div>
 
-                {/* Desktop/Tablet open trades table */}
-                <div className="hidden sm:block bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden">
-                  <div className="px-3 py-2.5 border-b border-white/10 flex items-center justify-between">
+                {/* Desktop/Tablet: header fixed + trade rows scrollable */}
+                <div className="hidden sm:flex flex-col flex-1 bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden min-h-0">
+                  {/* Header — fixed, does not scroll */}
+                  <div className="flex-shrink-0 px-3 py-2.5 border-b border-white/10 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
                       <h3 className="text-xs font-semibold text-white uppercase tracking-wider">{t('dash_open_trades')}</h3>
@@ -2109,16 +2111,17 @@ export default function DashboardPage() {
                       <span className="text-xs text-slate-500">{openTrades.length} {t('dash_open_count')}</span>
                     </div>
                   </div>
-                  {tradesLoading && openTrades.length === 0 ? (
-                    <div className="flex items-center justify-center py-6">
-                      <span className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                    </div>
-                  ) : openTrades.length === 0 ? (
-                    <div className="text-center py-5 text-slate-500 text-sm">{t('dash_no_open_trades')}</div>
-                  ) : (
-                    <div className="overflow-x-auto">
+                  {/* Trade list — scrollable */}
+                  <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0">
+                    {tradesLoading && openTrades.length === 0 ? (
+                      <div className="flex items-center justify-center py-6">
+                        <span className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                      </div>
+                    ) : openTrades.length === 0 ? (
+                      <div className="text-center py-5 text-slate-500 text-sm">{t('dash_no_open_trades')}</div>
+                    ) : (
                       <table className="w-full text-xs">
-                        <thead>
+                        <thead className="sticky top-0 bg-[#0d0d0d]">
                           <tr className="text-slate-500 border-b border-white/5">
                             <th className="px-3 py-2 text-left font-medium">{t('dash_col_asset')}</th>
                             <th className="px-3 py-2 text-left font-medium">{t('dash_col_type')}</th>
@@ -2162,11 +2165,14 @@ export default function DashboardPage() {
                           ))}
                         </tbody>
                       </table>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               </div>
             )}
+
+            {/* OTHER NAV SECTIONS — scrollable */}
+            <div className="flex-1 overflow-y-auto overflow-x-hidden" style={{ display: activeNav !== 'trade' ? 'block' : 'none', paddingBottom: 16 }}>
 
             {/* TRADE HISTORY */}
             {activeNav === 'history' && (
@@ -2322,7 +2328,8 @@ export default function DashboardPage() {
                 </div>
               </div>
             )}
-          </div>
+            </div>{/* end other nav scrollable section */}
+          </div>{/* end chart + scrollable content */}
 
           {/* ── FIXED BOTTOM TRADING PANEL ── */}
           <div className="flex-shrink-0 bg-[#0a0a0a] border-t border-white/10">

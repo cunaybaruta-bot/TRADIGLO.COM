@@ -307,6 +307,19 @@ export default function LeaderboardPage() {
       />
 
       <div className="flex-1 overflow-y-auto">
+        {/* Back Button */}
+        <div className="px-4 sm:px-6 pt-4">
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="flex items-center gap-1.5 text-slate-500 hover:text-slate-300 text-xs transition-colors group"
+          >
+            <svg className="w-3.5 h-3.5 group-hover:-translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to Trade
+          </button>
+        </div>
+
         {/* Hero Banner */}
         <div
           className="relative overflow-hidden px-4 sm:px-6 py-8 sm:py-12"

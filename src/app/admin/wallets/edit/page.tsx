@@ -12,7 +12,6 @@ interface WalletPair {
   real_balance: number;
   demo_wallet_id: string | null;
   demo_balance: number;
-  currency: string;
 }
 
 export default function EditBalancePage() {
@@ -24,11 +23,18 @@ export default function EditBalancePage() {
   const [saving, setSaving] = useState(false);
 
   const fetchWallets = useCallback(async () => {
+    setLoading(true);
     const supabase = createClient();
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('wallets')
-      .select('id, user_id, balance, is_demo, currency, updated_at, users(email, full_name)')
+      .select('id, user_id, balance, is_demo, updated_at, users(email, full_name)')
       .order('updated_at', { ascending: false });
+
+    if (error) {
+      setMessage('Failed to load wallets: ' + error.message);
+      setLoading(false);
+      return;
+    }
 
     if (data) {
       const userMap: Record<string, WalletPair> = {};
@@ -43,7 +49,6 @@ export default function EditBalancePage() {
             real_balance: 0,
             demo_wallet_id: null,
             demo_balance: 0,
-            currency: w.currency || 'USD',
           };
         }
         if (w.is_demo) {
@@ -63,26 +68,44 @@ export default function EditBalancePage() {
 
   const handleSave = async () => {
     if (!editWallet) return;
+    const parsed = parseFloat(editWallet.value);
+    if (isNaN(parsed) || parsed < 0) {
+      setMessage('Please enter a valid positive number');
+      setTimeout(() => setMessage(''), 3000);
+      return;
+    }
     setSaving(true);
     const supabase = createClient();
-    const { error } = await supabase.from('wallets').update({ balance: parseFloat(editWallet.value) }).eq('id', editWallet.walletId);
+    const { error } = await supabase
+      .from('wallets')
+      .update({ balance: parsed })
+      .eq('id', editWallet.walletId);
+
     if (error) {
       setMessage('Failed to update balance: ' + error.message);
     } else {
       setMessage('Balance updated successfully');
+      setEditWallet(null);
+      fetchWallets();
     }
-    setEditWallet(null);
-    fetchWallets();
     setSaving(false);
-    setTimeout(() => setMessage(''), 3000);
+    setTimeout(() => setMessage(''), 4000);
   };
 
   const handleResetDemo = async (demoWalletId: string | null) => {
     if (!demoWalletId) return;
     const supabase = createClient();
-    await supabase.from('wallets').update({ balance: 10000 }).eq('id', demoWalletId);
-    setMessage('Demo balance reset to $10,000');
-    fetchWallets();
+    const { error } = await supabase
+      .from('wallets')
+      .update({ balance: 100000 })
+      .eq('id', demoWalletId);
+
+    if (error) {
+      setMessage('Reset failed: ' + error.message);
+    } else {
+      setMessage('Demo balance reset to $100,000');
+      fetchWallets();
+    }
     setTimeout(() => setMessage(''), 3000);
   };
 
@@ -96,7 +119,7 @@ export default function EditBalancePage() {
       </div>
 
       {message && (
-        <div className={`px-4 py-3 rounded-lg text-sm border ${message.startsWith('Failed') ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-green-500/10 border-green-500/20 text-green-400'}`}>
+        <div className={`px-4 py-3 rounded-lg text-sm border ${message.startsWith('Failed') || message.startsWith('Please') || message.startsWith('Reset failed') ? 'bg-red-500/10 border-red-500/20 text-red-400' : 'bg-green-500/10 border-green-500/20 text-green-400'}`}>
           {message}
         </div>
       )}
@@ -131,21 +154,33 @@ export default function EditBalancePage() {
                   <tr key={w.user_id} className="hover:bg-white/5 transition-colors">
                     <td className="py-3">
                       <div className="text-white">{w.email}</div>
-                      <div className="text-gray-500 text-xs">{w.full_name || w.currency}</div>
+                      {w.full_name && <div className="text-gray-500 text-xs">{w.full_name}</div>}
                     </td>
                     <td className="py-3">
                       {editWallet?.walletId === w.real_wallet_id && editWallet.type === 'real' ? (
                         <div className="flex items-center gap-2">
-                          <input type="number" value={editWallet.value} onChange={(e) => setEditWallet({ ...editWallet, value: e.target.value })}
-                            className="w-28 px-2 py-1 bg-white/10 border border-blue-500 rounded text-white text-sm focus:outline-none" />
-                          <button onClick={handleSave} disabled={saving} className="text-green-400 hover:text-green-300"><CheckIcon className="w-4 h-4" /></button>
-                          <button onClick={() => setEditWallet(null)} className="text-red-400 hover:text-red-300"><XMarkIcon className="w-4 h-4" /></button>
+                          <input
+                            type="number"
+                            value={editWallet.value}
+                            onChange={(e) => setEditWallet({ ...editWallet, value: e.target.value })}
+                            className="w-28 px-2 py-1 bg-white/10 border border-green-500 rounded text-white text-sm focus:outline-none"
+                            autoFocus
+                          />
+                          <button onClick={handleSave} disabled={saving} className="text-green-400 hover:text-green-300 disabled:opacity-50">
+                            <CheckIcon className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => setEditWallet(null)} className="text-red-400 hover:text-red-300">
+                            <XMarkIcon className="w-4 h-4" />
+                          </button>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
                           <span className="text-green-400 font-medium">${w.real_balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                           {w.real_wallet_id && (
-                            <button onClick={() => setEditWallet({ walletId: w.real_wallet_id!, type: 'real', value: String(w.real_balance) })} className="text-gray-500 hover:text-blue-400">
+                            <button
+                              onClick={() => setEditWallet({ walletId: w.real_wallet_id!, type: 'real', value: String(w.real_balance) })}
+                              className="text-gray-500 hover:text-blue-400"
+                            >
                               <PencilSquareIcon className="w-3.5 h-3.5" />
                             </button>
                           )}
@@ -155,16 +190,28 @@ export default function EditBalancePage() {
                     <td className="py-3">
                       {editWallet?.walletId === w.demo_wallet_id && editWallet.type === 'demo' ? (
                         <div className="flex items-center gap-2">
-                          <input type="number" value={editWallet.value} onChange={(e) => setEditWallet({ ...editWallet, value: e.target.value })}
-                            className="w-28 px-2 py-1 bg-white/10 border border-blue-500 rounded text-white text-sm focus:outline-none" />
-                          <button onClick={handleSave} disabled={saving} className="text-green-400 hover:text-green-300"><CheckIcon className="w-4 h-4" /></button>
-                          <button onClick={() => setEditWallet(null)} className="text-red-400 hover:text-red-300"><XMarkIcon className="w-4 h-4" /></button>
+                          <input
+                            type="number"
+                            value={editWallet.value}
+                            onChange={(e) => setEditWallet({ ...editWallet, value: e.target.value })}
+                            className="w-28 px-2 py-1 bg-white/10 border border-blue-500 rounded text-white text-sm focus:outline-none"
+                            autoFocus
+                          />
+                          <button onClick={handleSave} disabled={saving} className="text-green-400 hover:text-green-300 disabled:opacity-50">
+                            <CheckIcon className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => setEditWallet(null)} className="text-red-400 hover:text-red-300">
+                            <XMarkIcon className="w-4 h-4" />
+                          </button>
                         </div>
                       ) : (
                         <div className="flex items-center gap-2">
                           <span className="text-blue-400 font-medium">${w.demo_balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                           {w.demo_wallet_id && (
-                            <button onClick={() => setEditWallet({ walletId: w.demo_wallet_id!, type: 'demo', value: String(w.demo_balance) })} className="text-gray-500 hover:text-blue-400">
+                            <button
+                              onClick={() => setEditWallet({ walletId: w.demo_wallet_id!, type: 'demo', value: String(w.demo_balance) })}
+                              className="text-gray-500 hover:text-blue-400"
+                            >
                               <PencilSquareIcon className="w-3.5 h-3.5" />
                             </button>
                           )}
@@ -172,9 +219,11 @@ export default function EditBalancePage() {
                       )}
                     </td>
                     <td className="py-3">
-                      <button onClick={() => handleResetDemo(w.demo_wallet_id)}
+                      <button
+                        onClick={() => handleResetDemo(w.demo_wallet_id)}
                         disabled={!w.demo_wallet_id}
-                        className="flex items-center gap-1 px-3 py-1 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 disabled:opacity-40 rounded-lg text-xs font-medium transition-colors">
+                        className="flex items-center gap-1 px-3 py-1 bg-yellow-500/10 text-yellow-400 hover:bg-yellow-500/20 disabled:opacity-40 rounded-lg text-xs font-medium transition-colors"
+                      >
                         <ArrowPathIcon className="w-3 h-3" /> Reset Demo
                       </button>
                     </td>
@@ -182,7 +231,7 @@ export default function EditBalancePage() {
                 ))}
               </tbody>
             </table>
-            {filtered.length === 0 && (
+            {filtered.length === 0 && !loading && (
               <div className="text-center py-8 text-gray-500">No wallets found</div>
             )}
           </div>

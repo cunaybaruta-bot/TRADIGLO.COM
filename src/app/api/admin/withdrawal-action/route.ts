@@ -165,7 +165,10 @@ export async function POST(req: NextRequest) {
 
     if (rpcErr) {
       console.error('[withdrawal-action] RPC error:', rpcErr);
-      // Fallback: direct update + manual balance deduction
+      // Fallback: direct status update only.
+      // The DB trigger (on_withdrawal_status_change → handle_withdrawal_approval)
+      // will automatically deduct wallet balance when status changes to 'approved'.
+      // DO NOT manually deduct balance here to avoid double deduction.
       const { error: updateErr } = await supabase
         .from('withdrawals')
         .update({
@@ -180,24 +183,6 @@ export async function POST(req: NextRequest) {
       if (updateErr) {
         console.error('[withdrawal-action] direct update error:', updateErr);
         return NextResponse.json({ error: updateErr.message }, { status: 500 });
-      }
-
-      // If approved, also deduct balance in fallback path
-      if (action === 'approved') {
-        const { data: wallet } = await supabase
-          .from('wallets')
-          .select('id, balance')
-          .eq('user_id', withdrawal.user_id)
-          .eq('is_demo', false)
-          .single();
-
-        if (wallet) {
-          const newBalance = Math.max(0, Number(wallet.balance) - Number(withdrawal.amount));
-          await supabase
-            .from('wallets')
-            .update({ balance: newBalance, updated_at: new Date().toISOString() })
-            .eq('id', wallet.id);
-        }
       }
     } else if (rpcResult && !(rpcResult as any).success) {
       return NextResponse.json({ error: (rpcResult as any).error || 'Processing failed' }, { status: 400 });

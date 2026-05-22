@@ -781,9 +781,9 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     useEffect(() => {
       const updateHeight = () => {
         if (window.innerWidth < 640) {
-          setChartHeight(380);
+          setChartHeight(240);
         } else if (window.innerWidth < 1024) {
-          setChartHeight(380);
+          setChartHeight(320);
         } else {
           setChartHeight(CHART_HEIGHT);
         }
@@ -1219,7 +1219,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         const w = containerRef.current.clientWidth || 800;
         const isMobile = window.innerWidth < 640;
         const isTablet = window.innerWidth < 1024;
-        const chartH = isMobile ? 380 : isTablet ? 380 : CHART_HEIGHT;
+        const chartH = isMobile ? 240 : isTablet ? 320 : CHART_HEIGHT;
 
         const chart = createChart(containerRef.current, {
           width: w,
@@ -1266,7 +1266,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
             if (cw > 0 && chartRef.current) {
               const isMob = window.innerWidth < 640;
               const isTab = window.innerWidth < 1024;
-              const newH = isMob ? 380 : isTab ? 380 : CHART_HEIGHT;
+              const newH = isMob ? 240 : isTab ? 320 : CHART_HEIGHT;
               try { chartRef.current.applyOptions({ width: cw, height: newH }); } catch {}
               [rsiChartRef, macdChartRef, stochChartRef, atrChartRef, cciChartRef].forEach(r => {
                 if (r.current) { try { r.current.applyOptions({ width: cw }); } catch {} }
@@ -1757,8 +1757,8 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         >
           {/* ── Timeframe pills (scrollable) ── */}
           <div
-            className="flex items-center gap-0.5 px-2 flex-shrink-0 overflow-x-auto"
-            style={{ scrollbarWidth: 'none', maxWidth: 'calc(100% - 160px)' }}
+            className="flex items-center gap-0.5 px-2 flex-shrink-1 overflow-x-auto"
+            style={{ scrollbarWidth: 'none', minWidth: 0, flex: '1 1 0' }}
           >
             {TIMEFRAMES.map((tf) => (
               <button

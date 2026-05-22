@@ -125,7 +125,7 @@ export default function WalletsPage() {
     const supabase = createClient();
     const { error } = await supabase
       .from('wallets')
-      .update({ balance: confirm.newValue, updated_at: new Date().toISOString() })
+      .update({ balance: confirm.newValue })
       .eq('id', confirm.walletId);
 
     if (error) {
