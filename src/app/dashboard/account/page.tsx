@@ -6,6 +6,7 @@ import { User, Shield, Wallet, BarChart2, Trophy, Clock, Settings, Headphones, C
 import { createClient } from '@/lib/supabase/client';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useRealtimeDashboard } from '@/lib/hooks/useRealtimeDashboard';
+import DepositModal from '@/components/dashboard/DepositModal';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,6 +73,8 @@ interface WithdrawalRecord {
   payment_method: string | null;
   destination_address: string | null;
   status: string;
+  admin_note: string | null;
+  processed_at: string | null;
   created_at: string;
 }
 
@@ -632,7 +635,7 @@ function SecuritySection() {
 
 // ─── Section: Wallet ──────────────────────────────────────────────────────────
 
-const PAYMENT_METHODS = ['Bank Transfer', 'QRIS', 'OVO', 'GoPay', 'Dana', 'ShopeePay', 'Crypto (USDT)', 'Crypto (BTC)', 'Paypal'];
+const PAYMENT_METHODS = ['Bank Transfer', 'Crypto (USDT)', 'Crypto (BTC)', 'Paypal', 'Wire Transfer', 'SWIFT'];
 
 function depositStatusBadge(status: string) {
   if (status === 'approved') return 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/25';
@@ -645,13 +648,14 @@ function depositStatusLabel(status: string) {
   return 'Pending';
 }
 function withdrawalStatusBadge(status: string) {
-  if (status === 'completed') return 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/25';
+  if (status === 'completed' || status === 'approved') return 'text-emerald-400 bg-emerald-500/10 border border-emerald-500/25';
   if (status === 'rejected') return 'text-red-400 bg-red-500/10 border border-red-500/25';
   if (status === 'processing') return 'text-blue-400 bg-blue-500/10 border border-blue-500/25';
   return 'text-yellow-400 bg-yellow-500/10 border border-yellow-500/25';
 }
 function withdrawalStatusLabel(status: string) {
   if (status === 'completed') return 'Completed';
+  if (status === 'approved') return 'Approved';
   if (status === 'rejected') return 'Rejected';
   if (status === 'processing') return 'Processing';
   return 'Pending';
@@ -663,6 +667,7 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
   const [toast, setToast] = useState<ToastState | null>(null);
   const [resetting, setResetting] = useState(false);
   const [countryPaymentMethods, setCountryPaymentMethods] = useState<string[]>([]);
+  const [showCommissionModal, setShowCommissionModal] = useState(false);
 
   useEffect(() => {
     const fetchCountryMethods = async () => {
@@ -730,9 +735,25 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
     if (!withdrawalForm.destination_address) { setToast({ message: 'Please enter a destination account', type: 'error' }); return; }
     setSubmittingWithdrawal(true);
     try {
-      const { error } = await supabase.from('withdrawals').insert({ user_id: userId, amount, currency: 'USD', payment_method: withdrawalForm.payment_method, destination_address: withdrawalForm.destination_address, status: 'pending' });
+      const { error, data: inserted } = await supabase.from('withdrawals').insert({ user_id: userId, amount, currency: 'USD', payment_method: withdrawalForm.payment_method, destination_address: withdrawalForm.destination_address, status: 'pending' }).select('id').single();
       if (error) throw error;
-      setToast({ message: 'Withdrawal request submitted successfully.', type: 'success' });
+      // Notify admin via email
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        const { data: userProfile } = await supabase.from('users').select('email, full_name').eq('id', userId).single();
+        await fetch('/api/admin/notify-withdrawal', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            withdrawal_id: inserted?.id,
+            user_email: userProfile?.email || user?.email || '',
+            user_name: userProfile?.full_name || '',
+            amount,
+            payment_method: withdrawalForm.payment_method,
+          }),
+        });
+      } catch { /* email notification failure is non-blocking */ }
+      setToast({ message: '⚠️ Withdrawal request submitted. Please pay the 20% Tradiglo commission first. Once payment is confirmed, your withdrawal will be processed within 5–30 minutes to your bank account.', type: 'success' });
       setWithdrawalForm({ amount: '', payment_method: '', destination_address: '' });
       await onRefresh();
     } catch (e: any) {
@@ -752,6 +773,66 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
   return (
     <div className="space-y-4">
       {toast && <Toast toast={toast} onClose={() => setToast(null)} />}
+
+      {/* Commission Notice Modal */}
+      {showCommissionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.82)', backdropFilter: 'blur(8px)' }}>
+          <div className="relative w-full max-w-md rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(160deg, #0d1117 0%, #161b27 50%, #0d1117 100%)', border: '1px solid rgba(255,255,255,0.08)', boxShadow: '0 32px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.04)' }}>
+            {/* Header */}
+            <div className="px-6 pt-6 pb-5 flex items-start gap-4 border-b border-white/6">
+              <div className="flex-shrink-0 w-11 h-11 rounded-xl flex items-center justify-center" style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)' }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              </div>
+              <div>
+                <h3 className="text-[15px] font-bold text-white leading-tight">Important: Withdrawal Commission</h3>
+                <p className="text-[11px] text-amber-500 font-semibold uppercase tracking-widest mt-0.5">Please read before proceeding</p>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="px-6 py-5 space-y-3">
+              <div className="rounded-xl p-4 space-y-3" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                <p className="text-[13px] text-slate-300 leading-relaxed">
+                  Before your withdrawal can be processed, you are required to pay the{' '}
+                  <span className="text-amber-400 font-bold">20% Tradiglo commission fee</span> first.
+                </p>
+                <p className="text-[13px] text-slate-400 leading-relaxed">
+                  Once your commission payment is confirmed, your withdrawal will be fully processed and the funds will be transferred to your bank account within{' '}
+                  <span className="text-white font-semibold">5–30 minutes</span>.
+                </p>
+              </div>
+
+              <div className="rounded-xl p-3 flex items-start gap-3" style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.15)' }}>
+                <svg className="flex-shrink-0 mt-0.5" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#818cf8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                <p className="text-[12px] text-indigo-300 leading-relaxed">
+                  Contact your account manager or support team for commission payment instructions and bank details.
+                </p>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 pb-6 flex gap-3">
+              <button
+                onClick={() => setShowCommissionModal(false)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all"
+                style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: '#94a3b8' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.07)'; (e.currentTarget as HTMLElement).style.color = '#e2e8f0'; }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = '#94a3b8'; }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => setShowCommissionModal(false)}
+                className="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition-all hover:scale-105 active:scale-95"
+                style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', boxShadow: '0 4px 20px rgba(245,158,11,0.35)' }}
+              >
+                I Understand, Proceed
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <GlassCard className="p-4" style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(99,102,241,0.08))', borderColor: 'rgba(59,130,246,0.25)' }}>
           <div className="flex items-center justify-between mb-3"><span className="text-[10px] font-semibold text-blue-400 uppercase tracking-wider flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" /> Demo Balance</span><button onClick={handleResetDemo} disabled={resetting} className="text-[10px] text-blue-400/60 hover:text-blue-400 transition-colors flex items-center gap-1"><RotateCcw size={10} className={resetting ? 'animate-spin' : ''} /> Reset</button></div>
@@ -807,7 +888,7 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
       <GlassCard className="overflow-hidden">
         <div className="flex border-b border-white/8">
           {([{ key: 'deposit', label: 'Deposit', icon: <ArrowDownCircle size={13} />, color: '#10b981' }, { key: 'withdrawal', label: 'Withdrawal', icon: <ArrowUpCircle size={13} />, color: '#ef4444' }, { key: 'history', label: 'History', icon: <List size={13} />, color: '#6366f1' }] as const).map(({ key, label, icon, color }) => (
-            <button key={key} onClick={() => setTab(key)} className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-xs font-semibold transition-all relative" style={{ background: tab === key ? `${color}20` : 'transparent', color: tab === key ? 'white' : '#64748b' }} onMouseEnter={e => { if (tab !== key) { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = '#94a3b8'; } }} onMouseLeave={e => { if (tab !== key) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#64748b'; } }}>
+            <button key={key} onClick={() => { setTab(key); if (key === 'withdrawal') setShowCommissionModal(true); }} className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-xs font-semibold transition-all relative" style={{ background: tab === key ? `${color}20` : 'transparent', color: tab === key ? 'white' : '#64748b' }} onMouseEnter={e => { if (tab !== key) { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = '#94a3b8'; } }} onMouseLeave={e => { if (tab !== key) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#64748b'; } }}>
               {icon} {label}
               {tab === key && <span className="absolute bottom-0 w-6 h-0.5 rounded-full" style={{ background: color }} />}
             </button>
@@ -853,9 +934,21 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
                 <div><h5 className="text-[10px] text-slate-500 uppercase tracking-wider mb-3">Withdrawal History</h5>
                   <div className="space-y-2 max-h-60 overflow-y-auto">
                     {withdrawals.map(w => (
-                      <div key={w.id} className="flex items-center justify-between py-2.5 px-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                        <div><div className="text-xs font-semibold text-white">${formatCurrency(w.amount)} {w.currency}</div><div className="text-[10px] text-slate-500">{w.payment_method || '—'} · {formatDate(w.created_at)}</div></div>
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${withdrawalStatusBadge(w.status)}`}>{withdrawalStatusLabel(w.status)}</span>
+                      <div key={w.id} className="py-2.5 px-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                        <div className="flex items-center justify-between">
+                          <div><div className="text-xs font-semibold text-white">${formatCurrency(w.amount)} {w.currency}</div><div className="text-[10px] text-slate-500">{w.payment_method || '—'} · {formatDate(w.created_at)}</div></div>
+                          <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${withdrawalStatusBadge(w.status)}`}>{withdrawalStatusLabel(w.status)}</span>
+                        </div>
+                        {w.admin_note && w.status === 'rejected' && (
+                          <div className="mt-1.5 text-[10px] text-red-300 bg-red-500/8 border border-red-500/15 rounded-lg px-2 py-1">
+                            <span className="font-semibold text-red-400">Reason: </span>{w.admin_note}
+                          </div>
+                        )}
+                        {w.admin_note && w.status === 'approved' && (
+                          <div className="mt-1.5 text-[10px] text-slate-400 bg-slate-700/30 border border-slate-700/50 rounded-lg px-2 py-1">
+                            <span className="font-semibold">Note: </span>{w.admin_note}
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
@@ -1376,6 +1469,8 @@ export default function AccountPage() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sectionKey, setSectionKey] = useState(0);
+  const [depositModalOpen, setDepositModalOpen] = useState(false);
+  const [isDemo, setIsDemo] = useState(false);
 
   const [userId, setUserId] = useState<string>('');
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -1554,6 +1649,18 @@ export default function AccountPage() {
           <span style={{ fontFamily: "'DM Sans', sans-serif", fontWeight: 800, letterSpacing: '0.06em', fontSize: 14 }} className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 select-none">TRADIGLO</span>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setDepositModalOpen(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-white transition-all hover:scale-105 active:scale-95"
+            style={{ background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 4px 16px rgba(16,185,129,0.25)' }}
+          >
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="5" width="20" height="14" rx="2" />
+              <path d="M16 12h2" />
+              <path d="M2 10h20" />
+            </svg>
+            <span>Deposit</span>
+          </button>
           <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-slate-400 hover:text-white transition-colors" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}><Bell size={15} /></button>
           <div className="w-8 h-8 rounded-xl overflow-hidden flex items-center justify-center text-xs font-bold text-blue-300" style={{ background: 'linear-gradient(135deg, #1e3a5f, #1e1b4b)', border: '1px solid rgba(59,130,246,0.3)' }}>
             {profile?.avatar_url ? <img src={profile.avatar_url} alt="avatar" className="w-full h-full object-cover" /> : (profile?.full_name?.[0] || profile?.email?.[0] || 'U').toUpperCase()}
@@ -1637,6 +1744,15 @@ export default function AccountPage() {
             </div>
           </div>
         </div>
+      )}
+
+      {depositModalOpen && userId && (
+        <DepositModal
+          isOpen={depositModalOpen}
+          onClose={() => setDepositModalOpen(false)}
+          userId={userId}
+          isDemo={isDemo}
+        />
       )}
     </div>
   );

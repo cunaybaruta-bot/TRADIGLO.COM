@@ -55,6 +55,55 @@
   }
 }
 
+/* Admin panel page transition */
+@keyframes adminFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes adminSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes subMenuExpand {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 500px;
+  }
+}
+
+.admin-page-enter {
+  animation: adminFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.admin-submenu-enter {
+  animation: subMenuExpand 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  overflow: hidden;
+}
+
+.admin-nav-item-enter {
+  animation: adminSlideIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 body {
   font-family: 'Inter', sans-serif;
   font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;

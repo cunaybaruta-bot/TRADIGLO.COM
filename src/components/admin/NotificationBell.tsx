@@ -14,18 +14,16 @@ import {
   UserGroupIcon,
 } from '@heroicons/react/24/outline';
 import { useNotifications, AdminNotification } from '@/contexts/NotificationContext';
-import Icon from '@/components/ui/AppIcon';
-
 
 const TYPE_CONFIG: Record<
   string,
-  { label: string; color: string; bg: string; border: string; icon: React.ComponentType<{ className?: string }> }
+  { label: string; color: string; bg: string; border: string; dot: string; icon: React.ComponentType<{ className?: string }> }
 > = {
-  new_user:   { label: 'New User',    color: 'text-blue-400',   bg: 'bg-blue-400/10',   border: 'border-blue-400/30',   icon: UserPlusIcon },
-  deposit:    { label: 'Deposit',     color: 'text-green-400',  bg: 'bg-green-400/10',  border: 'border-green-400/30',  icon: ArrowDownTrayIcon },
-  withdrawal: { label: 'Withdrawal',  color: 'text-orange-400', bg: 'bg-orange-400/10', border: 'border-orange-400/30', icon: ArrowUpTrayIcon },
-  trade:      { label: 'Trade',       color: 'text-purple-400', bg: 'bg-purple-400/10', border: 'border-purple-400/30', icon: ChartBarIcon },
-  copy_trade: { label: 'Copy Trade',  color: 'text-cyan-400',   bg: 'bg-cyan-400/10',   border: 'border-cyan-400/30',   icon: UserGroupIcon },
+  new_user:   { label: 'New User',    color: 'text-blue-400',   bg: 'bg-blue-500/15',   border: 'border-blue-500/25',   dot: 'bg-blue-400',   icon: UserPlusIcon },
+  deposit:    { label: 'Deposit',     color: 'text-emerald-400', bg: 'bg-emerald-500/15', border: 'border-emerald-500/25', dot: 'bg-emerald-400', icon: ArrowDownTrayIcon },
+  withdrawal: { label: 'Withdrawal',  color: 'text-amber-400',  bg: 'bg-amber-500/15',  border: 'border-amber-500/25',  dot: 'bg-amber-400',  icon: ArrowUpTrayIcon },
+  trade:      { label: 'Trade',       color: 'text-violet-400', bg: 'bg-violet-500/15', border: 'border-violet-500/25', dot: 'bg-violet-400', icon: ChartBarIcon },
+  copy_trade: { label: 'Copy Trade',  color: 'text-cyan-400',   bg: 'bg-cyan-500/15',   border: 'border-cyan-500/25',   dot: 'bg-cyan-400',   icon: UserGroupIcon },
 };
 
 function relativeTime(dateStr: string): string {
@@ -47,65 +45,76 @@ function NotificationItem({
 }) {
   const router = useRouter();
   const cfg = TYPE_CONFIG[notification.type] || TYPE_CONFIG.trade;
-  const Icon = cfg.icon;
+  const IconComp = cfg.icon;
   const isDeposit = notification.type === 'deposit';
+  const isWithdrawal = notification.type === 'withdrawal';
 
-  const handleView = () => {
+  const handleClick = () => {
     if (!notification.is_read) onRead(notification.id);
     onClose();
-    router.push('/admin/deposits?status=pending');
+    if (isWithdrawal) router.push('/admin/withdrawals?status=pending');
+    else if (isDeposit) router.push('/admin/deposits?status=pending');
   };
 
   return (
     <div
-      className={`flex items-start gap-3 px-4 py-3 transition-colors group ${
-        notification.is_read ? 'opacity-50 hover:opacity-70' : 'hover:bg-slate-700/40'
-      }`}
-      onClick={() => !notification.is_read && onRead(notification.id)}
+      onClick={handleClick}
+      className={`relative flex items-start gap-3 px-4 py-3.5 cursor-pointer transition-all duration-150 group
+        ${notification.is_read
+          ? 'opacity-55 hover:opacity-75 hover:bg-white/[0.02]'
+          : 'hover:bg-white/[0.04]'
+        }`}
     >
-      <div className={`flex-shrink-0 w-8 h-8 rounded-lg ${cfg.bg} border ${cfg.border} flex items-center justify-center mt-0.5`}>
-        <Icon className={`w-4 h-4 ${cfg.color}`} />
+      {/* Unread left accent bar */}
+      {!notification.is_read && (
+        <div className="absolute left-0 top-3 bottom-3 w-0.5 rounded-r-full bg-gradient-to-b from-transparent via-current to-transparent" style={{ color: cfg.dot.replace('bg-', '') }} />
+      )}
+
+      {/* Icon */}
+      <div className={`flex-shrink-0 w-9 h-9 rounded-xl ${cfg.bg} border ${cfg.border} flex items-center justify-center mt-0.5`}>
+        <IconComp className={`w-4 h-4 ${cfg.color}`} />
       </div>
 
+      {/* Content */}
       <div className="flex-1 min-w-0">
-        <div className="flex items-start justify-between gap-2">
-          <p className={`text-sm font-medium leading-tight ${notification.is_read ? 'text-slate-400' : 'text-white'}`}>
+        <div className="flex items-start justify-between gap-2 mb-0.5">
+          <p className={`text-sm font-semibold leading-snug truncate ${notification.is_read ? 'text-slate-400' : 'text-slate-100'}`}>
             {notification.title}
           </p>
-          <span className="text-[10px] text-slate-500 flex-shrink-0 mt-0.5">{relativeTime(notification.created_at)}</span>
+          <span className="text-[10px] text-slate-500 flex-shrink-0 mt-px whitespace-nowrap">{relativeTime(notification.created_at)}</span>
         </div>
-        <p className="text-xs text-slate-500 mt-0.5 leading-relaxed line-clamp-2">{notification.message}</p>
+        <p className="text-xs text-slate-500 leading-relaxed line-clamp-2">{notification.message}</p>
         {notification.users?.email && (
           <p className="text-[10px] text-slate-600 mt-1 truncate">{notification.users.email}</p>
         )}
-        {isDeposit && (
-          <button
-            onClick={(e) => { e.stopPropagation(); handleView(); }}
-            className="mt-1.5 text-[10px] text-emerald-400 hover:text-emerald-300 font-semibold transition-colors"
-          >
-            View →
-          </button>
+        {(isDeposit || isWithdrawal) && (
+          <span className={`inline-flex items-center gap-1 mt-2 text-[11px] font-semibold ${cfg.color} group-hover:underline`}>
+            Review →
+          </span>
         )}
       </div>
 
+      {/* Unread dot */}
       {!notification.is_read && (
-        <div className="flex-shrink-0 w-2 h-2 rounded-full bg-[#22c55e] mt-2" />
+        <div className={`flex-shrink-0 w-2 h-2 rounded-full mt-1.5 ${cfg.dot}`} />
       )}
     </div>
   );
 }
 
+type FilterTab = 'all' | 'new' | 'withdrawals';
+
 export default function NotificationBell() {
   const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications();
   const [open, setOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<FilterTab>('all');
   const [prevUnread, setPrevUnread] = useState(0);
   const [pulse, setPulse] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Count pending deposits from notifications
-  const pendingDepositCount = notifications.filter(
-    (n) => n.type === 'deposit' && !n.is_read
-  ).length;
+  const pendingDepositCount = notifications.filter(n => n.type === 'deposit' && !n.is_read).length;
+  const pendingWithdrawalCount = notifications.filter(n => n.type === 'withdrawal' && !n.is_read).length;
+  const newCount = notifications.filter(n => !n.is_read).length;
 
   useEffect(() => {
     if (unreadCount > prevUnread && prevUnread !== 0) {
@@ -126,99 +135,157 @@ export default function NotificationBell() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [open]);
 
-  const recent = notifications.slice(0, 10);
+  const filtered = notifications.slice(0, 15).filter(n => {
+    if (activeTab === 'new') return !n.is_read;
+    if (activeTab === 'withdrawals') return n.type === 'withdrawal';
+    return true;
+  });
 
   return (
     <div className="relative" ref={dropdownRef}>
+      {/* Bell Button */}
       <button
-        onClick={() => setOpen((v) => !v)}
-        className={`relative p-2 rounded-lg transition-colors ${open ? 'bg-slate-700 text-white' : 'text-slate-400 hover:text-white hover:bg-slate-700/50'}`}
+        onClick={() => setOpen(v => !v)}
+        className={`relative p-2 rounded-xl transition-all duration-150 ${
+          open
+            ? 'bg-slate-700/80 text-white shadow-inner'
+            : 'text-slate-400 hover:text-white hover:bg-slate-700/50'
+        }`}
         aria-label="Notifications"
       >
         <BellIcon className={`w-5 h-5 ${pulse ? 'animate-bounce' : ''}`} />
-
         {unreadCount > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center">
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </span>
-        )}
-
-        {pulse && (
-          <span className="absolute -top-0.5 -right-0.5 w-[18px] h-[18px] rounded-full bg-red-500/40 animate-ping" />
+          <>
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center shadow-lg shadow-red-500/30 z-10">
+              {unreadCount > 99 ? '99+' : unreadCount}
+            </span>
+            {pulse && (
+              <span className="absolute -top-1 -right-1 w-[18px] h-[18px] rounded-full bg-red-400/50 animate-ping" />
+            )}
+          </>
         )}
       </button>
 
+      {/* Dropdown */}
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-[380px] max-w-[calc(100vw-2rem)] bg-[#1e293b] border border-slate-700 rounded-xl shadow-2xl shadow-black/50 z-50 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700">
-            <div className="flex items-center gap-2">
-              <h3 className="text-white font-semibold text-sm">Notifications</h3>
-              {unreadCount > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full bg-red-500/20 text-red-400 text-[10px] font-bold border border-red-500/30">
-                  {unreadCount} new
-                </span>
-              )}
-              {pendingDepositCount > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 text-[10px] font-bold border border-yellow-500/25">
-                  {pendingDepositCount} deposits
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-1">
-              {unreadCount > 0 && (
+        <div className="absolute right-0 top-full mt-2.5 w-[400px] max-w-[calc(100vw-1.5rem)] bg-[#0a0f1e] border border-white/10 rounded-2xl shadow-2xl shadow-black/60 z-50 overflow-hidden">
+
+          {/* Header */}
+          <div className="px-5 pt-4 pb-3 border-b border-white/8">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-white font-bold text-base tracking-tight">Notifications</h3>
+              <div className="flex items-center gap-1">
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs text-slate-400 hover:text-emerald-400 hover:bg-emerald-500/10 transition-all duration-150 font-medium"
+                  >
+                    <CheckIcon className="w-3.5 h-3.5" />
+                    Mark all read
+                  </button>
+                )}
                 <button
-                  onClick={markAllAsRead}
-                  className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs text-slate-400 hover:text-[#22c55e] hover:bg-[#22c55e]/10 transition-colors"
+                  onClick={() => setOpen(false)}
+                  className="p-1.5 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-white/8 transition-all duration-150"
                 >
-                  <CheckIcon className="w-3.5 h-3.5" />
-                  Mark all read
+                  <XMarkIcon className="w-4 h-4" />
                 </button>
-              )}
-              <button
-                onClick={() => setOpen(false)}
-                className="p-1 rounded-lg text-slate-500 hover:text-white hover:bg-slate-700/50 transition-colors"
-              >
-                <XMarkIcon className="w-4 h-4" />
-              </button>
+              </div>
+            </div>
+
+            {/* Filter Tabs */}
+            <div className="flex items-center gap-1.5">
+              {([
+                { key: 'all', label: 'All', count: notifications.length },
+                { key: 'new', label: 'New', count: newCount },
+                { key: 'withdrawals', label: 'Withdrawals', count: pendingWithdrawalCount },
+              ] as { key: FilterTab; label: string; count: number }[]).map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => setActiveTab(tab.key)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150 ${
+                    activeTab === tab.key
+                      ? 'bg-blue-500/15 text-blue-400 border border-blue-500/25' :'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                  }`}
+                >
+                  {tab.label}
+                  {tab.count > 0 && (
+                    <span className={`min-w-[18px] h-[18px] px-1 rounded-full text-[10px] font-bold flex items-center justify-center ${
+                      activeTab === tab.key
+                        ? tab.key === 'withdrawals' ? 'bg-amber-500/25 text-amber-300' : 'bg-blue-500/25 text-blue-300' : 'bg-white/8 text-slate-400'
+                    }`}>
+                      {tab.count}
+                    </span>
+                  )}
+                </button>
+              ))}
             </div>
           </div>
 
-          {/* Pending deposits quick link */}
-          {pendingDepositCount > 0 && (
+          {/* Quick action banners */}
+          {activeTab !== 'withdrawals' && pendingWithdrawalCount > 0 && (
             <Link
-              href="/admin/deposits?status=pending"
+              href="/admin/withdrawals?status=pending"
               onClick={() => setOpen(false)}
-              className="flex items-center justify-between px-4 py-2.5 bg-yellow-500/8 border-b border-yellow-500/15 hover:bg-yellow-500/12 transition-colors"
+              className="flex items-center justify-between px-5 py-2.5 bg-amber-500/8 border-b border-amber-500/15 hover:bg-amber-500/14 transition-colors group"
             >
-              <div className="flex items-center gap-2">
-                <ArrowDownTrayIcon className="w-4 h-4 text-yellow-400" />
-                <span className="text-yellow-300 text-xs font-semibold">{pendingDepositCount} deposit{pendingDepositCount > 1 ? 's' : ''} awaiting approval</span>
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-amber-500/20 border border-amber-500/30 flex items-center justify-center">
+                  <ArrowUpTrayIcon className="w-3.5 h-3.5 text-amber-400" />
+                </div>
+                <span className="text-amber-300 text-xs font-semibold">
+                  {pendingWithdrawalCount} withdrawal{pendingWithdrawalCount > 1 ? 's' : ''} awaiting approval
+                </span>
               </div>
-              <span className="text-yellow-400 text-xs">Review →</span>
+              <span className="text-amber-400 text-xs font-semibold group-hover:translate-x-0.5 transition-transform">Review →</span>
             </Link>
           )}
 
-          <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-700/50">
-            {recent.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-12 h-12 rounded-full bg-slate-700/50 flex items-center justify-center mb-3">
+          {activeTab !== 'withdrawals' && pendingDepositCount > 0 && (
+            <Link
+              href="/admin/deposits?status=pending"
+              onClick={() => setOpen(false)}
+              className="flex items-center justify-between px-5 py-2.5 bg-emerald-500/8 border-b border-emerald-500/15 hover:bg-emerald-500/14 transition-colors group"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center">
+                  <ArrowDownTrayIcon className="w-3.5 h-3.5 text-emerald-400" />
+                </div>
+                <span className="text-emerald-300 text-xs font-semibold">
+                  {pendingDepositCount} deposit{pendingDepositCount > 1 ? 's' : ''} awaiting approval
+                </span>
+              </div>
+              <span className="text-emerald-400 text-xs font-semibold group-hover:translate-x-0.5 transition-transform">Review →</span>
+            </Link>
+          )}
+
+          {/* Notification List */}
+          <div className="max-h-[360px] overflow-y-auto divide-y divide-white/5 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-slate-700">
+            {filtered.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-14 text-center px-6">
+                <div className="w-14 h-14 rounded-2xl bg-white/5 border border-white/8 flex items-center justify-center mb-4">
                   <BellIcon className="w-6 h-6 text-slate-500" />
                 </div>
-                <p className="text-slate-400 text-sm font-medium">No notifications yet</p>
-                <p className="text-slate-600 text-xs mt-1">New activity will appear here</p>
+                <p className="text-slate-300 text-sm font-semibold mb-1">
+                  {activeTab === 'new' ? 'All caught up!' : activeTab === 'withdrawals' ? 'No withdrawal notifications' : 'No notifications yet'}
+                </p>
+                <p className="text-slate-600 text-xs leading-relaxed">
+                  {activeTab === 'new' ? 'You have no unread notifications.' : 'New activity will appear here.'}
+                </p>
               </div>
             ) : (
-              recent.map((n) => (
+              filtered.map(n => (
                 <NotificationItem key={n.id} notification={n} onRead={markAsRead} onClose={() => setOpen(false)} />
               ))
             )}
           </div>
 
-          <div className="border-t border-slate-700 px-4 py-3">
+          {/* Footer */}
+          <div className="border-t border-white/8 px-5 py-3 bg-white/3">
             <Link
               href="/admin/notifications"
               onClick={() => setOpen(false)}
-              className="flex items-center justify-center w-full py-2 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-700/50 transition-colors font-medium"
+              className="flex items-center justify-center w-full py-2 rounded-xl text-sm text-slate-400 hover:text-white hover:bg-white/8 transition-all duration-150 font-medium gap-1.5"
             >
               View all notifications
             </Link>

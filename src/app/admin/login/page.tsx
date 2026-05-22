@@ -87,14 +87,14 @@ export default function AdminLoginPage() {
 
   if (checking) {
     return (
-      <div className="min-h-screen bg-[#0f172a] flex items-center justify-center">
+      <div className="min-h-screen bg-[#060a14] flex items-center justify-center">
         <div className="text-slate-400 text-sm">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-[#0f172a] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[#060a14] flex items-center justify-center px-4">
       <div className="w-full max-w-md">
         {/* Logo / Brand */}
         <div className="flex flex-col items-center mb-8">
@@ -128,7 +128,7 @@ export default function AdminLoginPage() {
         </div>
 
         {/* Card */}
-        <div className="bg-[#1e293b] rounded-2xl border border-slate-700/50 p-8 shadow-2xl">
+        <div className="bg-[#0a0f1e] rounded-2xl border border-white/10 p-8 shadow-2xl shadow-black/50">
           <h2 className="text-white text-lg font-semibold mb-1">Sign in to Admin</h2>
           <p className="text-slate-400 text-sm mb-6">Enter your admin credentials to continue</p>
 
@@ -144,7 +144,7 @@ export default function AdminLoginPage() {
                 required
                 autoComplete="email"
                 placeholder="admin@tradiglo.com"
-                className="w-full bg-[#0f172a] border border-slate-600 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#22c55e] focus:ring-1 focus:ring-[#22c55e] transition-colors"
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30 transition-colors"
               />
             </div>
 
@@ -160,7 +160,7 @@ export default function AdminLoginPage() {
                   required
                   autoComplete="current-password"
                   placeholder="••••••••"
-                  className="w-full bg-[#0f172a] border border-slate-600 rounded-lg px-4 py-2.5 pr-11 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-[#22c55e] focus:ring-1 focus:ring-[#22c55e] transition-colors"
+                  className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-2.5 pr-11 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/30 transition-colors"
                 />
                 <button
                   type="button"
@@ -191,7 +191,7 @@ export default function AdminLoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-[#22c55e] hover:bg-[#16a34a] disabled:opacity-60 disabled:cursor-not-allowed text-black font-semibold py-2.5 rounded-lg text-sm transition-colors"
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-2.5 rounded-lg text-sm transition-all shadow-lg shadow-blue-500/20"
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
