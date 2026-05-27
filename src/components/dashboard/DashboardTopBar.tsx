@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
 import { useLanguage, LangCode } from '@/contexts/LanguageContext';
+import MemberChatNotificationBell from '@/components/dashboard/MemberChatNotificationBell';
 
 interface Wallet {
   demoBalance: number;
@@ -36,6 +37,14 @@ export default function DashboardTopBar({
   const { lang, setLang, t } = useLanguage();
   const [langOpen, setLangOpen] = useState(false);
   const langRef = useRef<HTMLDivElement>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.id) setUserId(session.user.id);
+    });
+  }, []);
 
   const languages: { code: LangCode; label: string; flag: string }[] = [
     { code: 'en', label: 'EN', flag: '🇺🇸' },
@@ -150,6 +159,9 @@ export default function DashboardTopBar({
           </svg>
           <span className="hidden sm:inline">{t('dash_deposit')}</span>
         </button>
+
+        {/* Member Chat Notification Bell */}
+        {userId && <MemberChatNotificationBell userId={userId} />}
 
         {/* Language Selector */}
         <div className="relative" ref={langRef}>

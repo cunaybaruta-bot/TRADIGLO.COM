@@ -2,7 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { MagnifyingGlassIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, CheckCircleIcon, XCircleIcon, ClipboardDocumentIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
+import { useRouter } from 'next/navigation';
+import type React from 'react';
 
 interface User {
   id: string;
@@ -57,6 +59,31 @@ const KycBadge = ({ status }: { status: string }) => {
   return <span className={`px-2 py-0.5 rounded-full text-xs font-medium border ${cfg.cls}`}>{cfg.label}</span>;
 };
 
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  };
+  return (
+    <button
+      onClick={handleCopy}
+      className="relative inline-flex items-center text-slate-500 hover:text-[#22c55e] transition-colors flex-shrink-0"
+      title="Copy to clipboard"
+    >
+      <ClipboardDocumentIcon className="w-3.5 h-3.5" />
+      {copied && (
+        <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-[#22c55e] text-black text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap z-10">
+          Copied!
+        </span>
+      )}
+    </button>
+  );
+}
+
 export default function UsersPage() {
   const [users, setUsers] = useState<UserWithWallet[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,6 +93,8 @@ export default function UsersPage() {
   const [messageType, setMessageType] = useState<'success' | 'error'>('success');
   const [tab, setTab] = useState<'all' | 'active' | 'suspended'>('all');
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [chatLoading, setChatLoading] = useState<string | null>(null);
+  const router = useRouter();
 
   const fetchUsers = useCallback(async () => {
     const supabase = createClient();
@@ -195,6 +224,40 @@ export default function UsersPage() {
     setActionLoading(null);
   };
 
+  const handleStartChat = async (userId: string) => {
+    setChatLoading(userId);
+    const supabase = createClient();
+    try {
+      // Check if there's already an active session for this user
+      const { data: existing } = await supabase
+        .from('chat_sessions')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .maybeSingle();
+
+      let sessionId = existing?.id;
+
+      if (!sessionId) {
+        // Create a new session
+        const { data: newSession, error } = await supabase
+          .from('chat_sessions')
+          .insert({ user_id: userId, status: 'active' })
+          .select('id')
+          .single();
+        if (error) throw error;
+        sessionId = newSession.id;
+      }
+
+      // Navigate to live chat with this session pre-selected
+      router.push(`/admin/support/live-chat?session=${sessionId}`);
+    } catch (err) {
+      showMessage('Failed to start chat session', 'error');
+    } finally {
+      setChatLoading(null);
+    }
+  };
+
   const isUserSuspended = (user: UserWithWallet) => user.status === 'suspended';
 
   const filtered = users.filter((u) => {
@@ -271,7 +334,12 @@ export default function UsersPage() {
               {filtered.map((user) => (
                 <>
                   <tr key={user.id} className="hover:bg-slate-700/20 transition-colors">
-                    <td className="px-5 py-3 text-white text-sm">{user.email}</td>
+                    <td className="px-5 py-3 text-white text-sm">
+                      <div className="flex items-center gap-1.5">
+                        <span>{user.email}</span>
+                        <CopyButton text={user.email} />
+                      </div>
+                    </td>
                     <td className="px-5 py-3 text-slate-300 text-sm">{user.full_name || '—'}</td>
                     <td className="px-5 py-3"><StatusBadge active={!isUserSuspended(user)} /></td>
                     <td className="px-5 py-3">
@@ -283,6 +351,15 @@ export default function UsersPage() {
                         <button onClick={() => toggleExpand(user.id)}
                           className="text-xs px-2 py-1 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20 hover:bg-blue-500/20 transition-colors">
                           {expandedUser === user.id ? 'Hide' : 'Details'}
+                        </button>
+                        <button
+                          onClick={() => handleStartChat(user.id)}
+                          disabled={chatLoading === user.id}
+                          className="text-xs px-2 py-1 rounded bg-purple-500/10 text-purple-400 border border-purple-500/20 hover:bg-purple-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                          title="Start chat with this user"
+                        >
+                          <ChatBubbleLeftRightIcon className="w-3 h-3" />
+                          {chatLoading === user.id ? '...' : 'Chat'}
                         </button>
                         {!isUserSuspended(user) ? (
                           <button
@@ -340,7 +417,10 @@ export default function UsersPage() {
                             </div>
                             <div className="bg-[#0f172a] rounded-lg p-3 border border-slate-700">
                               <div className="text-slate-400 text-xs mb-1">Phone</div>
-                              <div className="text-white text-sm font-medium">{user.phone || '—'}</div>
+                              <div className="flex items-center gap-1.5">
+                                <span className="text-white text-sm font-medium">{user.phone || '—'}</span>
+                                {user.phone && <CopyButton text={user.phone} />}
+                              </div>
                             </div>
                             <div className="bg-[#0f172a] rounded-lg p-3 border border-slate-700">
                               <div className="text-slate-400 text-xs mb-1">2FA</div>

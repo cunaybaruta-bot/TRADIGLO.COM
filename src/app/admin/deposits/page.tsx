@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect, useCallback, useRef, Suspense } from 'react';
+import React, { useState, useEffect, useCallback, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { CheckCircleIcon, XCircleIcon, EyeIcon, GiftIcon } from '@heroicons/react/24/outline';
+import { CheckCircleIcon, XCircleIcon, EyeIcon, GiftIcon, ClipboardDocumentIcon } from '@heroicons/react/24/outline';
 
 interface Deposit {
   id: string;
@@ -200,6 +200,31 @@ function ApproveModal({
         </div>
       </div>
     </div>
+  );
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  };
+  return (
+    <button
+      onClick={handleCopy}
+      className="relative inline-flex items-center text-slate-500 hover:text-emerald-400 transition-colors flex-shrink-0"
+      title="Copy to clipboard"
+    >
+      <ClipboardDocumentIcon className="w-3.5 h-3.5" />
+      {copied && (
+        <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-emerald-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap z-10">
+          Copied!
+        </span>
+      )}
+    </button>
   );
 }
 
@@ -447,6 +472,7 @@ function DepositsContent() {
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <span className="text-white text-sm">{(d.users as any)?.email || d.user_id.slice(0, 12) + '...'}</span>
+                          {(d.users as any)?.email && <CopyButton text={(d.users as any).email} />}
                           {(d.is_first_deposit || (d.status === 'pending' && isFirst)) && (
                             <span className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400 border border-yellow-500/25 text-[10px] font-bold whitespace-nowrap">
                               <GiftIcon className="w-2.5 h-2.5" /> 1st

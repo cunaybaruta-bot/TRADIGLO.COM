@@ -13,6 +13,7 @@ import {
   ArrowPathIcon,
   MagnifyingGlassIcon,
   EyeIcon,
+  ClipboardDocumentIcon,
 } from '@heroicons/react/24/outline';
 
 interface Withdrawal {
@@ -283,6 +284,31 @@ function ActionModal({ withdrawal, action, onConfirm, onClose, processing }: Act
       </div>
     </div>,
     document.body
+  );
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  };
+  return (
+    <button
+      onClick={handleCopy}
+      className="relative inline-flex items-center text-slate-500 hover:text-orange-400 transition-colors flex-shrink-0"
+      title="Copy to clipboard"
+    >
+      <ClipboardDocumentIcon className="w-3.5 h-3.5" />
+      {copied && (
+        <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-orange-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap z-10">
+          Copied!
+        </span>
+      )}
+    </button>
   );
 }
 
@@ -576,7 +602,10 @@ export default function WithdrawalsPage() {
                         </div>
                         <div className="min-w-0">
                           {userName && <div className="text-white text-xs font-medium truncate max-w-[140px]">{userName}</div>}
-                          <div className="text-slate-400 text-xs truncate max-w-[160px]">{userEmail}</div>
+                          <div className="flex items-center gap-1">
+                            <div className="text-slate-400 text-xs truncate max-w-[160px]">{userEmail}</div>
+                            <CopyButton text={userEmail} />
+                          </div>
                         </div>
                       </div>
                     </td>

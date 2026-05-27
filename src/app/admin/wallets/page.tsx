@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import {
   MagnifyingGlassIcon,
@@ -9,6 +9,7 @@ import {
   CheckIcon,
   XMarkIcon,
   ExclamationTriangleIcon,
+  ClipboardDocumentIcon,
 } from '@heroicons/react/24/outline';
 
 interface UserWalletRow {
@@ -26,6 +27,31 @@ interface ConfirmState {
   field: 'demo' | 'real';
   newValue: number;
   email: string;
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    });
+  };
+  return (
+    <button
+      onClick={handleCopy}
+      className="relative inline-flex items-center text-slate-500 hover:text-blue-400 transition-colors flex-shrink-0"
+      title="Copy to clipboard"
+    >
+      <ClipboardDocumentIcon className="w-3.5 h-3.5" />
+      {copied && (
+        <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-blue-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap z-10">
+          Copied!
+        </span>
+      )}
+    </button>
+  );
 }
 
 export default function WalletsPage() {
@@ -298,7 +324,12 @@ export default function WalletsPage() {
                 return (
                   <tr key={row.user_id} className="hover:bg-slate-700/20 transition-colors">
                     {/* Email */}
-                    <td className="px-5 py-3 text-white text-sm">{row.email}</td>
+                    <td className="px-5 py-3 text-white text-sm">
+                      <div className="flex items-center gap-1.5">
+                        <span>{row.email}</span>
+                        <CopyButton text={row.email} />
+                      </div>
+                    </td>
 
                     {/* Demo Balance */}
                     <td className="px-5 py-3">

@@ -1,16 +1,9 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import {
-  ChatBubbleLeftRightIcon,
-  PaperAirplaneIcon,
-  XMarkIcon,
-  CheckCircleIcon,
-  ClockIcon,
-  UserCircleIcon,
-  LanguageIcon,
-} from '@heroicons/react/24/outline';
+import { ChatBubbleLeftRightIcon, PaperAirplaneIcon, XMarkIcon, CheckCircleIcon, ClockIcon, UserCircleIcon, LanguageIcon,  } from '@heroicons/react/24/outline';
 
 interface ChatSession {
   id: string;
@@ -71,6 +64,7 @@ const TRANSLATE_LANGUAGES = [
 ];
 
 export default function AdminLiveChatPage() {
+  const searchParams = useSearchParams();
   const [sessions, setSessions] = useState<ChatSession[]>([]);
   const [selectedSession, setSelectedSession] = useState<ChatSession | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -83,6 +77,7 @@ export default function AdminLiveChatPage() {
   const [translating, setTranslating] = useState<Record<string, boolean>>({});
   const [adminTranslateLang, setAdminTranslateLang] = useState('ar');
   const [translatingInput, setTranslatingInput] = useState(false);
+  const [notifSent, setNotifSent] = useState<Record<string, boolean>>({});
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Stable supabase client reference — never recreated on re-render
@@ -105,6 +100,15 @@ export default function AdminLiveChatPage() {
       .order('created_at', { ascending: true });
     if (data) setMessages(data);
   }, [supabase]);
+
+  // Auto-select session from URL param (coming from Users page Chat button)
+  useEffect(() => {
+    const sessionParam = searchParams?.get('session');
+    if (sessionParam && sessions.length > 0) {
+      const found = sessions.find((s) => s.id === sessionParam);
+      if (found) setSelectedSession(found);
+    }
+  }, [searchParams, sessions]);
 
   // Sessions realtime subscription
   useEffect(() => {
@@ -255,6 +259,21 @@ export default function AdminLiveChatPage() {
       message: messageText.trim(),
     });
     await supabase.from('chat_sessions').update({ updated_at: new Date().toISOString() }).eq('id', selectedSession.id);
+
+    // Send member notification on first admin message (or if not yet sent this session)
+    if (!notifSent[selectedSession.id]) {
+      const userEmail = (selectedSession.users as any)?.email || 'Member';
+      await supabase.from('member_notifications').insert({
+        user_id: selectedSession.user_id,
+        type: 'chat',
+        title: 'New message from Admin',
+        message: messageText.trim().length > 80 ? messageText.trim().slice(0, 80) + '…' : messageText.trim(),
+        session_id: selectedSession.id,
+        is_read: false,
+      });
+      setNotifSent((prev) => ({ ...prev, [selectedSession.id]: true }));
+    }
+
     setMessageText('');
     setSending(false);
   };
@@ -338,6 +357,9 @@ export default function AdminLiveChatPage() {
                 <div className="flex items-center gap-1.5">
                   <div className={`w-1.5 h-1.5 rounded-full ${selectedSession.status === 'active' ? 'bg-green-400' : 'bg-slate-500'}`} />
                   <span className="text-slate-400 text-xs capitalize">{selectedSession.status}</span>
+                  {notifSent[selectedSession.id] && (
+                    <span className="text-xs text-purple-400 ml-1">· Notified</span>
+                  )}
                 </div>
               </div>
               <div className="flex items-center gap-2">
@@ -479,6 +501,7 @@ export default function AdminLiveChatPage() {
           <div className="hidden sm:flex flex-1 items-center justify-center flex-col gap-3 text-slate-500">
             <ChatBubbleLeftRightIcon className="w-12 h-12 opacity-20" />
             <span className="text-sm">Select a chat session to view messages</span>
+            <span className="text-xs text-slate-600">Or go to User Management to start a chat with a member</span>
           </div>
         )}
       </div>
