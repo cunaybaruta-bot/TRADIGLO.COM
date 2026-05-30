@@ -81,7 +81,8 @@ export default function DashboardTopBar({
     }).format(value);
   }
 
-  const activeBalance = isDemo ? (wallet?.demoBalance ?? 0) : (wallet?.realBalance ?? 0);
+  const demoBalance = wallet?.demoBalance ?? 0;
+  const realBalance = wallet?.realBalance ?? 0;
 
   return (
     <header className="sticky top-0 z-40 bg-[#0a0a0a] border-b border-white/10 flex items-center justify-between px-2 sm:px-4 h-12 sm:h-14 gap-1.5">
@@ -106,46 +107,13 @@ export default function DashboardTopBar({
             letterSpacing: '0.04em',
             animation: 'logoTextGlow 3s ease-in-out infinite',
           }}
-          className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-500 to-purple-500 text-sm tracking-wide select-none hidden xs:block"
+          className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-500 to-purple-500 text-sm tracking-wide select-none"
         >
           TRADIGLO
         </span>
       </div>
 
-      {/* Center: Single balance toggle */}
-      <div className="flex items-center gap-1 flex-1 justify-center min-w-0">
-        {/* Demo/Real Segmented Control */}
-        <div className="relative flex items-center bg-white/5 border border-white/10 rounded-full p-0.5 flex-shrink-0" style={{ minWidth: 96 }}>
-          {/* Sliding background pill */}
-          <span
-            className={`absolute top-0.5 bottom-0.5 rounded-full transition-all duration-300 ease-in-out ${isDemo ? 'bg-blue-600 left-0.5 right-[calc(50%+1px)]' : 'bg-emerald-600 left-[calc(50%+1px)] right-0.5'}`}
-            aria-hidden="true"
-          />
-          <button
-            onClick={() => onToggleDemo(true)}
-            className={`relative z-10 flex-1 px-2.5 py-0.5 text-[10px] font-bold tracking-wide rounded-full transition-colors duration-200 ${isDemo ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
-          >
-            DEMO
-          </button>
-          <button
-            onClick={() => onToggleDemo(false)}
-            className={`relative z-10 flex-1 px-2.5 py-0.5 text-[10px] font-bold tracking-wide rounded-full transition-colors duration-200 ${!isDemo ? 'text-white' : 'text-slate-500 hover:text-slate-300'}`}
-          >
-            REAL
-          </button>
-        </div>
-        {/* Active balance display */}
-        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg border text-xs font-semibold min-w-0 ${
-          isDemo ? 'bg-blue-500/10 border-blue-500/30 text-blue-300' : 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
-        }`}>
-          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${isDemo ? 'bg-blue-400' : 'bg-emerald-400'}`} />
-          <span className="text-white font-bold tabular-nums truncate" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em', fontSize: 11 }}>
-            {walletLoading ? '…' : `$${formatCurrency(activeBalance)}`}
-          </span>
-        </div>
-      </div>
-
-      {/* Right: Deposit button + Avatar dropdown */}
+      {/* Right: Deposit button + Notification + Language + Avatar dropdown */}
       <div className="flex items-center gap-1.5 flex-shrink-0">
         {/* Deposit button */}
         <button
@@ -206,12 +174,63 @@ export default function DashboardTopBar({
 
           {dropdownOpen && (
             <div
-              className="absolute right-0 top-9 w-44 rounded-xl border border-white/10 bg-[#111] shadow-2xl overflow-hidden z-50"
+              className="absolute right-0 top-9 w-52 rounded-xl border border-white/10 bg-[#111] shadow-2xl overflow-hidden z-50"
               style={{ backdropFilter: 'blur(12px)' }}
             >
+              {/* Email */}
               <div className="px-3 py-2.5 border-b border-white/10">
                 <div className="text-[10px] text-slate-500 truncate">{userEmail}</div>
               </div>
+
+              {/* Account type selector */}
+              <div className="px-3 py-2.5 border-b border-white/10">
+                <div className="text-[10px] text-slate-500 mb-2 uppercase tracking-wider">Account</div>
+                <div className="flex items-center bg-white/5 border border-white/10 rounded-full p-0.5">
+                  <span
+                    className={`absolute rounded-full transition-all duration-300 ease-in-out pointer-events-none`}
+                    aria-hidden="true"
+                  />
+                  <button
+                    onClick={() => onToggleDemo(true)}
+                    className={`flex-1 px-3 py-1 text-[10px] font-bold tracking-wide rounded-full transition-all duration-200 ${isDemo ? 'bg-blue-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                  >
+                    DEMO
+                  </button>
+                  <button
+                    onClick={() => onToggleDemo(false)}
+                    className={`flex-1 px-3 py-1 text-[10px] font-bold tracking-wide rounded-full transition-all duration-200 ${!isDemo ? 'bg-emerald-600 text-white' : 'text-slate-500 hover:text-slate-300'}`}
+                  >
+                    REAL
+                  </button>
+                </div>
+              </div>
+
+              {/* Balance display */}
+              <div className="px-3 py-2.5 border-b border-white/10">
+                <div className="text-[10px] text-slate-500 mb-1.5 uppercase tracking-wider">Balance</div>
+                <div className="flex flex-col gap-1.5">
+                  <div className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border ${isDemo ? 'bg-blue-500/15 border-blue-500/40' : 'bg-white/5 border-white/10'}`}>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`w-1.5 h-1.5 rounded-full ${isDemo ? 'bg-blue-400' : 'bg-slate-600'}`} />
+                      <span className={`text-[10px] font-bold ${isDemo ? 'text-blue-300' : 'text-slate-500'}`}>DEMO</span>
+                    </div>
+                    <span className={`text-xs font-bold tabular-nums ${isDemo ? 'text-white' : 'text-slate-500'}`} style={{ fontFamily: "'Geist Mono', ui-monospace, monospace" }}>
+                      {walletLoading ? '…' : `$${formatCurrency(demoBalance)}`}
+                    </span>
+                  </div>
+                  <div className={`flex items-center justify-between px-2.5 py-1.5 rounded-lg border ${!isDemo ? 'bg-emerald-500/15 border-emerald-500/40' : 'bg-white/5 border-white/10'}`}>
+                    <div className="flex items-center gap-1.5">
+                      <span className={`w-1.5 h-1.5 rounded-full ${!isDemo ? 'bg-emerald-400' : 'bg-slate-600'}`} />
+                      <span className={`text-[10px] font-bold ${!isDemo ? 'text-emerald-300' : 'text-slate-500'}`}>REAL</span>
+                    </div>
+                    <span className={`text-xs font-bold tabular-nums ${!isDemo ? 'text-white' : 'text-slate-500'}`} style={{ fontFamily: "'Geist Mono', ui-monospace, monospace" }}>
+                      {walletLoading ? '…' : `$${formatCurrency(realBalance)}`}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Menu items */}
               <div className="py-1">
                 <Link
                   href="/dashboard/account"
