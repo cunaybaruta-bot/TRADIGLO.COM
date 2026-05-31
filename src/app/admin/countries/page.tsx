@@ -47,7 +47,62 @@ const KNOWN_COUNTRIES = [
   'Philippines', 'China', 'India', 'Hong Kong', 'Taiwan', 'Pakistan',
   'Bangladesh', 'Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Oman', 'Sri Lanka',
   'Myanmar', 'Indonesia', 'Cambodia', 'Laos', 'Nepal', 'United States', 'Global',
+  'Jordan', 'Bahrain', 'Portugal',
 ];
+
+const FLAG_EMOJI: Record<string, string> = {
+  Malaysia: '🇲🇾',
+  Singapore: '🇸🇬',
+  Thailand: '🇹🇭',
+  Vietnam: '🇻🇳',
+  Japan: '🇯🇵',
+  'South Korea': '🇰🇷',
+  Indonesia: '🇮🇩',
+  Philippines: '🇵🇭',
+  China: '🇨🇳',
+  India: '🇮🇳',
+  'Hong Kong': '🇭🇰',
+  Taiwan: '🇹🇼',
+  Pakistan: '🇵🇰',
+  Bangladesh: '🇧🇩',
+  'Sri Lanka': '🇱🇰',
+  Myanmar: '🇲🇲',
+  Cambodia: '🇰🇭',
+  Laos: '🇱🇦',
+  Nepal: '🇳🇵',
+  'Saudi Arabia': '🇸🇦',
+  UAE: '🇦🇪',
+  Qatar: '🇶🇦',
+  Kuwait: '🇰🇼',
+  Oman: '🇴🇲',
+  Bahrain: '🇧🇭',
+  Jordan: '🇯🇴',
+  Lebanon: '🇱🇧',
+  Iraq: '🇮🇶',
+  Turkey: '🇹🇷',
+  Portugal: '🇵🇹',
+  'United Kingdom': '🇬🇧',
+  Germany: '🇩🇪',
+  France: '🇫🇷',
+  Spain: '🇪🇸',
+  'United States': '🇺🇸',
+  Canada: '🇨🇦',
+  Brazil: '🇧🇷',
+  Australia: '🇦🇺',
+  'New Zealand': '🇳🇿',
+  Nigeria: '🇳🇬',
+  'South Africa': '🇿🇦',
+  Kenya: '🇰🇪',
+  Egypt: '🇪🇬',
+  Global: '🌍',
+};
+
+function getCountryFlag(country: string): string {
+  if (FLAG_EMOJI[country]) return FLAG_EMOJI[country];
+  const lower = country.toLowerCase();
+  const match = Object.keys(FLAG_EMOJI).find((k) => k.toLowerCase() === lower);
+  return match ? FLAG_EMOJI[match] : '🌍';
+}
 
 const EMPTY_METHOD_FORM: NewMethodForm = {
   type: 'bank',
@@ -333,12 +388,15 @@ export default function AdminCountriesPage() {
                           ? 'bg-emerald-500/10 border-l-2 border-emerald-500' :'hover:bg-slate-700/30 border-l-2 border-transparent'
                       }`}
                     >
-                      <div className="min-w-0">
-                        <div className={`text-sm font-medium truncate ${isSelected ? 'text-emerald-400' : 'text-white'}`}>
-                          {country}
-                        </div>
-                        <div className="text-xs text-slate-500 mt-0.5">
-                          {count} method{count !== 1 ? 's' : ''} · {activeCount} active
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <span className="text-lg flex-shrink-0">{getCountryFlag(country)}</span>
+                        <div className="min-w-0">
+                          <div className={`text-sm font-medium truncate ${isSelected ? 'text-emerald-400' : 'text-white'}`}>
+                            {country}
+                          </div>
+                          <div className="text-xs text-slate-500 mt-0.5">
+                            {count} method{count !== 1 ? 's' : ''} · {activeCount} active
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center gap-2 flex-shrink-0 ml-2">
@@ -401,11 +459,14 @@ export default function AdminCountriesPage() {
               <div className="space-y-4">
                 {/* Country header */}
                 <div className="bg-[#1e293b] rounded-xl border border-slate-700 px-5 py-4 flex items-center justify-between">
-                  <div>
-                    <h3 className="text-white font-bold text-base">{selectedCountry}</h3>
-                    <p className="text-slate-400 text-xs mt-0.5">
-                      {countryMethods.length} method{countryMethods.length !== 1 ? 's' : ''} · {countryMethods.filter((m) => m.is_active).length} active
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">{getCountryFlag(selectedCountry)}</span>
+                    <div>
+                      <h3 className="text-white font-bold text-base">{selectedCountry}</h3>
+                      <p className="text-slate-400 text-xs mt-0.5">
+                        {countryMethods.length} method{countryMethods.length !== 1 ? 's' : ''} · {countryMethods.filter((m) => m.is_active).length} active
+                      </p>
+                    </div>
                   </div>
                   <button
                     onClick={() => { setMethodForm(EMPTY_METHOD_FORM); setShowAddMethod(true); }}

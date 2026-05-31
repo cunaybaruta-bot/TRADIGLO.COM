@@ -64,6 +64,7 @@ const COUNTRY_CURRENCY: Record<string, string> = {
   'Sri Lanka': 'LKR',
   Myanmar: 'MMK',
   Portugal: 'EUR',
+  Jordan: 'JOD',
 };
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {

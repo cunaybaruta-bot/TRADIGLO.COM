@@ -49,7 +49,7 @@ const KNOWN_COUNTRIES = [
   'Malaysia', 'Singapore', 'Thailand', 'Vietnam', 'Japan', 'South Korea',
   'Philippines', 'China', 'India', 'Hong Kong', 'Taiwan', 'Pakistan',
   'Bangladesh', 'Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Oman', 'Sri Lanka',
-  'Myanmar', 'United States', 'Global', 'Portugal',
+  'Myanmar', 'United States', 'Global', 'Portugal', 'Jordan',
 ];
 
 const CURRENCIES = [
@@ -93,6 +93,7 @@ const CURRENCIES = [
   { code: 'KWD', label: 'KWD – Kuwaiti Dinar' },
   { code: 'BHD', label: 'BHD – Bahraini Dinar' },
   { code: 'OMR', label: 'OMR – Omani Rial' },
+  { code: 'JOD', label: 'JOD – Jordanian Dinar' },
   { code: 'EGP', label: 'EGP – Egyptian Pound' },
   { code: 'ZAR', label: 'ZAR – South African Rand' },
   // Crypto / Stablecoin
@@ -123,6 +124,7 @@ const COUNTRY_DEFAULT_CURRENCY: Record<string, string> = {
   'Myanmar': 'MMK',
   'United States': 'USD',
   'Global': 'USD',
+  'Jordan': 'JOD',
   // European countries
   'Portugal': 'EUR',
   'Spain': 'EUR',
