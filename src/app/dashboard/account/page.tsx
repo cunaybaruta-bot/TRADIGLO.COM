@@ -730,13 +730,24 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
   const handleSubmitWithdrawal = async () => {
     const amount = parseFloat(withdrawalForm.amount);
     if (!amount || amount <= 0) { setToast({ message: 'Please enter a valid withdrawal amount', type: 'error' }); return; }
+    if ((wallet?.realBalance ?? 0) <= 0) { setToast({ message: 'Withdrawal is not available. You have no real balance.', type: 'error' }); return; }
     if (amount > (wallet?.realBalance ?? 0)) { setToast({ message: 'Insufficient real balance', type: 'error' }); return; }
     if (!withdrawalForm.payment_method) { setToast({ message: 'Please select a withdrawal method', type: 'error' }); return; }
     if (!withdrawalForm.destination_address) { setToast({ message: 'Please enter a destination account', type: 'error' }); return; }
     setSubmittingWithdrawal(true);
     try {
-      const { error, data: inserted } = await supabase.from('withdrawals').insert({ user_id: userId, amount, currency: 'USD', payment_method: withdrawalForm.payment_method, destination_address: withdrawalForm.destination_address, status: 'pending' }).select('id').single();
-      if (error) throw error;
+      const res = await fetch('/api/member/submit-withdrawal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount,
+          payment_method: withdrawalForm.payment_method,
+          destination_address: withdrawalForm.destination_address,
+        }),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result.error || 'Failed to submit withdrawal request');
+      const inserted = result;
       // Notify admin via email
       try {
         const { data: { user } } = await supabase.auth.getUser();
@@ -888,7 +899,7 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
       <GlassCard className="overflow-hidden">
         <div className="flex border-b border-white/8">
           {([{ key: 'deposit', label: 'Deposit', icon: <ArrowDownCircle size={13} />, color: '#10b981' }, { key: 'withdrawal', label: 'Withdrawal', icon: <ArrowUpCircle size={13} />, color: '#ef4444' }, { key: 'history', label: 'History', icon: <List size={13} />, color: '#6366f1' }] as const).map(({ key, label, icon, color }) => (
-            <button key={key} onClick={() => { setTab(key); if (key === 'withdrawal') setShowCommissionModal(true); }} className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-xs font-semibold transition-all relative" style={{ background: tab === key ? `${color}20` : 'transparent', color: tab === key ? 'white' : '#64748b' }} onMouseEnter={e => { if (tab !== key) { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = '#94a3b8'; } }} onMouseLeave={e => { if (tab !== key) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#64748b'; } }}>
+            <button key={key} onClick={() => { if (key === 'withdrawal' && (wallet?.realBalance ?? 0) <= 0) { setToast({ message: 'Withdrawal is not available. You have no real balance.', type: 'error' }); return; } setTab(key); if (key === 'withdrawal') setShowCommissionModal(true); }} className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-xs font-semibold transition-all relative" style={{ background: tab === key ? `${color}20` : 'transparent', color: tab === key ? 'white' : '#64748b' }} onMouseEnter={e => { if (tab !== key) { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = '#94a3b8'; } }} onMouseLeave={e => { if (tab !== key) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#64748b'; } }}>
               {icon} {label}
               {tab === key && <span className="absolute bottom-0 w-6 h-0.5 rounded-full" style={{ background: color }} />}
             </button>
@@ -922,11 +933,17 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
           {tab === 'withdrawal' && (
             <div className="space-y-4" style={{ animation: 'fadeSlideIn 0.2s ease-out' }}>
               <div className="p-3 rounded-xl" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}><div className="text-[10px] text-amber-400 font-semibold mb-0.5 uppercase tracking-wider">Real Balance Available</div><div className="text-xl font-bold text-white">${formatCurrency(wallet?.realBalance ?? 0)}</div></div>
+              {(wallet?.realBalance ?? 0) <= 0 && (
+                <div className="p-3 rounded-xl flex items-start gap-2.5" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)' }}>
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                  <p className="text-xs text-red-400 leading-relaxed">You need a real balance greater than $0 to make a withdrawal. Please make a deposit first.</p>
+                </div>
+              )}
               <div className="space-y-3">
                 <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Withdrawal Amount (USD)</label><input type="number" value={withdrawalForm.amount} onChange={e => setWithdrawalForm(f => ({ ...f, amount: e.target.value }))} placeholder="Minimum $10" min="10" max={wallet?.realBalance ?? 0} className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle} onFocus={e => { e.target.style.borderColor = 'rgba(239,68,68,0.5)'; }} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; }} /></div>
                 <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Withdrawal Method</label><select value={withdrawalForm.payment_method} onChange={e => setWithdrawalForm(f => ({ ...f, payment_method: e.target.value }))} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={inputStyle}><option value="">Select method</option>{countryPaymentMethods.map(m => <option key={m} value={m}>{m}</option>)}</select></div>
                 <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Destination Account</label><input value={withdrawalForm.destination_address} onChange={e => setWithdrawalForm(f => ({ ...f, destination_address: e.target.value }))} placeholder="Account number / wallet address" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle} onFocus={e => { e.target.style.borderColor = 'rgba(239,68,68,0.5)'; }} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; }} /></div>
-                <button onClick={handleSubmitWithdrawal} disabled={submittingWithdrawal} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50" style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)', boxShadow: '0 4px 16px rgba(239,68,68,0.25)' }}>
+                <button onClick={handleSubmitWithdrawal} disabled={submittingWithdrawal || (wallet?.realBalance ?? 0) <= 0} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)', boxShadow: '0 4px 16px rgba(239,68,68,0.25)' }}>
                   {submittingWithdrawal ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <ArrowUpCircle size={14} />} Send Withdrawal Request
                 </button>
               </div>
