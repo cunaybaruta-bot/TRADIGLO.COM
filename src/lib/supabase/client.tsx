@@ -7,7 +7,7 @@ export function createClient() {
     {
       cookies: {
         getAll() {
-          if (typeof document === 'undefined') return [];
+          if (typeof window === 'undefined' || typeof document === 'undefined') return [];
           try {
             return document.cookie.split(';').map((cookie) => {
               const parts = cookie.trim().split('=');
@@ -20,7 +20,7 @@ export function createClient() {
           }
         },
         setAll(cookiesToSet: Array<{ name: string; value: string; options?: any }>) {
-          if (typeof document === 'undefined') return;
+          if (typeof window === 'undefined' || typeof document === 'undefined') return;
           try {
             cookiesToSet.forEach(({ name, value, options }) => {
               let cookieString = `${name}=${encodeURIComponent(value)}; Path=${options?.path || '/'}; Secure; SameSite=None`;

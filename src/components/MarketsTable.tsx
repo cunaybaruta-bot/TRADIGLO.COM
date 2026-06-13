@@ -167,8 +167,11 @@ export default function MarketsTable() {
       if (!response.ok) {
         throw new Error('Failed to fetch market data');
       }
-      const data: CoinMarket[] = await response.json();
-      setCoins(data);
+      const data = await response.json();
+      if (!Array.isArray(data)) {
+        throw new Error(data?.error || 'Invalid market data received');
+      }
+      setCoins(data as CoinMarket[]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

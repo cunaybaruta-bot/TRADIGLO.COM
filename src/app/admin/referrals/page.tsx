@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import React from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { UsersIcon, CurrencyDollarIcon, ClockIcon, CheckCircleIcon, MagnifyingGlassIcon, ArrowPathIcon, ArrowDownTrayIcon, ChevronLeftIcon, ChevronRightIcon, XMarkIcon, ExclamationTriangleIcon, ArrowTopRightOnSquareIcon,  } from '@heroicons/react/24/outline';
 
