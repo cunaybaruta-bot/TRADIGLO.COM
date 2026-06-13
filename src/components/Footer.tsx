@@ -36,15 +36,14 @@ export default function Footer() {
       { label: 'Trust Center', href: '/about/trust-center' },
     ],
     [t('footer_cat_community')]: [
-      { label: 'X/Twitter', href: 'https://twitter.com/tradiglo', external: true },
-      { label: 'Telegram Chat', href: 'https://t.me/tradiglo', external: true },
-      { label: 'Telegram News', href: 'https://t.me/tradiglo_news', external: true },
-      { label: 'Instagram', href: 'https://instagram.com/tradiglo', external: true },
-      { label: 'Reddit', href: 'https://reddit.com/r/tradiglo', external: true },
-      { label: 'Discord', href: 'https://discord.gg/tradiglo', external: true },
-      { label: 'Facebook', href: 'https://facebook.com/tradiglo', external: true },
-      { label: 'Youtube', href: 'https://youtube.com/@tradiglo', external: true },
-      { label: 'TikTok', href: 'https://tiktok.com/@tradiglo', external: true },
+      { label: 'Malaysia', href: '/tradiglo.malaysia' },
+      { label: 'Singapore', href: '/community' },
+      { label: 'Bahrain', href: '/community' },
+      { label: 'Jordania', href: '/tradiglo.jordan' },
+      { label: 'Brunei', href: '/community' },
+      { label: 'Japan', href: '/community' },
+      { label: 'Korea', href: '/community' },
+      { label: 'Tiongkok', href: '/community' },
     ],
   };
 

@@ -11,10 +11,18 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: 'TRADIGLO #1 Crypto Trading Platform',
-    template: '%s | TRADIGLO',
+    default: 'Tradiglo Malaysia | Signal Forex & Gold Melalui WhatsApp',
+    template: '%s | Tradiglo',
   },
-  description: 'TRADIGLO #1 Crypto Trading Platform — Advanced trading tools, lightning-fast execution, and unmatched security.',
+  description: 'Join WhatsApp Channel Tradiglo Malaysia untuk signal Forex dan Gold, market update, serta panduan risiko. Daftar melalui WhatsApp Admin Malaysia. Trading melibatkan risiko.',
+  keywords: 'Tradiglo Malaysia, signal forex Malaysia, signal gold Malaysia, signal XAUUSD Malaysia, WhatsApp trading signal Malaysia, signal trading Malaysia, forex education Malaysia, gold trading Malaysia',
+  openGraph: {
+    title: 'Tradiglo Malaysia | Signal Forex & Gold Melalui WhatsApp',
+    description: 'Market update, signal XAUUSD dan Forex, serta panduan risiko untuk trader Malaysia melalui WhatsApp Channel dan WhatsApp Admin.',
+    type: 'website',
+    locale: 'ms_MY',
+    siteName: 'Tradiglo',
+  },
   icons: {
     icon: [
       { url: '/assets/images/Logo_Tradiglo-1775738380029.png', type: 'image/png' },
@@ -30,11 +38,43 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ms">
       <head>
-        <title>TRADIGLO #1 Crypto Trading Platform</title>
+        <title>Tradiglo Malaysia | Signal Forex &amp; Gold Melalui WhatsApp</title>
+        {/* Google tag (gtag.js) - Google Ads AW-17361830719 */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17361830719" />
+        <script dangerouslySetInnerHTML={{ __html: `
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'AW-17361830719');
+        ` }} />
+        {/* Google tag (gtag.js) - Google Analytics G-2LTST7HYM8 */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-2LTST7HYM8" />
+        <script dangerouslySetInnerHTML={{ __html: `
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-2LTST7HYM8');
+        ` }} />
+        {/* Google tag (gtag.js) - Google Analytics G-WDCXSB08YM */}
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-WDCXSB08YM" />
+        <script dangerouslySetInnerHTML={{ __html: `
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-WDCXSB08YM');
+        ` }} />
+        {/* Google Tag Manager placeholder */}
+        {/* GTM: Replace GTM-XXXXXXX with your GTM container ID */}
+        {/* Meta Pixel placeholder */}
+        {/* META_PIXEL_ID: Replace with your Meta Pixel ID */}
+        {/* TikTok Pixel placeholder */}
+        {/* TIKTOK_PIXEL_ID: Replace with your TikTok Pixel ID */}
         <link rel="icon" type="image/png" href="/assets/images/Logo_Tradiglo-1775738380029.png" />
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@100..900&display=swap" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Geist+Mono:wght@300..700&display=swap" />
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {

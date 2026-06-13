@@ -1,40 +1,157 @@
 import Link from 'next/link';
 
-export default function CommunityPage() {
-  const channels = [
-    { name: 'X/Twitter', handle: '@Tradiglo', desc: 'Follow us for real-time market updates and news.', href: 'https://twitter.com/tradiglo', icon: '𝕏', color: 'border-gray-700 hover:border-gray-500' },
-    { name: 'Telegram Chat', handle: 't.me/tradiglo', desc: 'Join our community chat for discussions.', href: 'https://t.me/tradiglo', icon: '✈️', color: 'border-blue-700/40 hover:border-blue-500/60' },
-    { name: 'Telegram News', handle: 't.me/tradiglo_news', desc: 'Get the latest crypto news directly.', href: 'https://t.me/tradiglo_news', icon: '📢', color: 'border-blue-700/40 hover:border-blue-500/60' },
-    { name: 'Instagram', handle: '@tradiglo', desc: 'Visual content and market highlights.', href: 'https://instagram.com/tradiglo', icon: '📸', color: 'border-pink-700/40 hover:border-pink-500/60' },
-    { name: 'Reddit', handle: 'r/tradiglo', desc: 'Community discussions and analysis.', href: 'https://reddit.com/r/tradiglo', icon: '🔴', color: 'border-orange-700/40 hover:border-orange-500/60' },
-    { name: 'Discord', handle: 'Tradiglo Server', desc: 'Real-time chat with the community.', href: 'https://discord.gg/tradiglo', icon: '💬', color: 'border-indigo-700/40 hover:border-indigo-500/60' },
-    { name: 'Facebook', handle: 'Tradiglo', desc: 'News and updates on Facebook.', href: 'https://facebook.com/tradiglo', icon: '👤', color: 'border-blue-700/40 hover:border-blue-500/60' },
-    { name: 'YouTube', handle: 'Tradiglo', desc: 'Video tutorials and market analysis.', href: 'https://youtube.com/@tradiglo', icon: '▶️', color: 'border-red-700/40 hover:border-red-500/60' },
-    { name: 'TikTok', handle: '@tradiglo', desc: 'Short-form crypto content and tips.', href: 'https://tiktok.com/@tradiglo', icon: '🎵', color: 'border-pink-700/40 hover:border-pink-500/60' },
-  ];
+interface TradigloCountry {
+  name: string;
+  flag: string;
+  lang: string;
+  href: string;
+  status: 'active' | 'coming-soon';
+  desc: string;
+}
 
+const tradigloCountries: TradigloCountry[] = [
+  {
+    name: 'Tradiglo Malaysia',
+    flag: '🇲🇾',
+    lang: 'Bahasa Melayu',
+    href: '/tradiglo.malaysia',
+    status: 'active',
+    desc: 'Signal Forex, Gold & Crypto untuk trader Malaysia melalui WhatsApp Channel dan WhatsApp Admin.',
+  },
+  {
+    name: 'Tradiglo Singapore',
+    flag: '🇸🇬',
+    lang: 'English',
+    href: '#',
+    status: 'coming-soon',
+    desc: 'Forex, Gold & Crypto signals for Singapore traders via WhatsApp Channel.',
+  },
+  {
+    name: 'Tradiglo Bahrain',
+    flag: '🇧🇭',
+    lang: 'العربية',
+    href: '#',
+    status: 'coming-soon',
+    desc: 'إشارات تداول الفوركس والذهب والعملات المشفرة للمتداولين في البحرين.',
+  },
+  {
+    name: 'Tradiglo Jordania',
+    flag: '🇯🇴',
+    lang: 'العربية',
+    href: '/tradiglo.jordan',
+    status: 'active',
+    desc: 'إشارات الفوركس والذهب والعملات المشفرة للمتداولين في الأردن عبر قناة واتساب وأدمن واتساب.',
+  },
+  {
+    name: 'Tradiglo Brunei',
+    flag: '🇧🇳',
+    lang: 'Bahasa Melayu',
+    href: '#',
+    status: 'coming-soon',
+    desc: 'Signal Forex, Gold & Crypto untuk trader Brunei melalui WhatsApp Channel.',
+  },
+  {
+    name: 'Tradiglo Japan',
+    flag: '🇯🇵',
+    lang: '日本語',
+    href: '#',
+    status: 'coming-soon',
+    desc: 'WhatsAppチャンネルを通じた日本のトレーダー向けFX・ゴールド・暗号資産シグナル。',
+  },
+  {
+    name: 'Tradiglo Korea',
+    flag: '🇰🇷',
+    lang: '한국어',
+    href: '#',
+    status: 'coming-soon',
+    desc: 'WhatsApp 채널을 통한 한국 트레이더를 위한 외환, 금 및 암호화폐 신호.',
+  },
+  {
+    name: 'Tradiglo Tiongkok',
+    flag: '🇨🇳',
+    lang: '中文',
+    href: '#',
+    status: 'coming-soon',
+    desc: '通过WhatsApp频道为中国交易者提供外汇、黄金和加密货币信号。',
+  },
+];
+
+export default function CommunityPage() {
   return (
-    <div className="min-h-screen bg-black text-white">
-      <div className="max-w-4xl mx-auto px-6 py-16">
+    <div className="min-h-screen text-white" style={{ background: '#07091F' }}>
+      <div className="max-w-5xl mx-auto px-6 py-16">
         <div className="mb-8">
           <Link href="/" className="text-gray-400 hover:text-white text-sm transition-colors">← Back to Home</Link>
         </div>
-        <h1 className="text-3xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-500 to-purple-500">Community</h1>
-        <p className="text-gray-400 text-lg mb-10">Join the Tradiglo community across all platforms.</p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {channels?.map((ch) => (
-            <a key={ch?.name} href={ch?.href} target="_blank" rel="noopener noreferrer" className={`border rounded-xl p-5 transition-colors ${ch?.color}`}>
-              <div className="flex items-center gap-3 mb-2">
-                <span className="text-2xl">{ch?.icon}</span>
-                <div>
-                  <h3 className="text-white font-semibold text-sm">{ch?.name}</h3>
-                  <p className="text-gray-500 text-xs">{ch?.handle}</p>
-                </div>
+
+        <h1 className="text-3xl font-bold mb-3 text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-indigo-400 to-blue-400">Community</h1>
+        <p className="text-gray-400 text-lg mb-12">Sertai komuniti Tradiglo di seluruh rantau. Pilih negara anda untuk mula.</p>
+
+        {/* Tradiglo by Country */}
+        <section>
+          <div className="flex items-center gap-3 mb-6">
+            <div className="w-1 h-6 rounded-full bg-gradient-to-b from-indigo-400 to-violet-500" />
+            <h2 className="text-lg font-semibold text-white">Tradiglo by Country</h2>
+            <span className="text-xs text-gray-500 border border-white/10 px-2.5 py-1 rounded-full" style={{ background: 'rgba(255,255,255,0.04)' }}>Regional Communities</span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {tradigloCountries.map((country) => (
+              <div key={country.name} className="relative group">
+                {country.status === 'active' ? (
+                  <Link
+                    href={country.href}
+                    className="flex flex-col gap-3 p-5 rounded-xl transition-all duration-200 block"
+                    style={{
+                      border: '1px solid rgba(139,92,246,0.35)',
+                      background: 'rgba(139,92,246,0.07)',
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{country.flag}</span>
+                        <div>
+                          <h3 className="text-white font-semibold text-sm">{country.name}</h3>
+                          <p className="text-xs" style={{ color: '#A78BFA' }}>{country.lang}</p>
+                        </div>
+                      </div>
+                      <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ color: '#4ade80', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.2)' }}>
+                        <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                        Live
+                      </span>
+                    </div>
+                    <p className="text-xs leading-relaxed" style={{ color: '#A6A8C3' }}>{country.desc}</p>
+                    <span className="text-xs font-medium transition-colors" style={{ color: '#A78BFA' }}>
+                      Lawati halaman →
+                    </span>
+                  </Link>
+                ) : (
+                  <div
+                    className="flex flex-col gap-3 p-5 rounded-xl opacity-55 cursor-not-allowed"
+                    style={{
+                      border: '1px solid rgba(255,255,255,0.08)',
+                      background: 'rgba(255,255,255,0.02)',
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{country.flag}</span>
+                        <div>
+                          <h3 className="text-gray-300 font-semibold text-sm">{country.name}</h3>
+                          <p className="text-gray-600 text-xs">{country.lang}</p>
+                        </div>
+                      </div>
+                      <span className="text-xs text-gray-500 bg-white/5 border border-white/10 px-2.5 py-1 rounded-full font-medium">
+                        Coming Soon
+                      </span>
+                    </div>
+                    <p className="text-gray-600 text-xs leading-relaxed">{country.desc}</p>
+                  </div>
+                )}
               </div>
-              <p className="text-gray-400 text-xs">{ch?.desc}</p>
-            </a>
-          ))}
-        </div>
+            ))}
+          </div>
+        </section>
       </div>
     </div>
   );
