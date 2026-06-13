@@ -1,13 +1,204 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { ShieldCheck, Bell, AlertTriangle, TrendingDown, UserCheck, Menu, X, MapPin,  } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { ShieldCheck, Bell, AlertTriangle, TrendingDown, UserCheck, Menu, X, MapPin } from 'lucide-react';
 import Icon from '@/components/ui/AppIcon';
 
 
+// ─── Translations ─────────────────────────────────────────────────────────────
+type Lang = 'ar' | 'en';
+
+const T = {
+  ar: {
+    // Header
+    navCopyTrading: 'Copy Trading',
+    navInvestment: 'باقات الاستثمار',
+    headerCTA: 'سجّل عبر واتساب',
+    headerCTAShort: 'سجّل',
+    subtitle: 'الأردن',
+
+    // Hero
+    badge1: 'استثمار ثابت الأجل',
+    badge2: 'عوائد مضمونة',
+    badge3: 'تسجيل عبر أدمن الأردن',
+    heroTitle1: 'باقات الاستثمار',
+    heroTitle2: 'للتجار',
+    heroTitle3: 'الأردنيين',
+    heroDesc: 'استثمار ثابت الأجل مع عوائد مضمونة — اختر الباقة المناسبة لك وتواصل مع أدمن الأردن للتسجيل.',
+    heroChannelBtn: 'انضم لقناة واتساب',
+    heroAdminBtn: 'سجّل عبر أدمن واتساب',
+    heroDisclaimer: 'ما في ضمان للأرباح. التداول فيه مخاطر. استخدم رأس المال المناسب لقدرتك المالية.',
+
+    // TrustBar
+    trust1: 'لا ضمان للأرباح',
+    trust2: 'ليس مخطط إثراء سريع',
+    trust3: 'المخاطر موضّحة بوضوح',
+    trust4: 'استثمار ثابت الأجل',
+    trust5: 'التسجيل عبر أدمن الأردن',
+
+    // Copy Trading
+    copyBadge: 'Copy Trading',
+    copyTitle1: 'تابع',
+    copyTitle2: 'Tradiglo الرسمي',
+    copyTitle3: 'وانسخ صفقاته تلقائياً',
+    copyDesc: 'نسبة فوز 90% — انضم إلى أكثر من 219,855 متابعاً يستفيدون من Copy Trade الرسمي لـ Tradiglo.',
+    copyFollowBtn: 'تابع Tradiglo عبر واتساب',
+    copyWhyTitle: 'لماذا Copy Trading مع Tradiglo؟',
+    copyPoint1Title: 'نسبة فوز 90%',
+    copyPoint1Desc: 'أداء موثّق ومتسق عبر آلاف الصفقات',
+    copyPoint2Title: '+219,855 متابع',
+    copyPoint2Desc: 'أكبر مجتمع Copy Trade في المنطقة',
+    copyPoint3Title: 'رصيد حقيقي $4.2M+',
+    copyPoint3Desc: 'شفافية كاملة في الأداء والأرصدة',
+    copyPoint4Title: 'تلقائي 100%',
+    copyPoint4Desc: 'الصفقات تُنسخ فورياً بدون تدخل يدوي',
+    copyPoint5Title: 'ضمان الرصيد 100%',
+    copyPoint5Desc: 'رأس مالك محمي عند الخسارة',
+    copyDisclaimer: 'Copy Trading لا يضمن الأرباح. الأداء السابق لا يضمن النتائج المستقبلية. استخدم رأس المال المناسب لقدرتك المالية.',
+    copyPlatformFeeTitle: '20% Platform Fee on Profit',
+    copyPlatformFeeDesc: 'Automatically deducted from profits only. Example: $100 profit → you receive $80.',
+
+    // Investment
+    investBadge: 'Investment Package',
+    investTitle1: 'استثمار ثابت الأجل مع',
+    investTitle2: 'عوائد مضمونة',
+    investViewOnly: 'عرض للمشاهدة فقط — للتسجيل تواصل مع أدمن واتساب الأردن',
+    investSelectCapital: 'SELECT CAPITAL AMOUNT',
+    investSelectDuration: 'SELECT DURATION',
+    investDisclaimer: 'Investment packages cannot be cancelled once joined. Capital is locked until the duration expires. A 20% platform fee is deducted from gross profit.',
+    investCTAPrefix: 'تواصل مع أدمن الأردن للتسجيل في',
+    investFootnote: 'للمشاهدة فقط — التسجيل والمعاملات تتم عبر أدمن واتساب الأردن',
+
+    // Final CTA
+    finalTitle1: 'ابدأ استثمارك مع',
+    finalDesc: 'اختر الباقة المناسبة لك وتواصل مع أدمن واتساب الأردن للتسجيل والبدء.',
+    finalChannelBtn: 'انضم لقناة واتساب',
+    finalAdminBtn: 'سجّل عبر أدمن واتساب الأردن',
+
+    // Footer
+    footerDesc: 'باقات استثمار ثابتة الأجل مع عوائد مضمونة للتجار الأردنيين — تسجيل عبر أدمن واتساب الأردن.',
+    footerChannelLink: 'قناة واتساب الأردن',
+    footerAdminLink: 'تواصل مع أدمن واتساب الأردن',
+    footerNavTitle: 'التنقل',
+    footerInfoTitle: 'المعلومات',
+    footerCommunity: 'المجتمع',
+    footerPrivacy: 'سياسة الخصوصية',
+    footerTerms: 'الشروط والأحكام',
+    footerDisclaimer: 'إخلاء مسؤولية المخاطر',
+    footerDisclaimerLabel: 'إخلاء مسؤولية المخاطر:',
+    footerDisclaimerText: 'الاستثمار ينطوي على مخاطر وقد لا يكون مناسباً لجميع الأفراد. Tradiglo لا يضمن أي أرباح. المستخدمون مسؤولون كلياً عن قرارات استثمارهم.',
+    footerCopyright: '© 2025 Tradiglo. جميع الحقوق محفوظة.',
+    footerLocation: 'الأردن',
+    footerGlobalCommunity: 'المجتمع العالمي',
+
+    // Mobile sticky
+    stickyChannel: 'Channel',
+    stickyRegister: 'سجّل',
+
+    // Language dropdown
+    langLabel: 'AR',
+    langFlag: '🇯🇴',
+  },
+  en: {
+    // Header
+    navCopyTrading: 'Copy Trading',
+    navInvestment: 'Investment Packages',
+    headerCTA: 'Register via WhatsApp',
+    headerCTAShort: 'Register',
+    subtitle: 'Jordan',
+
+    // Hero
+    badge1: 'Fixed-Term Investment',
+    badge2: 'Guaranteed Returns',
+    badge3: 'Register via Jordan Admin',
+    heroTitle1: 'Investment Packages',
+    heroTitle2: 'for',
+    heroTitle3: 'Jordanian Traders',
+    heroDesc: 'Fixed-term investment with guaranteed returns — choose your package and contact the Jordan admin to register.',
+    heroChannelBtn: 'Join WhatsApp Channel',
+    heroAdminBtn: 'Register via WhatsApp Admin',
+    heroDisclaimer: 'No profit guarantee. Trading involves risk. Only invest what you can afford to lose.',
+
+    // TrustBar
+    trust1: 'No Profit Guarantee',
+    trust2: 'Not a Get-Rich-Quick Scheme',
+    trust3: 'Risks Clearly Disclosed',
+    trust4: 'Fixed-Term Investment',
+    trust5: 'Register via Jordan Admin',
+
+    // Copy Trading
+    copyBadge: 'Copy Trading',
+    copyTitle1: 'Follow',
+    copyTitle2: 'Official Tradiglo',
+    copyTitle3: 'and copy trades automatically',
+    copyDesc: '90% win rate — join over 219,855 followers benefiting from Tradiglo\'s official Copy Trade.',
+    copyFollowBtn: 'Follow Tradiglo via WhatsApp',
+    copyWhyTitle: 'Why Copy Trading with Tradiglo?',
+    copyPoint1Title: '90% Win Rate',
+    copyPoint1Desc: 'Documented and consistent performance across thousands of trades',
+    copyPoint2Title: '+219,855 Followers',
+    copyPoint2Desc: 'Largest Copy Trade community in the region',
+    copyPoint3Title: 'Real Balance $4.2M+',
+    copyPoint3Desc: 'Full transparency in performance and balances',
+    copyPoint4Title: '100% Automatic',
+    copyPoint4Desc: 'Trades are copied instantly without manual intervention',
+    copyPoint5Title: '100% Balance Guarantee',
+    copyPoint5Desc: 'Your capital is protected in case of loss',
+    copyDisclaimer: 'Copy Trading does not guarantee profits. Past performance does not guarantee future results. Only invest what you can afford to lose.',
+    copyPlatformFeeTitle: '20% Platform Fee on Profit',
+    copyPlatformFeeDesc: 'Automatically deducted from profits only. Example: $100 profit → you receive $80.',
+
+    // Investment
+    investBadge: 'Investment Package',
+    investTitle1: 'Fixed-term investment with',
+    investTitle2: 'guaranteed returns',
+    investViewOnly: 'View only — to register, contact the Jordan WhatsApp admin',
+    investSelectCapital: 'SELECT CAPITAL AMOUNT',
+    investSelectDuration: 'SELECT DURATION',
+    investDisclaimer: 'Investment packages cannot be cancelled once joined. Capital is locked until the duration expires. A 20% platform fee is deducted from gross profit.',
+    investCTAPrefix: 'Contact Jordan Admin to Register for',
+    investFootnote: 'View only — registration and transactions are done via Jordan WhatsApp admin',
+
+    // Final CTA
+    finalTitle1: 'Start Your Investment with',
+    finalDesc: 'Choose your package and contact the Jordan WhatsApp admin to register and get started.',
+    finalChannelBtn: 'Join WhatsApp Channel',
+    finalAdminBtn: 'Register via Jordan WhatsApp Admin',
+
+    // Footer
+    footerDesc: 'Fixed-term investment packages with guaranteed returns for Jordanian traders — register via Jordan WhatsApp admin.',
+    footerChannelLink: 'Jordan WhatsApp Channel',
+    footerAdminLink: 'Contact Jordan WhatsApp Admin',
+    footerNavTitle: 'Navigation',
+    footerInfoTitle: 'Information',
+    footerCommunity: 'Community',
+    footerPrivacy: 'Privacy Policy',
+    footerTerms: 'Terms of Service',
+    footerDisclaimer: 'Risk Disclaimer',
+    footerDisclaimerLabel: 'Risk Disclaimer:',
+    footerDisclaimerText: 'Investing involves risk and may not be suitable for all individuals. Tradiglo does not guarantee any profits. Users are solely responsible for their investment decisions.',
+    footerCopyright: '© 2025 Tradiglo. All rights reserved.',
+    footerLocation: 'Jordan',
+    footerGlobalCommunity: 'Global Community',
+
+    // Mobile sticky
+    stickyChannel: 'Channel',
+    stickyRegister: 'Register',
+
+    // Language dropdown
+    langLabel: 'EN',
+    langFlag: '🇬🇧',
+  },
+};
+
+const LANGUAGES = [
+  { code: 'ar' as Lang, label: 'العربية', flag: '🇯🇴' },
+  { code: 'en' as Lang, label: 'English', flag: '🇬🇧' },
+];
+
 // ─── Jordan-specific constants ───────────────────────────────────────────────
 const WA_CHANNEL = 'https://whatsapp.com/channel/0029VbCNAlv2UPBGnuEFNt2T';
-const WA_ADMIN = 'https://wa.me/601164457282';
+const WA_ADMIN = 'https://wa.me/601111154832';
 
 const WA_SVG_SM = (
   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -25,10 +216,73 @@ const WA_ICON = (
   </svg>
 );
 
+// ─── Language Dropdown ────────────────────────────────────────────────────────
+function LanguageDropdown({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => void }) {
+  const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => { setMounted(true); }, []);
+
+  useEffect(() => {
+    if (!open) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [open]);
+
+  const current = LANGUAGES.find((l) => l.code === lang) || LANGUAGES[0];
+
+  if (!mounted) {
+    return (
+      <div className="inline-flex items-center gap-1 rounded-md border border-white/20 bg-white/10 text-slate-300 min-h-[32px] px-2 text-[11px]">
+        <span>🇯🇴</span>
+        <span className="font-medium uppercase">AR</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </div>
+    );
+  }
+
+  return (
+    <div ref={ref} className="relative flex-shrink-0">
+      <button
+        onClick={() => setOpen((prev) => !prev)}
+        className="inline-flex items-center gap-1 rounded-md border border-white/20 bg-white/10 hover:bg-white/15 text-slate-300 hover:text-white transition-all min-h-[32px] px-2 text-[11px]"
+        aria-label="Select language"
+        aria-expanded={open}
+      >
+        <span>{current.flag}</span>
+        <span className="font-medium uppercase">{current.code}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${open ? 'rotate-180' : ''}`}>
+          <polyline points="6 9 12 15 18 9"></polyline>
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 w-36 rounded-md border border-white/20 bg-black/95 shadow-xl py-1" style={{ zIndex: 10000 }}>
+          {LANGUAGES.map((l) => (
+            <button
+              key={l.code}
+              onClick={() => { setLang(l.code); setOpen(false); }}
+              className={`w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-white/10 transition-colors text-left ${current.code === l.code ? 'text-white bg-white/10' : 'text-slate-300'}`}
+            >
+              <span>{l.flag}</span>
+              <span>{l.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Header ───────────────────────────────────────────────────────────────────
-function JordanHeader() {
+function JordanHeader({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => void }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const t = T[lang];
+  const dir = lang === 'ar' ? 'rtl' : 'ltr';
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -37,8 +291,8 @@ function JordanHeader() {
   }, []);
 
   const navLinks = [
-    { label: 'Copy Trading', href: '#copy-trading' },
-    { label: 'باقات الاستثمار', href: '#investment-packages' },
+    { label: t.navCopyTrading, href: '#copy-trading' },
+    { label: t.navInvestment, href: '#investment-packages' },
   ];
 
   const handleNav = (href: string) => {
@@ -49,7 +303,7 @@ function JordanHeader() {
 
   return (
     <header
-      dir="rtl"
+      dir={dir}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${
         scrolled
           ? 'bg-[#07091F]/90 backdrop-blur-2xl border-b border-[rgba(139,92,246,0.18)] shadow-2xl shadow-black/50'
@@ -77,7 +331,7 @@ function JordanHeader() {
                 className="text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-purple-300 to-indigo-300 text-base tracking-widest select-none uppercase">
                 TRADIGLO
               </span>
-              <span className="text-[9px] text-violet-400/60 tracking-[0.25em] uppercase font-semibold">الأردن</span>
+              <span className="text-[9px] text-violet-400/60 tracking-[0.25em] uppercase font-semibold">{t.subtitle}</span>
             </div>
           </a>
 
@@ -91,19 +345,21 @@ function JordanHeader() {
           </nav>
 
           <div className="hidden md:flex items-center gap-3">
+            <LanguageDropdown lang={lang} setLang={setLang} />
             <a href={WA_ADMIN} target="_blank" rel="noopener noreferrer"
               onClick={() => typeof window !== 'undefined' && (window as any).gtag?.('event', 'click_whatsapp_admin_jordan', { location: 'header' })}
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white text-sm font-semibold hover:opacity-90 transition-all shadow-lg shadow-[#25D366]/25 active:scale-95">
               {WA_SVG_SM}
-              سجّل عبر واتساب
+              {t.headerCTA}
             </a>
           </div>
 
           <div className="md:hidden flex items-center gap-2">
+            <LanguageDropdown lang={lang} setLang={setLang} />
             <a href={WA_ADMIN} target="_blank" rel="noopener noreferrer"
               className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white text-xs font-semibold">
               {WA_SVG_SM}
-              سجّل
+              {t.headerCTAShort}
             </a>
             <button className="p-2 text-[#A6A8C3] hover:text-white transition-colors rounded-lg hover:bg-white/5"
               onClick={() => setMobileOpen(!mobileOpen)}>
@@ -118,7 +374,7 @@ function JordanHeader() {
           <div className="px-4 py-5 space-y-1">
             {navLinks.map((link) => (
               <button key={link.href} onClick={() => handleNav(link.href)}
-                className="block w-full text-right text-sm text-[#A6A8C3] hover:text-white hover:bg-[rgba(139,92,246,0.08)] px-4 py-3 rounded-lg font-medium transition-all">
+                className={`block w-full text-sm text-[#A6A8C3] hover:text-white hover:bg-[rgba(139,92,246,0.08)] px-4 py-3 rounded-lg font-medium transition-all ${lang === 'ar' ? 'text-right' : 'text-left'}`}>
                 {link.label}
               </button>
             ))}
@@ -130,12 +386,14 @@ function JordanHeader() {
 }
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
-function JordanHero() {
+function JordanHero({ lang }: { lang: Lang }) {
   const [mounted, setMounted] = useState(false);
   useEffect(() => { setMounted(true); }, []);
+  const t = T[lang];
+  const dir = lang === 'ar' ? 'rtl' : 'ltr';
 
   return (
-    <section dir="rtl" className="relative min-h-[60vh] flex flex-col justify-center pt-24 pb-16 overflow-hidden">
+    <section dir={dir} className="relative min-h-[60vh] flex flex-col justify-center pt-24 pb-16 overflow-hidden">
       <div className="absolute inset-0 bg-[#07091F]" />
       <div className="absolute top-[-10%] left-[-5%] w-[600px] h-[600px] rounded-full pointer-events-none"
         style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.18) 0%, transparent 70%)', animation: mounted ? 'pulse-glow 6s ease-in-out infinite' : undefined }} />
@@ -148,7 +406,7 @@ function JordanHero() {
       <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 w-full text-center">
         <div className="space-y-6">
           <div className="flex flex-wrap justify-center gap-2">
-            {['استثمار ثابت الأجل', 'عوائد مضمونة', 'تسجيل عبر أدمن الأردن'].map((badge) => (
+            {[t.badge1, t.badge2, t.badge3].map((badge) => (
               <span key={badge} className="px-3 py-1 rounded-full text-xs font-semibold"
                 style={{ border: '1px solid rgba(139,92,246,0.35)', background: 'rgba(139,92,246,0.08)', color: '#A78BFA' }}>
                 {badge}
@@ -157,19 +415,19 @@ function JordanHero() {
           </div>
 
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold leading-tight text-white tracking-tight">
-            باقات الاستثمار{' '}
+            {t.heroTitle1}{' '}
             <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(90deg, #A78BFA, #8B5CF6, #6366F1)' }}>
               Tradiglo
             </span>
             <br />
-            للتجار{' '}
+            {t.heroTitle2}{' '}
             <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(90deg, #8B5CF6, #6366F1)' }}>
-              الأردنيين
+              {t.heroTitle3}
             </span>
           </h1>
 
           <p className="text-base text-[#A6A8C3] leading-relaxed max-w-xl mx-auto">
-            استثمار ثابت الأجل مع عوائد مضمونة — اختر الباقة المناسبة لك وتواصل مع أدمن الأردن للتسجيل.
+            {t.heroDesc}
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
@@ -178,19 +436,19 @@ function JordanHero() {
               className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-all active:scale-95"
               style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.35)', color: '#A78BFA' }}>
               {WA_SVG_MD}
-              انضم لقناة واتساب
+              {t.heroChannelBtn}
             </a>
             <a href={WA_ADMIN} target="_blank" rel="noopener noreferrer"
               onClick={() => typeof window !== 'undefined' && (window as any).gtag?.('event', 'click_whatsapp_admin_jordan', { location: 'hero' })}
               className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-white font-semibold text-sm hover:opacity-90 transition-all active:scale-95"
               style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)', boxShadow: '0 4px 24px rgba(37,211,102,0.25)' }}>
               {WA_SVG_MD}
-              سجّل عبر أدمن واتساب
+              {t.heroAdminBtn}
             </a>
           </div>
 
           <p className="text-xs text-[#A6A8C3]/50 leading-relaxed">
-            ما في ضمان للأرباح. التداول فيه مخاطر. استخدم رأس المال المناسب لقدرتك المالية.
+            {t.heroDisclaimer}
           </p>
         </div>
       </div>
@@ -199,16 +457,18 @@ function JordanHero() {
 }
 
 // ─── TrustBar ─────────────────────────────────────────────────────────────────
-function JordanTrustBar() {
+function JordanTrustBar({ lang }: { lang: Lang }) {
+  const t = T[lang];
+  const dir = lang === 'ar' ? 'rtl' : 'ltr';
   const items = [
-    { icon: ShieldCheck, text: 'لا ضمان للأرباح' },
-    { icon: TrendingDown, text: 'ليس مخطط إثراء سريع' },
-    { icon: AlertTriangle, text: 'المخاطر موضّحة بوضوح' },
-    { icon: Bell, text: 'استثمار ثابت الأجل' },
-    { icon: UserCheck, text: 'التسجيل عبر أدمن الأردن' },
+    { icon: ShieldCheck, text: t.trust1 },
+    { icon: TrendingDown, text: t.trust2 },
+    { icon: AlertTriangle, text: t.trust3 },
+    { icon: Bell, text: t.trust4 },
+    { icon: UserCheck, text: t.trust5 },
   ];
   return (
-    <section dir="rtl" className="py-10"
+    <section dir={dir} className="py-10"
       style={{ background: '#0B0E2D', borderTop: '1px solid rgba(139,92,246,0.12)', borderBottom: '1px solid rgba(139,92,246,0.12)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
@@ -237,40 +497,37 @@ const COPY_PERFORMANCE_SCORES = [
   { label: 'Experience', value: 10, gradient: 'linear-gradient(90deg, #38bdf8, #a78bfa)' },
 ];
 
-function JordanCopyTradingShowcase() {
+function JordanCopyTradingShowcase({ lang }: { lang: Lang }) {
+  const t = T[lang];
+  const dir = lang === 'ar' ? 'rtl' : 'ltr';
+
   return (
-    <section dir="rtl" id="copy-trading" className="py-20 relative overflow-hidden"
+    <section dir={dir} id="copy-trading" className="py-20 relative overflow-hidden"
       style={{ background: '#0B0E2D' }}>
-      {/* Background glow */}
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] pointer-events-none"
         style={{ background: 'radial-gradient(ellipse at center, rgba(99,102,241,0.18) 0%, transparent 70%)' }} />
 
       <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-12 space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full"
             style={{ background: 'rgba(99,102,241,0.1)', border: '1px solid rgba(99,102,241,0.3)' }}>
             <div className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
-            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#6366F1' }}>Copy Trading</span>
+            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#6366F1' }}>{t.copyBadge}</span>
           </div>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight">
-            تابع{' '}
+            {t.copyTitle1}{' '}
             <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(90deg, #A78BFA, #6366F1)' }}>
-              Tradiglo الرسمي
+              {t.copyTitle2}
             </span>
-            {' '}وانسخ صفقاته تلقائياً
+            {' '}{t.copyTitle3}
           </h2>
           <p className="text-sm text-[#A6A8C3] leading-relaxed">
-            نسبة فوز 90% — انضم إلى أكثر من 219,855 متابعاً يستفيدون من Copy Trade الرسمي لـ Tradiglo.
+            {t.copyDesc}
           </p>
         </div>
 
-        {/* Two-column layout: card + stats */}
         <div className="grid lg:grid-cols-2 gap-8 items-start">
-
-          {/* LEFT: Copy Trading Card */}
           <div className="relative">
-            {/* Glow behind card */}
             <div className="absolute -inset-4 rounded-3xl pointer-events-none"
               style={{ background: 'radial-gradient(ellipse at center, rgba(139,92,246,0.2) 0%, transparent 70%)', filter: 'blur(20px)' }} />
 
@@ -280,7 +537,6 @@ function JordanCopyTradingShowcase() {
                 border: '1px solid rgba(139,92,246,0.3)',
                 boxShadow: '0 8px 48px rgba(139,92,246,0.2), 0 2px 8px rgba(0,0,0,0.5)',
               }}>
-              {/* Header: Tradiglo + Win Rate */}
               <div className="px-5 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
@@ -301,13 +557,12 @@ function JordanCopyTradingShowcase() {
                     <p className="text-xs text-[#A6A8C3]">Official Tradiglo Copy Trade</p>
                   </div>
                 </div>
-                <div className="text-right">
+                <div className={lang === 'ar' ? 'text-right' : 'text-left'}>
                   <p className="text-3xl font-extrabold" style={{ color: '#34d399' }}>90%</p>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-[#A6A8C3]">WIN RATE</p>
                 </div>
               </div>
 
-              {/* Balance Guarantee Banner */}
               <div className="mx-4 mb-4">
                 <div className="flex items-center gap-2 px-4 py-3 rounded-xl"
                   style={{ background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.25)' }}>
@@ -318,7 +573,6 @@ function JordanCopyTradingShowcase() {
                 </div>
               </div>
 
-              {/* Stats: Followers / Min Balance / Win Rate */}
               <div className="mx-4 mb-4 grid grid-cols-3 rounded-xl overflow-hidden"
                 style={{ background: 'rgba(139,92,246,0.05)', border: '1px solid rgba(139,92,246,0.15)' }}>
                 {[
@@ -334,7 +588,6 @@ function JordanCopyTradingShowcase() {
                 ))}
               </div>
 
-              {/* Performance Scores */}
               <div className="px-5 pb-4">
                 <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#A6A8C3] mb-3">Performance Scores</p>
                 <div className="space-y-2.5">
@@ -353,7 +606,6 @@ function JordanCopyTradingShowcase() {
                 </div>
               </div>
 
-              {/* Real Balance */}
               <div className="mx-4 mb-3">
                 <div className="flex items-center justify-between px-4 py-3 rounded-xl"
                   style={{ background: 'rgba(139,92,246,0.06)', border: '1px solid rgba(139,92,246,0.15)' }}>
@@ -368,7 +620,6 @@ function JordanCopyTradingShowcase() {
                 </div>
               </div>
 
-              {/* Platform Fee Notice */}
               <div className="mx-4 mb-4">
                 <div className="flex items-start gap-3 px-4 py-3 rounded-xl"
                   style={{ background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)' }}>
@@ -380,40 +631,35 @@ function JordanCopyTradingShowcase() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-white">20% Platform Fee on Profit</p>
-                    <p className="text-xs text-[#A6A8C3] leading-relaxed mt-0.5">
-                      Automatically deducted from profits only. Example: $100 profit → you receive $80.
-                    </p>
+                    <p className="text-sm font-bold text-white">{t.copyPlatformFeeTitle}</p>
+                    <p className="text-xs text-[#A6A8C3] leading-relaxed mt-0.5">{t.copyPlatformFeeDesc}</p>
                   </div>
                 </div>
               </div>
 
-              {/* Follow Button */}
               <div className="px-4 pb-5">
                 <a href={WA_ADMIN} target="_blank" rel="noopener noreferrer"
                   onClick={() => typeof window !== 'undefined' && (window as any).gtag?.('event', 'click_copy_trade_cta_jordan', { location: 'copy_trading_section' })}
                   className="flex items-center justify-center gap-2 w-full py-4 rounded-xl text-white font-bold text-base hover:opacity-90 transition-all active:scale-95"
                   style={{ background: 'linear-gradient(135deg, #6366f1, #8B5CF6)', boxShadow: '0 4px 24px rgba(99,102,241,0.35)' }}>
                   <span>→</span>
-                  تابع Tradiglo عبر واتساب
+                  {t.copyFollowBtn}
                 </a>
               </div>
             </div>
           </div>
 
-          {/* RIGHT: Key highlights */}
           <div className="space-y-5">
-            {/* Why Copy Trade */}
             <div className="rounded-2xl p-6 space-y-4"
               style={{ background: '#11143A', border: '1px solid rgba(139,92,246,0.2)' }}>
-              <h3 className="text-base font-bold text-white">لماذا Copy Trading مع Tradiglo؟</h3>
+              <h3 className="text-base font-bold text-white">{t.copyWhyTitle}</h3>
               <div className="space-y-3">
                 {[
-                  { icon: '◉', title: 'نسبة فوز 90%', desc: 'أداء موثّق ومتسق عبر آلاف الصفقات' },
-                  { icon: '◉', title: '+219,855 متابع', desc: 'أكبر مجتمع Copy Trade في المنطقة' },
-                  { icon: '◉', title: 'رصيد حقيقي $4.2M+', desc: 'شفافية كاملة في الأداء والأرصدة' },
-                  { icon: '◉', title: 'تلقائي 100%', desc: 'الصفقات تُنسخ فورياً بدون تدخل يدوي' },
-                  { icon: '◉', title: 'ضمان الرصيد 100%', desc: 'رأس مالك محمي عند الخسارة' },
+                  { icon: '◉', title: t.copyPoint1Title, desc: t.copyPoint1Desc },
+                  { icon: '◉', title: t.copyPoint2Title, desc: t.copyPoint2Desc },
+                  { icon: '◉', title: t.copyPoint3Title, desc: t.copyPoint3Desc },
+                  { icon: '◉', title: t.copyPoint4Title, desc: t.copyPoint4Desc },
+                  { icon: '◉', title: t.copyPoint5Title, desc: t.copyPoint5Desc },
                 ].map(({ icon, title, desc }) => (
                   <div key={title} className="flex items-start gap-3">
                     <span className="text-lg flex-shrink-0 mt-0.5">{icon}</span>
@@ -426,7 +672,6 @@ function JordanCopyTradingShowcase() {
               </div>
             </div>
 
-            {/* Score Summary */}
             <div className="rounded-2xl p-5"
               style={{ background: 'rgba(99,102,241,0.06)', border: '1px solid rgba(99,102,241,0.2)' }}>
               <div className="flex items-center justify-between mb-3">
@@ -443,14 +688,13 @@ function JordanCopyTradingShowcase() {
               </div>
             </div>
 
-            {/* Disclaimer */}
             <div className="rounded-xl p-4 flex items-start gap-3"
               style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.18)' }}>
               <svg className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
               <p className="text-xs text-amber-300/80 leading-relaxed">
-                Copy Trading <strong className="text-amber-300">لا يضمن الأرباح</strong>. الأداء السابق لا يضمن النتائج المستقبلية. استخدم رأس المال المناسب لقدرتك المالية.
+                {t.copyDisclaimer}
               </p>
             </div>
           </div>
@@ -461,7 +705,6 @@ function JordanCopyTradingShowcase() {
 }
 
 // ─── Investment Package Showcase ──────────────────────────────────────────────
-
 type ShowcaseTier = 'basic' | 'silver' | 'gold' | 'diamond';
 
 interface ShowcasePackage {
@@ -606,32 +849,33 @@ function TierIcon({ tier, size = 'sm' }: { tier: ShowcaseTier; size?: 'sm' | 'md
   );
 }
 
-function JordanInvestmentPackages() {
+function JordanInvestmentPackages({ lang }: { lang: Lang }) {
   const [activeTier, setActiveTier] = useState<ShowcaseTier>('basic');
   const [activeDuration, setActiveDuration] = useState<string>('3h');
+  const t = T[lang];
+  const dir = lang === 'ar' ? 'rtl' : 'ltr';
   const tier = SHOWCASE_TIERS.find((t) => t.id === activeTier)!;
   const duration = SHOWCASE_DURATIONS.find((d) => d.id === activeDuration)!;
 
-  const WA_INVEST = 'https://wa.me/601164457282';
+  const WA_INVEST = 'https://wa.me/601111154832';
 
   return (
-    <section dir="rtl" id="investment-packages" className="py-20 relative overflow-hidden"
+    <section dir={dir} id="investment-packages" className="py-20 relative overflow-hidden"
       style={{ background: '#07091F' }}>
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] pointer-events-none"
         style={{ background: `radial-gradient(ellipse at center, ${tier.glowColor} 0%, transparent 70%)`, transition: 'background 0.5s ease' }} />
 
       <div className="relative max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
         <div className="text-center max-w-2xl mx-auto mb-12 space-y-4">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full"
             style={{ background: 'rgba(139,92,246,0.1)', border: '1px solid rgba(139,92,246,0.25)' }}>
             <div className="w-1.5 h-1.5 rounded-full bg-violet-400" />
-            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#8B5CF6' }}>Investment Package</span>
+            <span className="text-xs font-bold uppercase tracking-wider" style={{ color: '#8B5CF6' }}>{t.investBadge}</span>
           </div>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white leading-tight">
-            Fixed-term investment with{' '}
+            {t.investTitle1}{' '}
             <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(90deg, #A78BFA, #6366F1)' }}>
-              guaranteed returns
+              {t.investTitle2}
             </span>
           </h2>
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl mx-auto"
@@ -640,40 +884,38 @@ function JordanInvestmentPackages() {
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
             </svg>
-            <span className="text-xs font-medium text-amber-400">عرض للمشاهدة فقط — للتسجيل تواصل مع أدمن واتساب الأردن</span>
+            <span className="text-xs font-medium text-amber-400">{t.investViewOnly}</span>
           </div>
         </div>
 
-        {/* Tier Selector */}
         <div className="grid grid-cols-4 gap-2 mb-6 p-1 rounded-2xl"
           style={{ background: '#0B0E2D', border: '1px solid rgba(139,92,246,0.15)' }}>
-          {SHOWCASE_TIERS.map((t) => {
-            const isActive = activeTier === t.id;
+          {SHOWCASE_TIERS.map((tierItem) => {
+            const isActive = activeTier === tierItem.id;
             return (
               <button
-                key={t.id}
-                onClick={() => setActiveTier(t.id)}
+                key={tierItem.id}
+                onClick={() => setActiveTier(tierItem.id)}
                 className="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl transition-all duration-300"
                 style={isActive ? {
-                  background: t.bgColor,
-                  border: `1px solid ${t.borderColor}`,
-                  boxShadow: `0 0 20px ${t.glowColor}`,
+                  background: tierItem.bgColor,
+                  border: `1px solid ${tierItem.borderColor}`,
+                  boxShadow: `0 0 20px ${tierItem.glowColor}`,
                 } : {
                   background: 'transparent',
                   border: '1px solid transparent',
                 }}>
-                <span style={{ color: isActive ? t.color : '#64748b' }}>
-                  <TierIcon tier={t.id} />
+                <span style={{ color: isActive ? tierItem.color : '#64748b' }}>
+                  <TierIcon tier={tierItem.id} />
                 </span>
-                <span className="text-xs font-bold" style={{ color: isActive ? t.color : '#64748b' }}>
-                  {t.labelAr}
+                <span className="text-xs font-bold" style={{ color: isActive ? tierItem.color : '#64748b' }}>
+                  {tierItem.labelAr}
                 </span>
               </button>
             );
           })}
         </div>
 
-        {/* Tier Info Card */}
         <div className="rounded-2xl p-5 mb-6 transition-all duration-500"
           style={{
             background: `linear-gradient(135deg, ${tier.bgColor} 0%, rgba(7,9,31,0.8) 100%)`,
@@ -707,18 +949,17 @@ function JordanInvestmentPackages() {
                 </div>
               </div>
             </div>
-            <div className="text-left flex-shrink-0">
+            <div className={`flex-shrink-0 ${lang === 'ar' ? 'text-left' : 'text-right'}`}>
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1">MAX PROFIT</p>
               <p className="text-2xl font-black" style={{ color: tier.color }}>{tier.maxProfit}</p>
             </div>
           </div>
         </div>
 
-        {/* Capital Options */}
         <div className="mb-6">
           <div className="flex items-center gap-3 mb-4">
             <div className="h-px flex-1" style={{ background: `linear-gradient(90deg, transparent, ${tier.color}40)` }} />
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">SELECT CAPITAL AMOUNT</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">{t.investSelectCapital}</span>
             <div className="h-px flex-1" style={{ background: `linear-gradient(90deg, ${tier.color}40, transparent)` }} />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -746,11 +987,10 @@ function JordanInvestmentPackages() {
           </div>
         </div>
 
-        {/* Duration Options */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
             <div className="h-px flex-1" style={{ background: `linear-gradient(90deg, transparent, ${tier.color}40)` }} />
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">SELECT DURATION</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-500">{t.investSelectDuration}</span>
             <div className="h-px flex-1" style={{ background: `linear-gradient(90deg, ${tier.color}40, transparent)` }} />
           </div>
           <div className="grid grid-cols-4 gap-2">
@@ -783,18 +1023,16 @@ function JordanInvestmentPackages() {
           </div>
         </div>
 
-        {/* Disclaimer */}
         <div className="rounded-xl p-4 mb-6 flex items-start gap-3"
           style={{ background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.18)' }}>
           <svg className="w-4 h-4 flex-shrink-0 mt-0.5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
           <p className="text-xs text-amber-300/80 leading-relaxed">
-            Investment packages <strong className="text-amber-300">cannot be cancelled</strong> once joined. Capital is locked until the duration expires. A 20% platform fee is deducted from gross profit.
+            {t.investDisclaimer}
           </p>
         </div>
 
-        {/* CTA Button */}
         <a
           href={WA_INVEST}
           target="_blank"
@@ -807,11 +1045,11 @@ function JordanInvestmentPackages() {
             color: '#fff',
           }}>
           {WA_SVG_MD}
-          تواصل مع أدمن الأردن للتسجيل في {tier.tierNameAr}
+          {t.investCTAPrefix} {tier.tierNameAr}
         </a>
 
         <p className="text-center text-[11px] text-slate-600 mt-4">
-          للمشاهدة فقط — التسجيل والمعاملات تتم عبر أدمن واتساب الأردن
+          {t.investFootnote}
         </p>
       </div>
     </section>
@@ -819,18 +1057,20 @@ function JordanInvestmentPackages() {
 }
 
 // ─── Final CTA ────────────────────────────────────────────────────────────────
-function JordanFinalCTA() {
+function JordanFinalCTA({ lang }: { lang: Lang }) {
+  const t = T[lang];
+  const dir = lang === 'ar' ? 'rtl' : 'ltr';
   return (
-    <section dir="rtl" className="py-24 bg-[#080b1a] relative overflow-hidden">
+    <section dir={dir} className="py-24 bg-[#080b1a] relative overflow-hidden">
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_50%,rgba(99,102,241,0.10),transparent)]" />
       <div className="relative max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center space-y-8">
         <div className="space-y-4">
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white leading-tight">
-            ابدأ استثمارك مع{' '}
+            {t.finalTitle1}{' '}
             <span className="bg-gradient-to-r from-indigo-400 via-violet-400 to-purple-400 bg-clip-text text-transparent">Tradiglo</span>
           </h2>
           <p className="text-gray-400 leading-relaxed max-w-xl mx-auto">
-            اختر الباقة المناسبة لك وتواصل مع أدمن واتساب الأردن للتسجيل والبدء.
+            {t.finalDesc}
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -839,13 +1079,13 @@ function JordanFinalCTA() {
             className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold hover:opacity-90 transition-all active:scale-95"
             style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.35)', color: '#A78BFA' }}>
             {WA_SVG_MD}
-            انضم لقناة واتساب
+            {t.finalChannelBtn}
           </a>
           <a href={WA_ADMIN} target="_blank" rel="noopener noreferrer"
             onClick={() => typeof window !== 'undefined' && (window as any).gtag?.('event', 'click_final_cta_admin_jordan')}
             className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white font-semibold hover:opacity-90 transition-all shadow-xl shadow-[#25D366]/20 active:scale-95">
             {WA_SVG_MD}
-            سجّل عبر أدمن واتساب الأردن
+            {t.finalAdminBtn}
           </a>
         </div>
       </div>
@@ -854,13 +1094,15 @@ function JordanFinalCTA() {
 }
 
 // ─── Footer ───────────────────────────────────────────────────────────────────
-function JordanFooter() {
+function JordanFooter({ lang }: { lang: Lang }) {
+  const t = T[lang];
+  const dir = lang === 'ar' ? 'rtl' : 'ltr';
   const scrollTo = (id: string) => {
     const el = document.querySelector(id);
     if (el) el.scrollIntoView({ behavior: 'smooth' });
   };
   return (
-    <footer dir="rtl" className="pb-24 md:pb-0" style={{ background: '#040610', borderTop: '1px solid rgba(139,92,246,0.12)' }}>
+    <footer dir={dir} className="pb-24 md:pb-0" style={{ background: '#040610', borderTop: '1px solid rgba(139,92,246,0.12)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10">
         <div className="grid md:grid-cols-4 gap-10 mb-12">
           <div className="md:col-span-2 space-y-5">
@@ -869,28 +1111,28 @@ function JordanFooter() {
               <div className="flex flex-col leading-none">
                 <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 800, letterSpacing: '0.08em' }}
                   className="text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-purple-300 to-indigo-300 text-sm tracking-widest uppercase">TRADIGLO</span>
-                <span className="text-[9px] tracking-[0.25em] uppercase font-semibold" style={{ color: 'rgba(139,92,246,0.5)' }}>الأردن</span>
+                <span className="text-[9px] tracking-[0.25em] uppercase font-semibold" style={{ color: 'rgba(139,92,246,0.5)' }}>{t.subtitle}</span>
               </div>
             </a>
             <p className="text-xs text-[#A6A8C3]/60 leading-relaxed max-w-sm">
-              باقات استثمار ثابتة الأجل مع عوائد مضمونة للتجار الأردنيين — تسجيل عبر أدمن واتساب الأردن.
+              {t.footerDesc}
             </p>
             <div className="flex flex-col gap-2.5 pt-1">
               <a href={WA_CHANNEL} target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-2 text-xs hover:text-[#A78BFA] transition-colors font-medium"
                 style={{ color: '#A78BFA' }}>
-                {WA_ICON}<span>قناة واتساب الأردن</span>
+                {WA_ICON}<span>{t.footerChannelLink}</span>
               </a>
               <a href={WA_ADMIN} target="_blank" rel="noopener noreferrer"
                 className="flex items-center gap-2 text-xs text-[#25D366] hover:text-[#4ade80] transition-colors font-medium">
-                {WA_ICON}<span>تواصل مع أدمن واتساب الأردن</span>
+                {WA_ICON}<span>{t.footerAdminLink}</span>
               </a>
             </div>
           </div>
           <div className="space-y-4">
-            <h4 className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#A6A8C3]/50">التنقل</h4>
+            <h4 className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#A6A8C3]/50">{t.footerNavTitle}</h4>
             <ul className="space-y-2.5">
-              {[{ label: 'Copy Trading', id: '#copy-trading' }, { label: 'باقات الاستثمار', id: '#investment-packages' }].map((item) => (
+              {[{ label: t.navCopyTrading, id: '#copy-trading' }, { label: t.navInvestment, id: '#investment-packages' }].map((item) => (
                 <li key={item.id}>
                   <button onClick={() => scrollTo(item.id)} className="text-xs text-[#A6A8C3]/50 hover:text-[#A6A8C3] transition-colors">{item.label}</button>
                 </li>
@@ -898,29 +1140,29 @@ function JordanFooter() {
             </ul>
           </div>
           <div className="space-y-4">
-            <h4 className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#A6A8C3]/50">المعلومات</h4>
+            <h4 className="text-[10px] font-bold uppercase tracking-[0.15em] text-[#A6A8C3]/50">{t.footerInfoTitle}</h4>
             <ul className="space-y-2.5">
-              <li><a href="/community" className="text-xs text-[#A6A8C3]/50 hover:text-[#A6A8C3] transition-colors">المجتمع</a></li>
-              <li><a href="/about/privacy-policy" className="text-xs text-[#A6A8C3]/50 hover:text-[#A6A8C3] transition-colors">سياسة الخصوصية</a></li>
-              <li><a href="/about/terms-of-service" className="text-xs text-[#A6A8C3]/50 hover:text-[#A6A8C3] transition-colors">الشروط والأحكام</a></li>
-              <li><a href="/about/disclaimer" className="text-xs text-[#A6A8C3]/50 hover:text-[#A6A8C3] transition-colors">إخلاء مسؤولية المخاطر</a></li>
+              <li><a href="/community" className="text-xs text-[#A6A8C3]/50 hover:text-[#A6A8C3] transition-colors">{t.footerCommunity}</a></li>
+              <li><a href="/about/privacy-policy" className="text-xs text-[#A6A8C3]/50 hover:text-[#A6A8C3] transition-colors">{t.footerPrivacy}</a></li>
+              <li><a href="/about/terms-of-service" className="text-xs text-[#A6A8C3]/50 hover:text-[#A6A8C3] transition-colors">{t.footerTerms}</a></li>
+              <li><a href="/about/disclaimer" className="text-xs text-[#A6A8C3]/50 hover:text-[#A6A8C3] transition-colors">{t.footerDisclaimer}</a></li>
             </ul>
           </div>
         </div>
         <div style={{ borderTop: '1px solid rgba(139,92,246,0.1)' }} className="pt-8 space-y-5">
           <div className="p-4 rounded-xl" style={{ background: 'rgba(139,92,246,0.04)', border: '1px solid rgba(139,92,246,0.12)' }}>
             <p className="text-[11px] text-[#A6A8C3]/50 leading-relaxed">
-              <span className="font-semibold text-[#A6A8C3]/70">إخلاء مسؤولية المخاطر:</span>{' '}
-              الاستثمار ينطوي على مخاطر وقد لا يكون مناسباً لجميع الأفراد. Tradiglo لا يضمن أي أرباح. المستخدمون مسؤولون كلياً عن قرارات استثمارهم.
+              <span className="font-semibold text-[#A6A8C3]/70">{t.footerDisclaimerLabel}</span>{' '}
+              {t.footerDisclaimerText}
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-            <p className="text-[11px] text-[#A6A8C3]/40">© 2025 Tradiglo. جميع الحقوق محفوظة.</p>
+            <p className="text-[11px] text-[#A6A8C3]/40">{t.footerCopyright}</p>
             <div className="flex items-center gap-2">
               <MapPin className="w-3 h-3 text-[#A6A8C3]/40" />
-              <span className="text-[11px] text-[#A6A8C3]/40">الأردن</span>
+              <span className="text-[11px] text-[#A6A8C3]/40">{t.footerLocation}</span>
               <span className="text-[#A6A8C3]/30">·</span>
-              <a href="/community" className="text-[11px] text-[#A6A8C3]/40 hover:text-[#A6A8C3] transition-colors">المجتمع العالمي</a>
+              <a href="/community" className="text-[11px] text-[#A6A8C3]/40 hover:text-[#A6A8C3] transition-colors">{t.footerGlobalCommunity}</a>
             </div>
           </div>
         </div>
@@ -930,9 +1172,11 @@ function JordanFooter() {
 }
 
 // ─── Mobile Sticky Bar ────────────────────────────────────────────────────────
-function JordanMobileStickyBar() {
+function JordanMobileStickyBar({ lang }: { lang: Lang }) {
+  const t = T[lang];
+  const dir = lang === 'ar' ? 'rtl' : 'ltr';
   return (
-    <div dir="rtl" className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-4 py-3"
+    <div dir={dir} className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-4 py-3"
       style={{ background: 'rgba(7,9,31,0.95)', backdropFilter: 'blur(20px)', borderTop: '1px solid rgba(139,92,246,0.2)' }}>
       <div className="flex gap-3">
         <a href={WA_CHANNEL} target="_blank" rel="noopener noreferrer"
@@ -940,14 +1184,14 @@ function JordanMobileStickyBar() {
           className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm active:scale-95 transition-all"
           style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.35)', color: '#A78BFA' }}>
           {WA_SVG_SM}
-          Channel
+          {t.stickyChannel}
         </a>
         <a href={WA_ADMIN} target="_blank" rel="noopener noreferrer"
           onClick={() => typeof window !== 'undefined' && (window as any).gtag?.('event', 'click_mobile_sticky_admin_jordan')}
           className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-white font-semibold text-sm active:scale-95 transition-all"
           style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)', boxShadow: '0 4px 16px rgba(37,211,102,0.25)' }}>
           {WA_SVG_SM}
-          سجّل
+          {t.stickyRegister}
         </a>
       </div>
     </div>
@@ -956,18 +1200,20 @@ function JordanMobileStickyBar() {
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
 export default function TradigloJordanLandingPage() {
+  const [lang, setLang] = useState<Lang>('ar');
+
   return (
     <div className="min-h-screen bg-[#07091F] text-white" style={{ fontFamily: "'Inter', sans-serif" }}>
-      <JordanHeader />
+      <JordanHeader lang={lang} setLang={setLang} />
       <main>
-        <JordanHero />
-        <JordanTrustBar />
-        <JordanCopyTradingShowcase />
-        <JordanInvestmentPackages />
-        <JordanFinalCTA />
+        <JordanHero lang={lang} />
+        <JordanTrustBar lang={lang} />
+        <JordanCopyTradingShowcase lang={lang} />
+        <JordanInvestmentPackages lang={lang} />
+        <JordanFinalCTA lang={lang} />
       </main>
-      <JordanFooter />
-      <JordanMobileStickyBar />
+      <JordanFooter lang={lang} />
+      <JordanMobileStickyBar lang={lang} />
     </div>
   );
 }
