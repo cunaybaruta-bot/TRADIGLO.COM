@@ -1,13 +1,13 @@
 'use client';
 
 import TradigloHeader from '@/components/tradiglo/TradigloHeader';
-import MalaysiaHero from '@/components/tradiglo/MalaysiaHero';
-import RegistrationSection from '@/components/tradiglo/RegistrationSection';
-import TradigloFooter from '@/components/tradiglo/TradigloFooter';
-import MobileStickyBar from '@/components/tradiglo/MobileStickyBar';
+import BruneiHero from '@/components/tradiglo/BruneiHero';
+import BruneiRegistrationSection from '@/components/tradiglo/BruneiRegistrationSection';
+import BruneiFooter from '@/components/tradiglo/BruneiFooter';
+import BruneiMobileStickyBar from '@/components/tradiglo/BruneiMobileStickyBar';
 import TickerTape from '@/components/TickerTape';
 
-export default function TradigloMalaysiaLandingPage() {
+export default function TradigloBruneiLandingPage() {
   return (
     <div className="min-h-screen bg-[#07091F] text-white" style={{ fontFamily: "'Inter', sans-serif" }}>
       <TradigloHeader />
@@ -15,11 +15,11 @@ export default function TradigloMalaysiaLandingPage() {
       <div className="h-16 md:h-20" />
       <TickerTape />
       <main>
-        <MalaysiaHero />
-        <RegistrationSection />
+        <BruneiHero />
+        <BruneiRegistrationSection />
       </main>
-      <TradigloFooter />
-      <MobileStickyBar />
+      <BruneiFooter />
+      <BruneiMobileStickyBar />
     </div>
   );
 }
