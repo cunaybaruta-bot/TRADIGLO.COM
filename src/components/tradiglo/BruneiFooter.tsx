@@ -2,8 +2,9 @@
 
 import { MapPin } from 'lucide-react';
 
+// Same WhatsApp Channel and Admin as Malaysia
 const WA_CHANNEL = 'https://whatsapp.com/channel/0029VbDNq7VGzzKIpSf7VE1g';
-const WA_ADMIN = 'https://wa.me/60147792325?text=Hi%20Tradiglo%2C%20saya%20berminat%20untuk%20daftar.%20Saya%20dari%20Malaysia%20dan%20ingin%20tahu%20cara%20bermula%20dengan%20Tradiglo.';
+const WA_ADMIN = 'https://wa.me/60147792325?text=Hi%20Tradiglo%2C%20saya%20berminat%20untuk%20daftar.%20Saya%20dari%20Brunei%20Darussalam%20dan%20ingin%20tahu%20cara%20bermula%20dengan%20Tradiglo.';
 
 const WA_ICON = (
   <svg className="w-3.5 h-3.5 text-[#25D366] flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
@@ -11,7 +12,7 @@ const WA_ICON = (
   </svg>
 );
 
-export default function TradigloFooter() {
+export default function BruneiFooter() {
   return (
     <footer
       className="pb-24 md:pb-0"
@@ -21,7 +22,7 @@ export default function TradigloFooter() {
         <div className="mb-12">
           {/* Brand */}
           <div className="space-y-5 max-w-sm">
-            <a href="/tradiglo.malaysia" className="flex items-center gap-3 group w-fit">
+            <a href="/tradiglo.brunei" className="flex items-center gap-3 group w-fit">
               <div
                 style={{
                   width: 32,
@@ -45,7 +46,7 @@ export default function TradigloFooter() {
                 >
                   TRADIGLO
                 </span>
-                <span className="text-[9px] tracking-[0.25em] uppercase font-semibold" style={{ color: 'rgba(139,92,246,0.5)' }}>Malaysia</span>
+                <span className="text-[9px] tracking-[0.25em] uppercase font-semibold" style={{ color: 'rgba(139,92,246,0.5)' }}>Brunei Darussalam</span>
               </div>
             </a>
             <div className="flex flex-col gap-2.5 pt-1">
@@ -53,10 +54,11 @@ export default function TradigloFooter() {
                 href={WA_CHANNEL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 text-xs text-[#25D366] hover:text-[#4ade80] transition-colors font-medium"
+                className="flex items-center gap-2 text-xs font-medium transition-opacity hover:opacity-80"
+                style={{ color: '#25D366' }}
               >
                 {WA_ICON}
-                <span>Sertai WhatsApp Channel Malaysia</span>
+                <span>WhatsApp Channel Brunei Darussalam</span>
               </a>
               <a
                 href={WA_ADMIN}
@@ -65,7 +67,7 @@ export default function TradigloFooter() {
                 className="flex items-center gap-2 text-xs text-[#25D366] hover:text-[#4ade80] transition-colors font-medium"
               >
                 {WA_ICON}
-                <span>Hubungi WhatsApp Admin Malaysia</span>
+                <span>Hubungi WhatsApp Admin Brunei Darussalam</span>
               </a>
             </div>
           </div>
@@ -74,12 +76,12 @@ export default function TradigloFooter() {
         {/* Divider */}
         <div style={{ borderTop: '1px solid rgba(139,92,246,0.1)' }} className="pt-8 space-y-5">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-            <p className="text-[11px] text-[#A6A8C3]/40">© 2025 Tradiglo. Hak cipta terpelihara.</p>
+            <p className="text-[11px] text-[#A6A8C3]/40">© 2025 Tradiglo. All rights reserved.</p>
             <div className="flex items-center gap-2">
               <MapPin className="w-3 h-3 text-[#A6A8C3]/40" />
-              <span className="text-[11px] text-[#A6A8C3]/40">Malaysia</span>
+              <span className="text-[11px] text-[#A6A8C3]/40">Brunei Darussalam</span>
               <span className="text-[#A6A8C3]/30">·</span>
-              <a href="/community" className="text-[11px] text-[#A6A8C3]/40 hover:text-[#A6A8C3] transition-colors">Komuniti Global</a>
+              <a href="/community" className="text-[11px] text-[#A6A8C3]/40 hover:text-[#A6A8C3] transition-colors">Global Community</a>
             </div>
           </div>
         </div>
