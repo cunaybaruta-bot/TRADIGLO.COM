@@ -54,6 +54,39 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
+// Call the server-side API route which uses service role key to bypass RLS
+async function callWalletUpdateAPI(walletId: string, newBalance: number): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await fetch('/api/admin/wallet-update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ wallet_id: walletId, new_balance: newBalance, action: 'update' }),
+    });
+    const data = await res.json();
+    if (!res.ok) return { success: false, error: data.error || 'Request failed' };
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Network error' };
+  }
+}
+
+async function callWalletResetAPI(walletId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await fetch('/api/admin/wallet-update', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ wallet_id: walletId, action: 'reset_demo' }),
+    });
+    const data = await res.json();
+    if (!res.ok) return { success: false, error: data.error || 'Request failed' };
+    return { success: true };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'Network error' };
+  }
+}
+
 export default function WalletsPage() {
   const [rows, setRows] = useState<UserWalletRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,7 +104,6 @@ export default function WalletsPage() {
     setLoading(true);
     const supabase = createClient();
 
-    // Fetch all wallets with user email
     const { data, error } = await supabase
       .from('wallets')
       .select('id, user_id, balance, is_demo, updated_at, users(email)')
@@ -83,7 +115,6 @@ export default function WalletsPage() {
       return;
     }
 
-    // Group by user_id — one row per user with demo + real wallet
     const userMap = new Map<string, UserWalletRow>();
 
     for (const w of (data || []) as any[]) {
@@ -110,7 +141,6 @@ export default function WalletsPage() {
         entry.real_wallet_id = w.id;
         entry.real_balance = Number(w.balance);
       }
-      // Keep the most recent updated_at
       if (new Date(w.updated_at) > new Date(entry.last_updated)) {
         entry.last_updated = w.updated_at;
       }
@@ -129,7 +159,6 @@ export default function WalletsPage() {
     setTimeout(() => setMessage(null), 4000);
   };
 
-  // Called when user clicks Save in the inline edit — opens confirmation modal
   const requestSave = (row: UserWalletRow, field: 'demo' | 'real', value: string) => {
     const parsed = parseFloat(value);
     if (isNaN(parsed) || parsed < 0) {
@@ -144,20 +173,20 @@ export default function WalletsPage() {
     setConfirm({ walletId, field, newValue: parsed, email: row.email });
   };
 
-  // Confirmed save
+  // Confirmed save — uses Next.js API route with service role key to bypass RLS
   const handleConfirmedSave = async () => {
     if (!confirm) return;
     setSaving(true);
-    const supabase = createClient();
-    const { error } = await supabase
-      .from('wallets')
-      .update({ balance: confirm.newValue })
-      .eq('id', confirm.walletId);
 
-    if (error) {
-      showMessage('Failed to update: ' + error.message, 'error');
+    const result = await callWalletUpdateAPI(confirm.walletId, confirm.newValue);
+
+    if (!result.success) {
+      showMessage('Failed to update: ' + (result.error || 'Unknown error'), 'error');
     } else {
-      showMessage(`${confirm.field === 'demo' ? 'Demo' : 'Real'} balance updated to $${confirm.newValue.toLocaleString('en', { minimumFractionDigits: 2 })}`, 'success');
+      showMessage(
+        `${confirm.field === 'demo' ? 'Demo' : 'Real'} balance updated to $${confirm.newValue.toLocaleString('en', { minimumFractionDigits: 2 })}`,
+        'success'
+      );
       setEditState(null);
       fetchWallets();
     }
@@ -165,21 +194,18 @@ export default function WalletsPage() {
     setSaving(false);
   };
 
-  // Reset demo balance to $100,000
+  // Reset demo balance — uses Next.js API route with service role key to bypass RLS
   const handleResetDemo = async (row: UserWalletRow) => {
     if (!row.demo_wallet_id) {
       showMessage('No demo wallet found for this user', 'error');
       return;
     }
     setSaving(true);
-    const supabase = createClient();
-    const { error } = await supabase
-      .from('wallets')
-      .update({ balance: 100000, updated_at: new Date().toISOString() })
-      .eq('id', row.demo_wallet_id);
 
-    if (error) {
-      showMessage('Reset failed: ' + error.message, 'error');
+    const result = await callWalletResetAPI(row.demo_wallet_id);
+
+    if (!result.success) {
+      showMessage('Reset failed: ' + (result.error || 'Unknown error'), 'error');
     } else {
       showMessage(`Demo balance for ${row.email} reset to $100,000`, 'success');
       fetchWallets();
@@ -337,20 +363,40 @@ export default function WalletsPage() {
                         <div className="flex items-center gap-1.5">
                           <input
                             type="number"
-                            value={editState.value}
-                            onChange={(e) => setEditState({ ...editState, value: e.target.value })}
+                            value={editState!.value}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setEditState((prev) => prev ? { ...prev, value: val } : prev);
+                            }}
                             className="w-32 px-2 py-1 bg-[#0f172a] border border-blue-500 rounded text-white text-sm focus:outline-none"
                             autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                const currentVal = (e.target as HTMLInputElement).value;
+                                requestSave(row, 'demo', currentVal);
+                              } else if (e.key === 'Escape') {
+                                setEditState(null);
+                              }
+                            }}
                           />
                           <button
-                            onClick={() => requestSave(row, 'demo', editState.value)}
+                            type="button"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              const currentVal = editState!.value;
+                              requestSave(row, 'demo', currentVal);
+                            }}
                             className="text-green-400 hover:text-green-300 p-1"
                             title="Save"
                           >
                             <CheckIcon className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => setEditState(null)}
+                            type="button"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setEditState(null);
+                            }}
                             className="text-red-400 hover:text-red-300 p-1"
                             title="Cancel"
                           >
@@ -381,20 +427,40 @@ export default function WalletsPage() {
                         <div className="flex items-center gap-1.5">
                           <input
                             type="number"
-                            value={editState.value}
-                            onChange={(e) => setEditState({ ...editState, value: e.target.value })}
+                            value={editState!.value}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setEditState((prev) => prev ? { ...prev, value: val } : prev);
+                            }}
                             className="w-32 px-2 py-1 bg-[#0f172a] border border-green-500 rounded text-white text-sm focus:outline-none"
                             autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                const currentVal = (e.target as HTMLInputElement).value;
+                                requestSave(row, 'real', currentVal);
+                              } else if (e.key === 'Escape') {
+                                setEditState(null);
+                              }
+                            }}
                           />
                           <button
-                            onClick={() => requestSave(row, 'real', editState.value)}
+                            type="button"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              const currentVal = editState!.value;
+                              requestSave(row, 'real', currentVal);
+                            }}
                             className="text-green-400 hover:text-green-300 p-1"
                             title="Save"
                           >
                             <CheckIcon className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => setEditState(null)}
+                            type="button"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setEditState(null);
+                            }}
                             className="text-red-400 hover:text-red-300 p-1"
                             title="Cancel"
                           >

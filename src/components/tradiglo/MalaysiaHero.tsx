@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 const WA_CHANNEL = 'https://whatsapp.com/channel/0029VbDNq7VGzzKIpSf7VE1g';
 const WA_ADMIN =
   'https://wa.me/60147792325?text=Hi%20Tradiglo%2C%20saya%20berminat%20untuk%20daftar.%20Saya%20dari%20Malaysia%20dan%20ingin%20tahu%20cara%20bermula%20dengan%20Tradiglo.';
+const TG_GROUP = 'https://t.me/+vxavFoEBYM0zOGM1';
 
 const WA_SVG = ({ size = 5 }: { size?: number }) => (
   <svg className={`w-${size} h-${size}`} fill="currentColor" viewBox="0 0 24 24">
@@ -166,6 +167,17 @@ export default function MalaysiaHero() {
               >
                 <WA_SVG size={4} />
                 Daftar Melalui WhatsApp Admin
+              </a>
+              <a
+                href={TG_GROUP}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-all active:scale-95"
+                style={{ background: 'rgba(0,136,204,0.12)', border: '1px solid rgba(0,136,204,0.35)', color: '#29B6F6' }}
+                aria-label="Sertai Telegram Group Tradiglo Malaysia"
+              >
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.26 13.947l-2.94-.918c-.64-.203-.658-.64.135-.954l11.566-4.461c.537-.194 1.006.131.873.607z"/></svg>
+                Sertai Telegram Group
               </a>
             </div>
 

@@ -199,6 +199,7 @@ const LANGUAGES = [
 // ─── Bahrain-specific constants ───────────────────────────────────────────────
 const WA_CHANNEL = 'https://whatsapp.com/channel/0029VbCotiRAu3aIY7os1Z0E';
 const WA_ADMIN = 'https://wa.me/601111154832';
+const TG_GROUP = 'https://t.me/+MN6PoKpD_1djOTg1';
 
 const WA_SVG_SM = (
   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -346,20 +347,21 @@ function BahrainHeader({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => vo
 
           <div className="hidden md:flex items-center gap-3">
             <LanguageDropdown lang={lang} setLang={setLang} />
-            <a href={WA_ADMIN} target="_blank" rel="noopener noreferrer"
-              onClick={() => typeof window !== 'undefined' && (window as any).gtag?.('event', 'click_whatsapp_admin_bahrain', { location: 'header' })}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white text-sm font-semibold hover:opacity-90 transition-all shadow-lg shadow-[#25D366]/25 active:scale-95">
-              {WA_SVG_SM}
-              {t.headerCTA}
+            <a href={TG_GROUP} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-white text-sm font-semibold hover:opacity-90 transition-all shadow-lg active:scale-95"
+              style={{ background: 'linear-gradient(135deg, #0088cc, #006699)', boxShadow: '0 2px 12px rgba(0,136,204,0.25)' }}>
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.26 13.947l-2.94-.918c-.64-.203-.658-.64.135-.954l11.566-4.461c.537-.194 1.006.131.873.607z"/></svg>
+              {lang === 'ar' ? 'انضم لمجموعة تيليغرام' : 'Join Telegram Group'}
             </a>
           </div>
 
           <div className="md:hidden flex items-center gap-2">
             <LanguageDropdown lang={lang} setLang={setLang} />
-            <a href={WA_ADMIN} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white text-xs font-semibold">
-              {WA_SVG_SM}
-              {t.headerCTAShort}
+            <a href={TG_GROUP} target="_blank" rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-white text-xs font-semibold"
+              style={{ background: 'linear-gradient(135deg, #0088cc, #006699)' }}>
+              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.26 13.947l-2.94-.918c-.64-.203-.658-.64.135-.954l11.566-4.461c.537-.194 1.006.131.873.607z"/></svg>
+              {lang === 'ar' ? 'تيليغرام' : 'Telegram'}
             </a>
             <button className="p-2 text-[#A6A8C3] hover:text-white transition-colors rounded-lg hover:bg-white/5"
               onClick={() => setMobileOpen(!mobileOpen)}>
@@ -431,19 +433,12 @@ function BahrainHero({ lang }: { lang: Lang }) {
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <a href={WA_CHANNEL} target="_blank" rel="noopener noreferrer"
-              onClick={() => typeof window !== 'undefined' && (window as any).gtag?.('event', 'click_whatsapp_channel_bahrain', { location: 'hero' })}
+            <a href={TG_GROUP} target="_blank" rel="noopener noreferrer"
               className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl font-semibold text-sm hover:opacity-90 transition-all active:scale-95"
-              style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.35)', color: '#A78BFA' }}>
-              {WA_SVG_MD}
-              {t.heroChannelBtn}
-            </a>
-            <a href={WA_ADMIN} target="_blank" rel="noopener noreferrer"
-              onClick={() => typeof window !== 'undefined' && (window as any).gtag?.('event', 'click_whatsapp_admin_bahrain', { location: 'hero' })}
-              className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl text-white font-semibold text-sm hover:opacity-90 transition-all active:scale-95"
-              style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)', boxShadow: '0 4px 24px rgba(37,211,102,0.25)' }}>
-              {WA_SVG_MD}
-              {t.heroAdminBtn}
+              style={{ background: 'rgba(0,136,204,0.12)', border: '1px solid rgba(0,136,204,0.35)', color: '#29B6F6' }}
+              aria-label="Join Tradiglo Bahrain Telegram Group">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.26 13.947l-2.94-.918c-.64-.203-.658-.64.135-.954l11.566-4.461c.537-.194 1.006.131.873.607z"/></svg>
+              {lang === 'ar' ? 'انضم لمجموعة تيليغرام' : 'Join Telegram Group'}
             </a>
           </div>
 
@@ -638,12 +633,11 @@ function BahrainCopyTradingShowcase({ lang }: { lang: Lang }) {
               </div>
 
               <div className="px-4 pb-5">
-                <a href={WA_ADMIN} target="_blank" rel="noopener noreferrer"
-                  onClick={() => typeof window !== 'undefined' && (window as any).gtag?.('event', 'click_copy_trade_cta_bahrain', { location: 'copy_trading_section' })}
+                <a href={TG_GROUP} target="_blank" rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 w-full py-4 rounded-xl text-white font-bold text-base hover:opacity-90 transition-all active:scale-95"
-                  style={{ background: 'linear-gradient(135deg, #6366f1, #8B5CF6)', boxShadow: '0 4px 24px rgba(99,102,241,0.35)' }}>
-                  <span>→</span>
-                  {t.copyFollowBtn}
+                  style={{ background: 'linear-gradient(135deg, #0088cc, #006699)', boxShadow: '0 4px 24px rgba(0,136,204,0.35)' }}>
+                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.26 13.947l-2.94-.918c-.64-.203-.658-.64.135-.954l11.566-4.461c.537-.194 1.006.131.873.607z"/></svg>
+                  {lang === 'ar' ? 'تابع Tradiglo عبر تيليغرام' : 'Follow Tradiglo via Telegram'}
                 </a>
               </div>
             </div>
@@ -1032,18 +1026,17 @@ function BahrainInvestmentPackages({ lang }: { lang: Lang }) {
         </div>
 
         <a
-          href={WA_ADMIN}
+          href={TG_GROUP}
           target="_blank"
           rel="noopener noreferrer"
-          onClick={() => typeof window !== 'undefined' && (window as any).gtag?.('event', 'click_investment_cta_bahrain', { tier: activeTier })}
           className="flex items-center justify-center gap-3 w-full py-4 rounded-2xl font-bold text-base transition-all duration-300 hover:opacity-90 active:scale-[0.99]"
           style={{
-            background: 'linear-gradient(135deg, #25D366, #128C7E)',
-            boxShadow: '0 4px 24px rgba(37,211,102,0.3)',
+            background: 'linear-gradient(135deg, #0088cc, #006699)',
+            boxShadow: '0 4px 24px rgba(0,136,204,0.3)',
             color: '#fff',
           }}>
-          {WA_SVG_MD}
-          {t.investCTAPrefix} {tier.tierNameAr}
+          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.26 13.947l-2.94-.918c-.64-.203-.658-.64.135-.954l11.566-4.461c.537-.194 1.006.131.873.607z"/></svg>
+          {lang === 'ar' ? 'تواصل عبر تيليغرام للتسجيل في' : 'Contact via Telegram to Register for'} {tier.tierNameAr}
         </a>
 
         <p className="text-center text-[11px] text-slate-600 mt-4">
@@ -1072,18 +1065,11 @@ function BahrainFinalCTA({ lang }: { lang: Lang }) {
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <a href={WA_CHANNEL} target="_blank" rel="noopener noreferrer"
-            onClick={() => typeof window !== 'undefined' && (window as any).gtag?.('event', 'click_final_cta_channel_bahrain')}
+          <a href={TG_GROUP} target="_blank" rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-semibold hover:opacity-90 transition-all active:scale-95"
-            style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.35)', color: '#A78BFA' }}>
-            {WA_SVG_MD}
-            {t.finalChannelBtn}
-          </a>
-          <a href={WA_ADMIN} target="_blank" rel="noopener noreferrer"
-            onClick={() => typeof window !== 'undefined' && (window as any).gtag?.('event', 'click_final_cta_admin_bahrain')}
-            className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl bg-gradient-to-r from-[#25D366] to-[#128C7E] text-white font-semibold hover:opacity-90 transition-all shadow-xl shadow-[#25D366]/20 active:scale-95">
-            {WA_SVG_MD}
-            {t.finalAdminBtn}
+            style={{ background: 'rgba(0,136,204,0.12)', border: '1px solid rgba(0,136,204,0.35)', color: '#29B6F6' }}>
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.26 13.947l-2.94-.918c-.64-.203-.658-.64.135-.954l11.566-4.461c.537-.194 1.006.131.873.607z"/></svg>
+            {lang === 'ar' ? 'انضم لمجموعة تيليغرام' : 'Join Telegram Group'}
           </a>
         </div>
       </div>
@@ -1116,14 +1102,11 @@ function BahrainFooter({ lang }: { lang: Lang }) {
               {t.footerDesc}
             </p>
             <div className="flex flex-col gap-2.5 pt-1">
-              <a href={WA_CHANNEL} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 text-xs hover:text-[#A78BFA] transition-colors font-medium"
-                style={{ color: '#A78BFA' }}>
-                {WA_ICON}<span>{t.footerChannelLink}</span>
-              </a>
-              <a href={WA_ADMIN} target="_blank" rel="noopener noreferrer"
-                className="flex items-center gap-2 text-xs text-[#25D366] hover:text-[#4ade80] transition-colors font-medium">
-                {WA_ICON}<span>{t.footerAdminLink}</span>
+              <a href={TG_GROUP} target="_blank" rel="noopener noreferrer"
+                className="flex items-center gap-2 text-xs transition-colors font-medium"
+                style={{ color: '#29B6F6' }}>
+                <svg className="w-3.5 h-3.5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.26 13.947l-2.94-.918c-.64-.203-.658-.64.135-.954l11.566-4.461c.537-.194 1.006.131.873.607z"/></svg>
+                <span>{lang === 'ar' ? 'مجموعة تيليغرام البحرين' : 'Bahrain Telegram Group'}</span>
               </a>
             </div>
           </div>
@@ -1177,19 +1160,11 @@ function BahrainMobileStickyBar({ lang }: { lang: Lang }) {
     <div dir={dir} className="md:hidden fixed bottom-0 left-0 right-0 z-50 px-4 py-3"
       style={{ background: 'rgba(7,9,31,0.95)', backdropFilter: 'blur(20px)', borderTop: '1px solid rgba(139,92,246,0.2)' }}>
       <div className="flex gap-3">
-        <a href={WA_CHANNEL} target="_blank" rel="noopener noreferrer"
-          onClick={() => typeof window !== 'undefined' && (window as any).gtag?.('event', 'click_mobile_sticky_channel_bahrain')}
-          className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl font-semibold text-sm active:scale-95 transition-all"
-          style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.35)', color: '#A78BFA' }}>
-          {WA_SVG_SM}
-          {t.stickyChannel}
-        </a>
-        <a href={WA_ADMIN} target="_blank" rel="noopener noreferrer"
-          onClick={() => typeof window !== 'undefined' && (window as any).gtag?.('event', 'click_mobile_sticky_admin_bahrain')}
+        <a href={TG_GROUP} target="_blank" rel="noopener noreferrer"
           className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl text-white font-semibold text-sm active:scale-95 transition-all"
-          style={{ background: 'linear-gradient(135deg, #25D366, #128C7E)', boxShadow: '0 4px 16px rgba(37,211,102,0.25)' }}>
-          {WA_SVG_SM}
-          {t.stickyRegister}
+          style={{ background: 'linear-gradient(135deg, #0088cc, #006699)', boxShadow: '0 4px 16px rgba(0,136,204,0.25)' }}>
+          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.894 8.221-1.97 9.28c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L7.26 13.947l-2.94-.918c-.64-.203-.658-.64.135-.954l11.566-4.461c.537-.194 1.006.131.873.607z"/></svg>
+          {lang === 'ar' ? 'انضم لتيليغرام' : 'Join Telegram'}
         </a>
       </div>
     </div>
