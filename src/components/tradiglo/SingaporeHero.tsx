@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 
 // WhatsApp Channel — placeholder, will be added later
-const WA_CHANNEL = 'https://whatsapp.com/channel/0029VbCuSOH9MF97jtucBD1c';
+const WA_CHANNEL = 'https://whatsapp.com/channel/0029VbDNq7VGzzKIpSf7VE1g';
 const WA_ADMIN =
   'https://wa.me/60147792325?text=Hi%20Tradiglo%2C%20I%20am%20interested%20to%20register.%20I%20am%20from%20Singapore%20and%20would%20like%20to%20know%20how%20to%20get%20started%20with%20Tradiglo.';
 const TG_GROUP = 'https://t.me/+vxavFoEBYM0zOGM1';
