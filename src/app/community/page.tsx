@@ -51,6 +51,22 @@ const tradigloCountries: TradigloCountry[] = [
     desc: 'Signal Forex, Gold & Crypto untuk trader Brunei Darussalam melalui WhatsApp Channel dan WhatsApp Admin.',
   },
   {
+    name: 'Tradiglo Oman',
+    flag: '🇴🇲',
+    lang: 'العربية',
+    href: '/tradiglo.oman',
+    status: 'active',
+    desc: 'إشارات الفوركس والذهب والعملات المشفرة للمتداولين في عُمان عبر قناة واتساب وأدمن واتساب.',
+  },
+  {
+    name: 'Tradiglo Kuwait',
+    flag: '🇰🇼',
+    lang: 'العربية',
+    href: '/tradiglo.kuwait',
+    status: 'active',
+    desc: 'إشارات الفوركس والذهب والعملات المشفرة للمتداولين في الكويت عبر قناة واتساب وأدمن واتساب.',
+  },
+  {
     name: 'Tradiglo Japan',
     flag: '🇯🇵',
     lang: '日本語',
