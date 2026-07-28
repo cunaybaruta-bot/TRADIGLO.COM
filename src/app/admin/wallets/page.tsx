@@ -2,15 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import {
-  MagnifyingGlassIcon,
-  PencilSquareIcon,
-  ArrowPathIcon,
-  CheckIcon,
-  XMarkIcon,
-  ExclamationTriangleIcon,
-  ClipboardDocumentIcon,
-} from '@heroicons/react/24/outline';
+import { MagnifyingGlassIcon, PencilSquareIcon, ArrowPathIcon, CheckIcon, XMarkIcon, ClipboardDocumentIcon, PlusIcon, MinusIcon,  } from '@heroicons/react/24/outline';
 
 interface UserWalletRow {
   user_id: string;
@@ -22,11 +14,14 @@ interface UserWalletRow {
   last_updated: string;
 }
 
-interface ConfirmState {
-  walletId: string;
+type EditMode = 'set' | 'add' | 'subtract';
+
+interface EditState {
+  userId: string;
   field: 'demo' | 'real';
-  newValue: number;
-  email: string;
+  value: string;
+  mode: EditMode;
+  saving: boolean;
 }
 
 function CopyButton({ text }: { text: string }) {
@@ -54,51 +49,13 @@ function CopyButton({ text }: { text: string }) {
   );
 }
 
-// Call the server-side API route which uses service role key to bypass RLS
-async function callWalletUpdateAPI(walletId: string, newBalance: number): Promise<{ success: boolean; error?: string }> {
-  try {
-    const res = await fetch('/api/admin/wallet-update', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ wallet_id: walletId, new_balance: newBalance, action: 'update' }),
-    });
-    const data = await res.json();
-    if (!res.ok) return { success: false, error: data.error || 'Request failed' };
-    return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message || 'Network error' };
-  }
-}
-
-async function callWalletResetAPI(walletId: string): Promise<{ success: boolean; error?: string }> {
-  try {
-    const res = await fetch('/api/admin/wallet-update', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      credentials: 'include',
-      body: JSON.stringify({ wallet_id: walletId, action: 'reset_demo' }),
-    });
-    const data = await res.json();
-    if (!res.ok) return { success: false, error: data.error || 'Request failed' };
-    return { success: true };
-  } catch (err: any) {
-    return { success: false, error: err.message || 'Network error' };
-  }
-}
-
 export default function WalletsPage() {
   const [rows, setRows] = useState<UserWalletRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [message, setMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  // Inline edit state: { userId, field, value }
-  const [editState, setEditState] = useState<{ userId: string; field: 'demo' | 'real'; value: string } | null>(null);
-
-  // Confirmation modal state
-  const [confirm, setConfirm] = useState<ConfirmState | null>(null);
+  const [editState, setEditState] = useState<EditState | null>(null);
+  const [resettingId, setResettingId] = useState<string | null>(null);
 
   const fetchWallets = useCallback(async () => {
     setLoading(true);
@@ -159,58 +116,84 @@ export default function WalletsPage() {
     setTimeout(() => setMessage(null), 4000);
   };
 
-  const requestSave = (row: UserWalletRow, field: 'demo' | 'real', value: string) => {
+  const doSave = async (row: UserWalletRow, field: 'demo' | 'real', value: string, mode: EditMode) => {
     const parsed = parseFloat(value);
     if (isNaN(parsed) || parsed < 0) {
       showMessage('Please enter a valid positive number', 'error');
       return;
     }
+
     const walletId = field === 'demo' ? row.demo_wallet_id : row.real_wallet_id;
+    const currentBalance = field === 'demo' ? row.demo_balance : row.real_balance;
+
     if (!walletId) {
       showMessage('Wallet not found for this user', 'error');
       return;
     }
-    setConfirm({ walletId, field, newValue: parsed, email: row.email });
-  };
 
-  // Confirmed save — uses Next.js API route with service role key to bypass RLS
-  const handleConfirmedSave = async () => {
-    if (!confirm) return;
-    setSaving(true);
+    let finalBalance = parsed;
+    if (mode === 'add') finalBalance = currentBalance + parsed;
+    if (mode === 'subtract') finalBalance = Math.max(0, currentBalance - parsed);
 
-    const result = await callWalletUpdateAPI(confirm.walletId, confirm.newValue);
+    // Mark as saving
+    setEditState((prev) => prev ? { ...prev, saving: true } : prev);
 
-    if (!result.success) {
-      showMessage('Failed to update: ' + (result.error || 'Unknown error'), 'error');
-    } else {
+    try {
+      const res = await fetch('/api/admin/wallet-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wallet_id: walletId, new_balance: finalBalance, action: 'update' }),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok || json.error) {
+        showMessage('Failed to update: ' + (json.error || res.statusText), 'error');
+        setEditState((prev) => prev ? { ...prev, saving: false } : prev);
+        return;
+      }
+
+      const label = field === 'demo' ? 'Demo' : 'Real';
+      const modeLabel = mode === 'add' ? 'increased to' : mode === 'subtract' ? 'reduced to' : 'set to';
       showMessage(
-        `${confirm.field === 'demo' ? 'Demo' : 'Real'} balance updated to $${confirm.newValue.toLocaleString('en', { minimumFractionDigits: 2 })}`,
+        `${label} balance ${modeLabel} $${finalBalance.toLocaleString('en', { minimumFractionDigits: 2 })}`,
         'success'
       );
       setEditState(null);
       fetchWallets();
+    } catch (err: any) {
+      showMessage('Error: ' + (err.message || 'Unknown error'), 'error');
+      setEditState((prev) => prev ? { ...prev, saving: false } : prev);
     }
-    setConfirm(null);
-    setSaving(false);
   };
 
-  // Reset demo balance — uses Next.js API route with service role key to bypass RLS
   const handleResetDemo = async (row: UserWalletRow) => {
     if (!row.demo_wallet_id) {
       showMessage('No demo wallet found for this user', 'error');
       return;
     }
-    setSaving(true);
+    setResettingId(row.user_id);
 
-    const result = await callWalletResetAPI(row.demo_wallet_id);
+    try {
+      const res = await fetch('/api/admin/wallet-update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ wallet_id: row.demo_wallet_id, action: 'reset_demo' }),
+      });
 
-    if (!result.success) {
-      showMessage('Reset failed: ' + (result.error || 'Unknown error'), 'error');
-    } else {
-      showMessage(`Demo balance for ${row.email} reset to $100,000`, 'success');
-      fetchWallets();
+      const json = await res.json();
+
+      if (!res.ok || json.error) {
+        showMessage('Reset failed: ' + (json.error || res.statusText), 'error');
+      } else {
+        showMessage(`Demo balance for ${row.email} reset to $100,000`, 'success');
+        fetchWallets();
+      }
+    } catch (err: any) {
+      showMessage('Reset error: ' + (err.message || 'Unknown error'), 'error');
     }
-    setSaving(false);
+
+    setResettingId(null);
   };
 
   const filtered = rows.filter((r) =>
@@ -219,6 +202,119 @@ export default function WalletsPage() {
 
   const totalReal = rows.reduce((s, r) => s + r.real_balance, 0);
   const totalDemo = rows.reduce((s, r) => s + r.demo_balance, 0);
+
+  const renderEditCell = (row: UserWalletRow, field: 'demo' | 'real') => {
+    const isEditing = editState?.userId === row.user_id && editState.field === field;
+    const balance = field === 'demo' ? row.demo_balance : row.real_balance;
+    const colorClass = field === 'demo' ? 'text-blue-400' : 'text-green-400';
+    const borderColor = field === 'demo' ? 'border-blue-500' : 'border-green-500';
+
+    if (isEditing) {
+      const mode = editState!.mode;
+      const isSaving = editState!.saving;
+
+      return (
+        <div className="flex flex-col gap-1.5">
+          {/* Mode selector */}
+          <div className="flex gap-1">
+            {(['set', 'add', 'subtract'] as EditMode[]).map((m) => (
+              <button
+                key={m}
+                type="button"
+                disabled={isSaving}
+                onClick={() => setEditState((prev) => prev ? { ...prev, mode: m } : prev)}
+                className={`text-[10px] px-2 py-0.5 rounded font-medium transition-colors ${
+                  mode === m
+                    ? 'bg-slate-500 text-white' :'bg-slate-700 text-slate-400 hover:bg-slate-600'
+                }`}
+              >
+                {m === 'set' ? 'Set' : m === 'add' ? '+Add' : '-Sub'}
+              </button>
+            ))}
+          </div>
+          <div className="flex items-center gap-1.5">
+            <input
+              type="number"
+              value={editState!.value}
+              disabled={isSaving}
+              onChange={(e) => {
+                const val = e.target.value;
+                setEditState((prev) => prev ? { ...prev, value: val } : prev);
+              }}
+              className={`w-32 px-2 py-1 bg-[#0f172a] border ${borderColor} rounded text-white text-sm focus:outline-none disabled:opacity-50`}
+              autoFocus
+              min="0"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !isSaving) {
+                  doSave(row, field, editState!.value, editState!.mode);
+                } else if (e.key === 'Escape' && !isSaving) {
+                  setEditState(null);
+                }
+              }}
+            />
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={() => doSave(row, field, editState!.value, editState!.mode)}
+              className="text-green-400 hover:text-green-300 p-1 disabled:opacity-50"
+              title="Save"
+            >
+              {isSaving ? (
+                <ArrowPathIcon className="w-4 h-4 animate-spin" />
+              ) : (
+                <CheckIcon className="w-4 h-4" />
+              )}
+            </button>
+            <button
+              type="button"
+              disabled={isSaving}
+              onClick={() => setEditState(null)}
+              className="text-red-400 hover:text-red-300 p-1 disabled:opacity-50"
+              title="Cancel"
+            >
+              <XMarkIcon className="w-4 h-4" />
+            </button>
+          </div>
+          {mode !== 'set' && (
+            <div className="text-[10px] text-slate-500">
+              Current: ${balance.toLocaleString('en', { minimumFractionDigits: 2 })}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-2">
+        <span className={`${colorClass} font-semibold text-sm`}>
+          ${balance.toLocaleString('en', { minimumFractionDigits: 2 })}
+        </span>
+        <div className="flex items-center gap-0.5">
+          <button
+            onClick={() => setEditState({ userId: row.user_id, field, value: String(balance), mode: 'set', saving: false })}
+            className={`text-slate-500 hover:${colorClass} transition-colors`}
+            title={`Edit ${field} balance`}
+          >
+            <PencilSquareIcon className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => setEditState({ userId: row.user_id, field, value: '', mode: 'add', saving: false })}
+            className="text-slate-500 hover:text-green-400 transition-colors"
+            title={`Add to ${field} balance`}
+          >
+            <PlusIcon className="w-3.5 h-3.5" />
+          </button>
+          <button
+            onClick={() => setEditState({ userId: row.user_id, field, value: '', mode: 'subtract', saving: false })}
+            className="text-slate-500 hover:text-red-400 transition-colors"
+            title={`Subtract from ${field} balance`}
+          >
+            <MinusIcon className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -271,50 +367,6 @@ export default function WalletsPage() {
         </div>
       )}
 
-      {/* Confirmation Modal */}
-      {confirm && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-          <div className="bg-[#1e293b] rounded-xl border border-slate-700 p-6 w-full max-w-sm shadow-2xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="w-10 h-10 rounded-full bg-yellow-500/10 flex items-center justify-center flex-shrink-0">
-                <ExclamationTriangleIcon className="w-5 h-5 text-yellow-400" />
-              </div>
-              <div>
-                <h3 className="text-white font-semibold text-sm">Confirm Balance Update</h3>
-                <p className="text-slate-400 text-xs mt-0.5">{confirm.email}</p>
-              </div>
-            </div>
-            <p className="text-slate-300 text-sm mb-5">
-              Set{' '}
-              <span className={confirm.field === 'demo' ? 'text-blue-400 font-semibold' : 'text-green-400 font-semibold'}>
-                {confirm.field === 'demo' ? 'Demo' : 'Real'}
-              </span>{' '}
-              balance to{' '}
-              <span className="text-white font-bold">
-                ${confirm.newValue.toLocaleString('en', { minimumFractionDigits: 2 })}
-              </span>
-              ?
-            </p>
-            <div className="flex gap-2">
-              <button
-                onClick={handleConfirmedSave}
-                disabled={saving}
-                className="flex-1 bg-[#22c55e] text-black text-sm font-semibold py-2 rounded-lg hover:bg-green-400 transition-colors disabled:opacity-50"
-              >
-                {saving ? 'Saving...' : 'Confirm'}
-              </button>
-              <button
-                onClick={() => setConfirm(null)}
-                disabled={saving}
-                className="flex-1 bg-slate-700 text-slate-300 text-sm py-2 rounded-lg hover:bg-slate-600 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Table */}
       <div className="bg-[#1e293b] rounded-xl border border-slate-700 overflow-hidden">
         <div className="overflow-x-auto">
@@ -343,168 +395,45 @@ export default function WalletsPage() {
                   </td>
                 </tr>
               )}
-              {filtered.map((row) => {
-                const isEditingDemo = editState?.userId === row.user_id && editState.field === 'demo';
-                const isEditingReal = editState?.userId === row.user_id && editState.field === 'real';
+              {filtered.map((row) => (
+                <tr key={row.user_id} className="hover:bg-slate-700/20 transition-colors">
+                  {/* Email */}
+                  <td className="px-5 py-3 text-white text-sm">
+                    <div className="flex items-center gap-1.5">
+                      <span>{row.email}</span>
+                      <CopyButton text={row.email} />
+                    </div>
+                  </td>
 
-                return (
-                  <tr key={row.user_id} className="hover:bg-slate-700/20 transition-colors">
-                    {/* Email */}
-                    <td className="px-5 py-3 text-white text-sm">
-                      <div className="flex items-center gap-1.5">
-                        <span>{row.email}</span>
-                        <CopyButton text={row.email} />
-                      </div>
-                    </td>
+                  {/* Demo Balance */}
+                  <td className="px-5 py-3">
+                    {renderEditCell(row, 'demo')}
+                  </td>
 
-                    {/* Demo Balance */}
-                    <td className="px-5 py-3">
-                      {isEditingDemo ? (
-                        <div className="flex items-center gap-1.5">
-                          <input
-                            type="number"
-                            value={editState!.value}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setEditState((prev) => prev ? { ...prev, value: val } : prev);
-                            }}
-                            className="w-32 px-2 py-1 bg-[#0f172a] border border-blue-500 rounded text-white text-sm focus:outline-none"
-                            autoFocus
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                const currentVal = (e.target as HTMLInputElement).value;
-                                requestSave(row, 'demo', currentVal);
-                              } else if (e.key === 'Escape') {
-                                setEditState(null);
-                              }
-                            }}
-                          />
-                          <button
-                            type="button"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              const currentVal = editState!.value;
-                              requestSave(row, 'demo', currentVal);
-                            }}
-                            className="text-green-400 hover:text-green-300 p-1"
-                            title="Save"
-                          >
-                            <CheckIcon className="w-4 h-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              setEditState(null);
-                            }}
-                            className="text-red-400 hover:text-red-300 p-1"
-                            title="Cancel"
-                          >
-                            <XMarkIcon className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <span className="text-blue-400 font-semibold text-sm">
-                            ${row.demo_balance.toLocaleString('en', { minimumFractionDigits: 2 })}
-                          </span>
-                          <button
-                            onClick={() =>
-                              setEditState({ userId: row.user_id, field: 'demo', value: String(row.demo_balance) })
-                            }
-                            className="text-slate-500 hover:text-blue-400 transition-colors"
-                            title="Edit demo balance"
-                          >
-                            <PencilSquareIcon className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      )}
-                    </td>
+                  {/* Real Balance */}
+                  <td className="px-5 py-3">
+                    {renderEditCell(row, 'real')}
+                  </td>
 
-                    {/* Real Balance */}
-                    <td className="px-5 py-3">
-                      {isEditingReal ? (
-                        <div className="flex items-center gap-1.5">
-                          <input
-                            type="number"
-                            value={editState!.value}
-                            onChange={(e) => {
-                              const val = e.target.value;
-                              setEditState((prev) => prev ? { ...prev, value: val } : prev);
-                            }}
-                            className="w-32 px-2 py-1 bg-[#0f172a] border border-green-500 rounded text-white text-sm focus:outline-none"
-                            autoFocus
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') {
-                                const currentVal = (e.target as HTMLInputElement).value;
-                                requestSave(row, 'real', currentVal);
-                              } else if (e.key === 'Escape') {
-                                setEditState(null);
-                              }
-                            }}
-                          />
-                          <button
-                            type="button"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              const currentVal = editState!.value;
-                              requestSave(row, 'real', currentVal);
-                            }}
-                            className="text-green-400 hover:text-green-300 p-1"
-                            title="Save"
-                          >
-                            <CheckIcon className="w-4 h-4" />
-                          </button>
-                          <button
-                            type="button"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              setEditState(null);
-                            }}
-                            className="text-red-400 hover:text-red-300 p-1"
-                            title="Cancel"
-                          >
-                            <XMarkIcon className="w-4 h-4" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <span className="text-green-400 font-semibold text-sm">
-                            ${row.real_balance.toLocaleString('en', { minimumFractionDigits: 2 })}
-                          </span>
-                          <button
-                            onClick={() =>
-                              setEditState({ userId: row.user_id, field: 'real', value: String(row.real_balance) })
-                            }
-                            className="text-slate-500 hover:text-green-400 transition-colors"
-                            title="Edit real balance"
-                          >
-                            <PencilSquareIcon className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      )}
-                    </td>
+                  {/* Last Updated */}
+                  <td className="px-5 py-3 text-slate-400 text-sm">
+                    {new Date(row.last_updated).toLocaleString()}
+                  </td>
 
-                    {/* Last Updated */}
-                    <td className="px-5 py-3 text-slate-400 text-sm">
-                      {new Date(row.last_updated).toLocaleString()}
-                    </td>
-
-                    {/* Actions */}
-                    <td className="px-5 py-3">
-                      <button
-                        onClick={() => handleResetDemo(row)}
-                        disabled={saving}
-                        className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 hover:bg-yellow-500/20 transition-colors disabled:opacity-50"
-                        title="Reset demo balance to $100,000"
-                      >
-                        <ArrowPathIcon className="w-3 h-3" />
-                        Reset Demo
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+                  {/* Actions */}
+                  <td className="px-5 py-3">
+                    <button
+                      onClick={() => handleResetDemo(row)}
+                      disabled={resettingId === row.user_id}
+                      className="flex items-center gap-1 text-xs px-3 py-1.5 rounded-lg bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 hover:bg-yellow-500/20 transition-colors disabled:opacity-50"
+                      title="Reset demo balance to $100,000"
+                    >
+                      <ArrowPathIcon className={`w-3 h-3 ${resettingId === row.user_id ? 'animate-spin' : ''}`} />
+                      Reset Demo
+                    </button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
