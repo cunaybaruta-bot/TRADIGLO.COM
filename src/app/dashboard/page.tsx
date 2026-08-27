@@ -1805,7 +1805,7 @@ export default function DashboardPage() {
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <div className="bg-black text-white flex flex-col" style={{ fontFamily: "'Inter', sans-serif", height: '100dvh' }}>
+    <div className="bg-black text-white flex flex-col" style={{ fontFamily: "'Satoshi', 'Inter', sans-serif", height: '100dvh' }}>
 
       {/* ── FIXED TOP BAR ── */}
       <DashboardTopBar
@@ -2140,8 +2140,12 @@ export default function DashboardPage() {
                   )}
                 </div>
 
-                {/* Desktop/Tablet: header fixed + trade rows scrollable */}
-                <div className="hidden sm:flex flex-col flex-1 bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden min-h-0">
+                {/* Desktop/Tablet: header fixed + trade rows scrollable.
+                    Capped height (not flex-1) so an empty/short trade list
+                    doesn't stretch this card to fill all leftover vertical
+                    space below the chart — it only grows to fit its rows,
+                    up to maxHeight, and scrolls internally beyond that. */}
+                <div className="hidden sm:flex flex-col bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden min-h-0" style={{ maxHeight: 260 }}>
                   {/* Header — fixed, does not scroll */}
                   <div className="flex-shrink-0 px-3 py-2.5 border-b border-white/10 flex items-center justify-between">
                     <div className="flex items-center gap-2">

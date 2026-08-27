@@ -35,6 +35,14 @@ interface LightweightChartProps {
 
 type IndicatorKey = 'MA' | 'EMA' | 'BB' | 'RSI' | 'MACD' | 'Stoch' | 'Vol' | 'Ichimoku' | 'SAR' | 'ATR' | 'CCI' | 'VWAP' | 'Pivot';
 
+interface LegendItem { label: string; color: string; value: string; }
+
+function fmtLegendVal(v: number): string {
+  if (!Number.isFinite(v)) return '—';
+  const abs = Math.abs(v);
+  return abs >= 1000 ? v.toFixed(0) : abs >= 1 ? v.toFixed(2) : v.toFixed(4);
+}
+
 // ─── Drawing types ────────────────────────────────────────────────────────────
 
 type DrawingTool = 'trendline' | 'horizontal' | 'freehand' | 'delete' | null;
@@ -724,6 +732,18 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     const [activeIndicators, setActiveIndicators] = useState<Set<IndicatorKey>>(new Set());
     const [chartHeight, setChartHeight] = useState<number>(CHART_HEIGHT);
 
+    // ── Indicator legends ─────────────────────────────────────────────────
+    // Overlay/oscillator values live here (a compact top-left legend per
+    // pane) instead of as price-axis labels — with many indicators active
+    // at once those labels used to stack on top of each other on the right
+    // edge of the chart.
+    const [mainLegend, setMainLegend] = useState<LegendItem[]>([]);
+    const [rsiLegend, setRsiLegend] = useState<LegendItem[]>([]);
+    const [macdLegend, setMacdLegend] = useState<LegendItem[]>([]);
+    const [stochLegend, setStochLegend] = useState<LegendItem[]>([]);
+    const [atrLegend, setAtrLegend] = useState<LegendItem[]>([]);
+    const [cciLegend, setCciLegend] = useState<LegendItem[]>([]);
+
     const [activeTool, setActiveTool] = useState<DrawingTool>(null);
     const [drawColor, setDrawColor] = useState('#f59e0b');
     const [drawings, setDrawings] = useState<Drawing[]>([]);
@@ -961,6 +981,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         pivotLinesRef.current.forEach(pl => { try { seriesRef.current!.removePriceLine(pl); } catch {} });
       }
       pivotLinesRef.current = [];
+      setMainLegend([]);
     }, []);
 
     // ── Remove sub-panel charts ───────────────────────────────────────────────
@@ -971,6 +992,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
       if (stochChartRef.current) { try { stochChartRef.current.remove(); } catch {} stochChartRef.current = null; stochKRef.current = null; stochDRef.current = null; }
       if (atrChartRef.current) { try { atrChartRef.current.remove(); } catch {} atrChartRef.current = null; atrSeriesRef.current = null; }
       if (cciChartRef.current) { try { cciChartRef.current.remove(); } catch {} cciChartRef.current = null; cciSeriesRef.current = null; }
+      setRsiLegend([]); setMacdLegend([]); setStochLegend([]); setAtrLegend([]); setCciLegend([]);
     }, []);
 
     // ── Apply indicators to candle data ──────────────────────────────────────
@@ -979,6 +1001,13 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
       if (!chartRef.current || candles.length === 0) return;
       const closes = candles.map(c => c.close as number);
       const times = candles.map(c => c.time);
+
+      // Collected as each block below runs, then written to state once at
+      // the end — this becomes the single source of truth for the top-left
+      // legend, so a just-disabled indicator (already absent from
+      // `indicators` here) simply never gets pushed instead of needing a
+      // separate reset.
+      const mainLegendItems: LegendItem[] = [];
 
       if (indicators.has('MA')) {
         const maPeriods = [14, 25, 50];
@@ -992,6 +1021,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           });
           s.setData(data);
           maSeriesRef.current.push(s);
+          mainLegendItems.push({ label: `MA${period}`, color: maColors[idx], value: fmtLegendVal(data[data.length - 1].value) });
         });
       }
 
@@ -1007,6 +1037,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           });
           s.setData(data);
           emaSeriesRef.current.push(s);
+          mainLegendItems.push({ label: `EMA${period}`, color: emaColors[idx], value: fmtLegendVal(data[data.length - 1].value) });
         });
       }
 
@@ -1025,6 +1056,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           });
           s.setData(data);
           bbSeriesRef.current.push(s);
+          mainLegendItems.push({ label: title, color, value: fmtLegendVal(data[data.length - 1].value) });
         });
       }
 
@@ -1047,22 +1079,37 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
       if (indicators.has('RSI') && rsiContainerRef.current) {
         if (!rsiChartRef.current) {
           rsiChartRef.current = createChart(rsiContainerRef.current, subPanelOptions(100));
+        } else if (rsiSeriesRef.current) {
+          // Panel already exists from a previous applyIndicators() call (e.g.
+          // toggling a different indicator while RSI stays on) — remove the
+          // old line before adding a fresh one so they don't stack.
+          try { rsiChartRef.current.removeSeries(rsiSeriesRef.current); } catch {}
+          rsiSeriesRef.current = null; rsiOBRef.current = null; rsiOSRef.current = null;
         }
         const rsiValues = calcRSI(closes, 14);
         const rsiData = rsiValues.map((v, i) => v !== null ? { time: times[i], value: v } : null).filter(Boolean) as { time: Time; value: number }[];
         if (rsiData.length > 0) {
-          const s = rsiChartRef.current.addSeries(LineSeries, { color: '#c084fc', lineWidth: 1, priceLineVisible: false, lastValueVisible: true, title: 'RSI(14)' });
+          const s = rsiChartRef.current.addSeries(LineSeries, { color: '#c084fc', lineWidth: 1, priceLineVisible: false, lastValueVisible: false, title: 'RSI(14)' });
           s.setData(rsiData);
           rsiSeriesRef.current = s;
           rsiOBRef.current = s.createPriceLine({ price: 70, color: 'rgba(239,68,68,0.6)', lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: 'OB' });
           rsiOSRef.current = s.createPriceLine({ price: 30, color: 'rgba(34,197,94,0.6)', lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: 'OS' });
           rsiChartRef.current.timeScale().fitContent();
+          setRsiLegend([{ label: 'RSI(14)', color: '#c084fc', value: fmtLegendVal(rsiData[rsiData.length - 1].value) }]);
         }
+      } else {
+        setRsiLegend([]);
       }
 
       if (indicators.has('MACD') && macdContainerRef.current) {
         if (!macdChartRef.current) {
           macdChartRef.current = createChart(macdContainerRef.current, subPanelOptions(100));
+        } else {
+          // Same re-apply guard as RSI above — clear the previous three
+          // series before adding new ones.
+          if (macdHistRef.current) { try { macdChartRef.current.removeSeries(macdHistRef.current); } catch {} macdHistRef.current = null; }
+          if (macdLineRef.current) { try { macdChartRef.current.removeSeries(macdLineRef.current); } catch {} macdLineRef.current = null; }
+          if (macdSignalRef.current) { try { macdChartRef.current.removeSeries(macdSignalRef.current); } catch {} macdSignalRef.current = null; }
         }
         const { macd, signal, histogram } = calcMACD(closes);
         const macdData = macd.map((v, i) => v !== null ? { time: times[i], value: v } : null).filter(Boolean) as { time: Time; value: number }[];
@@ -1072,32 +1119,47 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           const histS = macdChartRef.current.addSeries(HistogramSeries, { priceLineVisible: false, lastValueVisible: false, title: 'MACD Hist' });
           histS.setData(histData);
           macdHistRef.current = histS;
-          const macdS = macdChartRef.current.addSeries(LineSeries, { color: '#38bdf8', lineWidth: 1, priceLineVisible: false, lastValueVisible: true, title: 'MACD' });
+          const macdS = macdChartRef.current.addSeries(LineSeries, { color: '#38bdf8', lineWidth: 1, priceLineVisible: false, lastValueVisible: false, title: 'MACD' });
           macdS.setData(macdData);
           macdLineRef.current = macdS;
-          const signalS = macdChartRef.current.addSeries(LineSeries, { color: '#fb923c', lineWidth: 1, priceLineVisible: false, lastValueVisible: true, title: 'Signal' });
+          const signalS = macdChartRef.current.addSeries(LineSeries, { color: '#fb923c', lineWidth: 1, priceLineVisible: false, lastValueVisible: false, title: 'Signal' });
           signalS.setData(signalData);
           macdSignalRef.current = signalS;
           macdChartRef.current.timeScale().fitContent();
+          setMacdLegend([
+            { label: 'MACD', color: '#38bdf8', value: fmtLegendVal(macdData[macdData.length - 1].value) },
+            { label: 'Signal', color: '#fb923c', value: fmtLegendVal(signalData[signalData.length - 1]?.value ?? 0) },
+          ]);
         }
+      } else {
+        setMacdLegend([]);
       }
 
       if (indicators.has('Stoch') && stochContainerRef.current) {
         if (!stochChartRef.current) {
           stochChartRef.current = createChart(stochContainerRef.current, subPanelOptions(100));
+        } else {
+          if (stochKRef.current) { try { stochChartRef.current.removeSeries(stochKRef.current); } catch {} stochKRef.current = null; }
+          if (stochDRef.current) { try { stochChartRef.current.removeSeries(stochDRef.current); } catch {} stochDRef.current = null; }
         }
         const { k, d } = calcStoch(candles, 14, 3, 3);
         const kData = k.map((v, i) => v !== null ? { time: times[i], value: v } : null).filter(Boolean) as { time: Time; value: number }[];
         const dData = d.map((v, i) => v !== null ? { time: times[i], value: v } : null).filter(Boolean) as { time: Time; value: number }[];
         if (kData.length > 0) {
-          const kS = stochChartRef.current.addSeries(LineSeries, { color: '#38bdf8', lineWidth: 1, priceLineVisible: false, lastValueVisible: true, title: '%K' });
+          const kS = stochChartRef.current.addSeries(LineSeries, { color: '#38bdf8', lineWidth: 1, priceLineVisible: false, lastValueVisible: false, title: '%K' });
           kS.setData(kData);
           stochKRef.current = kS;
-          const dS = stochChartRef.current.addSeries(LineSeries, { color: '#fb923c', lineWidth: 1, priceLineVisible: false, lastValueVisible: true, title: '%D' });
+          const dS = stochChartRef.current.addSeries(LineSeries, { color: '#fb923c', lineWidth: 1, priceLineVisible: false, lastValueVisible: false, title: '%D' });
           dS.setData(dData);
           stochDRef.current = dS;
           stochChartRef.current.timeScale().fitContent();
+          setStochLegend([
+            { label: '%K', color: '#38bdf8', value: fmtLegendVal(kData[kData.length - 1].value) },
+            { label: '%D', color: '#fb923c', value: fmtLegendVal(dData[dData.length - 1]?.value ?? 0) },
+          ]);
         }
+      } else {
+        setStochLegend([]);
       }
 
       if (indicators.has('Ichimoku') && chartRef.current) {
@@ -1117,6 +1179,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           });
           s.setData(data);
           ichimokuSeriesRef.current.push(s);
+          mainLegendItems.push({ label: title, color, value: fmtLegendVal(data[data.length - 1].value) });
         });
       }
 
@@ -1144,36 +1207,58 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           bearS.setData(bearData);
           ichimokuSeriesRef.current.push(bearS);
         }
+        if (sar.length > 0) {
+          const lastIdx = sar.length - 1;
+          mainLegendItems.push({
+            label: 'SAR',
+            color: trend[lastIdx] ? '#22c55e' : '#ef4444',
+            value: fmtLegendVal(sar[lastIdx]),
+          });
+        }
       }
 
       if (indicators.has('ATR') && atrContainerRef.current) {
         if (!atrChartRef.current) {
           atrChartRef.current = createChart(atrContainerRef.current, subPanelOptions(90));
+        } else if (atrSeriesRef.current) {
+          try { atrChartRef.current.removeSeries(atrSeriesRef.current); } catch {}
+          atrSeriesRef.current = null;
         }
         const atrValues = calcATR(candles, 14);
         const atrData = atrValues.map((v, i) => v !== null ? { time: times[i], value: v } : null).filter(Boolean) as { time: Time; value: number }[];
         if (atrData.length > 0) {
-          const s = atrChartRef.current.addSeries(LineSeries, { color: '#f97316', lineWidth: 1, priceLineVisible: false, lastValueVisible: true, title: 'ATR(14)' });
+          const s = atrChartRef.current.addSeries(LineSeries, { color: '#f97316', lineWidth: 1, priceLineVisible: false, lastValueVisible: false, title: 'ATR(14)' });
           s.setData(atrData);
           atrSeriesRef.current = s;
           atrChartRef.current.timeScale().fitContent();
+          setAtrLegend([{ label: 'ATR(14)', color: '#f97316', value: fmtLegendVal(atrData[atrData.length - 1].value) }]);
         }
+      } else {
+        setAtrLegend([]);
       }
 
       if (indicators.has('CCI') && cciContainerRef.current) {
         if (!cciChartRef.current) {
           cciChartRef.current = createChart(cciContainerRef.current, subPanelOptions(90));
+        } else if (cciSeriesRef.current) {
+          // Removing the series also drops the +100/-100 price lines
+          // attached to it, so they get recreated fresh below too.
+          try { cciChartRef.current.removeSeries(cciSeriesRef.current); } catch {}
+          cciSeriesRef.current = null;
         }
         const cciValues = calcCCI(candles, 20);
         const cciData = cciValues.map((v, i) => v !== null ? { time: times[i], value: v } : null).filter(Boolean) as { time: Time; value: number }[];
         if (cciData.length > 0) {
-          const s = cciChartRef.current.addSeries(LineSeries, { color: '#06b6d4', lineWidth: 1, priceLineVisible: false, lastValueVisible: true, title: 'CCI(20)' });
+          const s = cciChartRef.current.addSeries(LineSeries, { color: '#06b6d4', lineWidth: 1, priceLineVisible: false, lastValueVisible: false, title: 'CCI(20)' });
           s.setData(cciData);
           cciSeriesRef.current = s;
           s.createPriceLine({ price: 100, color: 'rgba(239,68,68,0.6)', lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: '+100' });
           s.createPriceLine({ price: -100, color: 'rgba(34,197,94,0.6)', lineWidth: 1, lineStyle: LineStyle.Dashed, axisLabelVisible: true, title: '-100' });
           cciChartRef.current.timeScale().fitContent();
+          setCciLegend([{ label: 'CCI(20)', color: '#06b6d4', value: fmtLegendVal(cciData[cciData.length - 1].value) }]);
         }
+      } else {
+        setCciLegend([]);
       }
 
       if (indicators.has('VWAP') && chartRef.current) {
@@ -1181,10 +1266,11 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         const vwapData = vwapValues.map((v, i) => v !== null ? { time: times[i], value: v } : null).filter(Boolean) as { time: Time; value: number }[];
         if (vwapData.length > 0) {
           const s = chartRef.current.addSeries(LineSeries, {
-            color: '#e879f9', lineWidth: 2, priceLineVisible: false, lastValueVisible: true, title: 'VWAP',
+            color: '#e879f9', lineWidth: 2, priceLineVisible: false, lastValueVisible: false, title: 'VWAP',
           });
           s.setData(vwapData);
           vwapSeriesRef.current = s;
+          mainLegendItems.push({ label: 'VWAP', color: '#e879f9', value: fmtLegendVal(vwapData[vwapData.length - 1].value) });
         }
       }
 
@@ -1211,6 +1297,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         }
       }
 
+      setMainLegend(mainLegendItems);
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -1963,6 +2050,21 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
               display: 'block',
             }}
           />
+          {/* Overlay indicator legend — top-left, so values live here instead
+              of stacking as price-axis labels on the right edge when many
+              overlays (MA/EMA/BB/Ichimoku/SAR/VWAP) are active at once. */}
+          {mainLegend.length > 0 && (
+            <div
+              className="absolute top-1.5 left-1.5 flex flex-wrap gap-x-2 gap-y-0.5 pointer-events-none"
+              style={{ maxWidth: 'calc(100% - 12px)', zIndex: 5 }}
+            >
+              {mainLegend.map((item, i) => (
+                <span key={`${item.label}-${i}`} className="text-[10px] font-medium whitespace-nowrap" style={{ color: item.color, textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>
+                  {item.label} {item.value}
+                </span>
+              ))}
+            </div>
+          )}
           <canvas
             ref={canvasRef}
             style={{
@@ -1985,6 +2087,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           <div className="border-t border-white/10">
             <div className="px-2 py-0.5 flex items-center gap-1">
               <span className="text-[10px] font-medium" style={{ color: '#c084fc' }}>RSI (14)</span>
+              {rsiLegend[0] && <span className="text-[10px] font-semibold" style={{ color: '#c084fc' }}>{rsiLegend[0].value}</span>}
               <span className="text-[9px] text-slate-500">· OB: 70 · OS: 30</span>
             </div>
             <div ref={rsiContainerRef} style={{ width: '100%', height: 100 }} />
@@ -1996,8 +2099,8 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           <div className="border-t border-white/10">
             <div className="px-2 py-0.5 flex items-center gap-2">
               <span className="text-[10px] font-medium" style={{ color: '#38bdf8' }}>MACD (12,26,9)</span>
-              <span className="text-[9px]" style={{ color: '#38bdf8' }}>— MACD</span>
-              <span className="text-[9px]" style={{ color: '#fb923c' }}>— Signal</span>
+              <span className="text-[9px]" style={{ color: '#38bdf8' }}>— MACD {macdLegend.find(l => l.label === 'MACD')?.value ?? ''}</span>
+              <span className="text-[9px]" style={{ color: '#fb923c' }}>— Signal {macdLegend.find(l => l.label === 'Signal')?.value ?? ''}</span>
             </div>
             <div ref={macdContainerRef} style={{ width: '100%', height: 100 }} />
           </div>
@@ -2008,8 +2111,8 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           <div className="border-t border-white/10">
             <div className="px-2 py-0.5 flex items-center gap-2">
               <span className="text-[10px] font-medium" style={{ color: '#fb923c' }}>Stoch (14,3,3)</span>
-              <span className="text-[9px]" style={{ color: '#38bdf8' }}>— %K</span>
-              <span className="text-[9px]" style={{ color: '#fb923c' }}>— %D</span>
+              <span className="text-[9px]" style={{ color: '#38bdf8' }}>— %K {stochLegend.find(l => l.label === '%K')?.value ?? ''}</span>
+              <span className="text-[9px]" style={{ color: '#fb923c' }}>— %D {stochLegend.find(l => l.label === '%D')?.value ?? ''}</span>
             </div>
             <div ref={stochContainerRef} style={{ width: '100%', height: 100 }} />
           </div>
@@ -2020,6 +2123,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           <div className="border-t border-white/10">
             <div className="px-2 py-0.5 flex items-center gap-1">
               <span className="text-[10px] font-medium" style={{ color: '#f97316' }}>ATR (14)</span>
+              {atrLegend[0] && <span className="text-[10px] font-semibold" style={{ color: '#f97316' }}>{atrLegend[0].value}</span>}
               <span className="text-[9px] text-slate-500">· Average True Range</span>
             </div>
             <div ref={atrContainerRef} style={{ width: '100%', height: 90 }} />
@@ -2031,6 +2135,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           <div className="border-t border-white/10">
             <div className="px-2 py-0.5 flex items-center gap-1">
               <span className="text-[10px] font-medium" style={{ color: '#06b6d4' }}>CCI (20)</span>
+              {cciLegend[0] && <span className="text-[10px] font-semibold" style={{ color: '#06b6d4' }}>{cciLegend[0].value}</span>}
               <span className="text-[9px] text-slate-500">· +100 / -100</span>
             </div>
             <div ref={cciContainerRef} style={{ width: '100%', height: 90 }} />
@@ -2079,7 +2184,7 @@ function IndicatorDropdown({ buttons, activeIndicators, onToggle }: IndicatorDro
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
-  const [dropPos, setDropPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [dropPos, setDropPos] = useState<{ top: number; right: number }>({ top: 0, right: 0 });
   const activeCount = buttons.filter(b => activeIndicators.has(b.key)).length;
 
   useEffect(() => {
@@ -2094,7 +2199,10 @@ function IndicatorDropdown({ buttons, activeIndicators, onToggle }: IndicatorDro
   const handleOpen = () => {
     if (!open && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
-      setDropPos({ top: rect.bottom + 4, left: rect.left });
+      // Anchor to the button's right edge (not left) so the panel opens
+      // leftward and never overflows past the viewport's right side —
+      // this button sits near the right end of the toolbar.
+      setDropPos({ top: rect.bottom + 4, right: Math.max(8, window.innerWidth - rect.right) });
     }
     setOpen(v => !v);
   };
@@ -2132,10 +2240,10 @@ function IndicatorDropdown({ buttons, activeIndicators, onToggle }: IndicatorDro
       {open && (
         <div
           ref={ref}
-          className="z-[9999] rounded-lg border border-white/10 shadow-2xl p-2"
-          style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, background: '#0f1117', minWidth: 200 }}
+          className="z-[9999] rounded-lg border border-white/10 shadow-2xl p-1.5"
+          style={{ position: 'fixed', top: dropPos.top, right: dropPos.right, background: '#0f1117', width: 176 }}
         >
-          <div className="text-[9px] text-slate-600 uppercase tracking-widest font-semibold px-1 mb-1.5">Indicators</div>
+          <div className="text-[9px] text-slate-600 uppercase tracking-widest font-semibold px-1 mb-1">Indicators</div>
           <div className="grid grid-cols-3 gap-1">
             {buttons.map(({ key, label, color }) => {
               const isActive = activeIndicators.has(key);
@@ -2177,7 +2285,7 @@ function DrawingDropdown({ tools, activeTool, drawColor, drawings, pendingTrendP
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const btnRef = useRef<HTMLButtonElement>(null);
-  const [dropPos, setDropPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [dropPos, setDropPos] = useState<{ top: number; right: number }>({ top: 0, right: 0 });
   const hasActiveTool = activeTool !== null;
 
   useEffect(() => {
@@ -2192,7 +2300,9 @@ function DrawingDropdown({ tools, activeTool, drawColor, drawings, pendingTrendP
   const handleOpen = () => {
     if (!open && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
-      setDropPos({ top: rect.bottom + 4, left: rect.left });
+      // Anchor to the button's right edge — Draw is the rightmost toolbar
+      // button, so opening from its left edge pushed the panel off-screen.
+      setDropPos({ top: rect.bottom + 4, right: Math.max(8, window.innerWidth - rect.right) });
     }
     setOpen(v => !v);
   };
@@ -2222,10 +2332,10 @@ function DrawingDropdown({ tools, activeTool, drawColor, drawings, pendingTrendP
       {open && (
         <div
           ref={ref}
-          className="z-[9999] rounded-lg border border-white/10 shadow-2xl p-2"
-          style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, background: '#0f1117', minWidth: 180 }}
+          className="z-[9999] rounded-lg border border-white/10 shadow-2xl p-1.5"
+          style={{ position: 'fixed', top: dropPos.top, right: dropPos.right, background: '#0f1117', width: 152 }}
         >
-          <div className="text-[9px] text-slate-600 uppercase tracking-widest font-semibold px-1 mb-1.5">Drawing Tools</div>
+          <div className="text-[9px] text-slate-600 uppercase tracking-widest font-semibold px-1 mb-1">Drawing Tools</div>
           <div className="flex flex-col gap-0.5">
             {tools.map(({ key, label, icon, title }) => {
               const isActive = activeTool === key;
@@ -2234,7 +2344,7 @@ function DrawingDropdown({ tools, activeTool, drawColor, drawings, pendingTrendP
                   key={key}
                   onClick={() => onToggleTool(key)}
                   title={title}
-                  className={`flex items-center gap-2 px-2 py-1.5 rounded text-[11px] font-medium transition-all text-left ${
+                  className={`flex items-center gap-1.5 px-1.5 py-1 rounded text-[10px] font-medium transition-all text-left ${
                     isActive
                       ? key === 'delete'
                         ? 'bg-red-600/20 text-red-400 border border-red-600/40' :'bg-indigo-600/20 text-indigo-300 border border-indigo-600/40' :'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
@@ -2247,13 +2357,13 @@ function DrawingDropdown({ tools, activeTool, drawColor, drawings, pendingTrendP
             })}
           </div>
 
-          <div className="h-px bg-white/10 my-2" />
+          <div className="h-px bg-white/10 my-1.5" />
 
           <div className="flex items-center justify-between px-1">
-            <label className="flex items-center gap-1.5 cursor-pointer" title="Drawing color">
-              <span className="text-[10px] text-slate-500">Color</span>
+            <label className="flex items-center gap-1 cursor-pointer" title="Drawing color">
+              <span className="text-[9px] text-slate-500">Color</span>
               <div
-                className="w-5 h-5 rounded border border-white/20 overflow-hidden relative"
+                className="w-4 h-4 rounded border border-white/20 overflow-hidden relative"
                 style={{ backgroundColor: drawColor }}
               >
                 <input
@@ -2270,7 +2380,7 @@ function DrawingDropdown({ tools, activeTool, drawColor, drawings, pendingTrendP
               onClick={onClearAll}
               disabled={drawings.length === 0}
               title="Clear all drawings"
-              className={`text-[10px] font-medium px-2 py-1 rounded transition-all ${
+              className={`text-[9px] font-medium px-1.5 py-0.5 rounded transition-all ${
                 drawings.length > 0
                   ? 'text-slate-400 hover:text-red-400 hover:bg-red-500/10' :'text-slate-700 cursor-not-allowed'
               }`}
@@ -2280,8 +2390,8 @@ function DrawingDropdown({ tools, activeTool, drawColor, drawings, pendingTrendP
           </div>
 
           {activeTool === 'trendline' && (
-            <div className="mt-2 px-1">
-              <span className={`text-[10px] ${pendingTrendP1 ? 'text-blue-400 animate-pulse' : 'text-slate-500'}`}>
+            <div className="mt-1.5 px-1">
+              <span className={`text-[9px] ${pendingTrendP1 ? 'text-blue-400 animate-pulse' : 'text-slate-500'}`}>
                 {pendingTrendP1 ? 'Click second point…' : 'Click first point…'}
               </span>
             </div>

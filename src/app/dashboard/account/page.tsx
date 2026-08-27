@@ -6,7 +6,7 @@ import { User, Shield, Wallet, BarChart2, Trophy, Clock, Settings, Headphones, C
 import { createClient } from '@/lib/supabase/client';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useRealtimeDashboard } from '@/lib/hooks/useRealtimeDashboard';
-import DepositModal from '@/components/dashboard/DepositModal';
+import DepositModal, { COUNTRY_CURRENCY } from '@/components/dashboard/DepositModal';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -102,6 +102,22 @@ function formatCurrency(value: number): string {
   return new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
 }
 
+function getMemberCurrency(country?: string): string {
+  if (!country || country.trim().toLowerCase() === 'indonesia') return 'USD';
+  const normalizedCountry = Object.keys(COUNTRY_CURRENCY).find(
+    (name) => name.toLowerCase() === country.trim().toLowerCase()
+  );
+  return normalizedCountry ? COUNTRY_CURRENCY[normalizedCountry] : 'USD';
+}
+
+function formatLocalizedAmount(amountUsd: number, currency: string, rateToUsd: number): string {
+  const localAmount = rateToUsd > 0 ? amountUsd / rateToUsd : amountUsd;
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+  }).format(localAmount);
+}
+
 function formatDate(dateStr: string): string {
   return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
@@ -139,7 +155,7 @@ const NAV_ITEMS: { id: AccountSection; label: string; icon: React.ReactNode; acc
 
 // ─── Toast ────────────────────────────────────────────────────────────────────
 
-interface ToastState { message: string; type: 'success\' | \'error\' | \'info' }
+interface ToastState { message: string; type: 'success' | 'error' | 'info' }
 
 function Toast({ toast, onClose }: { toast: ToastState; onClose: () => void }) {
   useEffect(() => {
@@ -663,33 +679,59 @@ function withdrawalStatusLabel(status: string) {
 
 function WalletSection({ userId, wallet, deposits, withdrawals, transactions, profile, onResetDemo, onRefresh, onUpdateProfile }: { userId: string; wallet: WalletData | null; deposits: DepositRecord[]; withdrawals: WithdrawalRecord[]; transactions: TransactionRecord[]; profile: UserProfile | null; onResetDemo: () => Promise<void>; onRefresh: () => Promise<void>; onUpdateProfile: (data: Partial<UserProfile>) => Promise<void> }) {
   const supabase = createClient();
+  const memberCurrency = getMemberCurrency(profile?.country);
   const [tab, setTab] = useState<'deposit' | 'withdrawal' | 'history'>('deposit');
   const [toast, setToast] = useState<ToastState | null>(null);
   const [resetting, setResetting] = useState(false);
   const [countryPaymentMethods, setCountryPaymentMethods] = useState<string[]>([]);
+  const [memberRateToUsd, setMemberRateToUsd] = useState<number | null>(null);
   const [showCommissionModal, setShowCommissionModal] = useState(false);
 
   useEffect(() => {
     const fetchCountryMethods = async () => {
       const userCountry = profile?.country || '';
       if (!userCountry) { setCountryPaymentMethods(PAYMENT_METHODS); return; }
-      const { data } = await supabase.from('payment_methods').select('name').eq('is_active', true).or(`country.eq.${userCountry},country.eq.Global`).order('name');
+      const { data } = await supabase.from('payment_methods').select('name').eq('is_active', true).neq('country', 'Indonesia').or(`country.eq.${userCountry},country.eq.Global`).order('name');
       if (data && data.length > 0) { setCountryPaymentMethods(data.map((m: { name: string }) => m.name)); }
       else {
-        const { data: globalData } = await supabase.from('payment_methods').select('name').eq('is_active', true).eq('country', 'Global').order('name');
+        const { data: globalData } = await supabase.from('payment_methods').select('name').eq('is_active', true).neq('country', 'Indonesia').eq('country', 'Global').order('name');
         setCountryPaymentMethods(globalData ? globalData.map((m: { name: string }) => m.name) : []);
       }
     };
     fetchCountryMethods();
   }, [profile?.country]);
 
+  useEffect(() => {
+    let active = true;
+    const fetchMemberRate = async () => {
+      if (memberCurrency === 'USD') {
+        if (active) setMemberRateToUsd(1);
+        return;
+      }
+      setMemberRateToUsd(null);
+      const { data } = await supabase
+        .from('currency_rates')
+        .select('rate_to_usd')
+        .eq('currency_code', memberCurrency)
+        .maybeSingle();
+      const rate = Number(data?.rate_to_usd);
+      if (active) setMemberRateToUsd(Number.isFinite(rate) && rate > 0 ? rate : null);
+    };
+    fetchMemberRate();
+    return () => { active = false; };
+  }, [memberCurrency]);
+
+  const displayCurrency = memberRateToUsd ? memberCurrency : 'USD';
+  const rateToUsd = memberRateToUsd ?? 1;
+  const formatMemberBalance = (amountUsd: number) => formatLocalizedAmount(amountUsd, displayCurrency, rateToUsd);
+
   const [editingFinancial, setEditingFinancial] = useState(false);
-  const [financialForm, setFinancialForm] = useState({ account_holder: profile?.account_holder || '', bank_name: profile?.bank_name || '', account_number: profile?.account_number || '', preferred_payment_method: profile?.preferred_payment_method || '', preferred_currency: profile?.preferred_currency || 'USD' });
+  const [financialForm, setFinancialForm] = useState({ account_holder: profile?.account_holder || '', bank_name: profile?.bank_name || '', account_number: profile?.account_number || '', preferred_payment_method: profile?.preferred_payment_method || '', preferred_currency: memberCurrency });
   const [savingFinancial, setSavingFinancial] = useState(false);
 
   useEffect(() => {
-    if (profile) setFinancialForm({ account_holder: profile.account_holder || '', bank_name: profile.bank_name || '', account_number: profile.account_number || '', preferred_payment_method: profile.preferred_payment_method || '', preferred_currency: profile.preferred_currency || 'USD' });
-  }, [profile]);
+    if (profile) setFinancialForm({ account_holder: profile.account_holder || '', bank_name: profile.bank_name || '', account_number: profile.account_number || '', preferred_payment_method: profile.preferred_payment_method || '', preferred_currency: displayCurrency });
+  }, [profile, displayCurrency]);
 
   const handleSaveFinancial = async () => {
     setSavingFinancial(true);
@@ -710,11 +752,12 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
   const handleSubmitDeposit = async () => {
     const amount = parseFloat(depositForm.amount);
     if (!amount || amount <= 0) { setToast({ message: 'Please enter a valid deposit amount', type: 'error' }); return; }
-    if (amount < 100) { setToast({ message: 'Minimum deposit amount is $100', type: 'error' }); return; }
+    const amountUsd = amount * rateToUsd;
+    if (amountUsd < 100) { setToast({ message: `Minimum deposit amount is ${formatMemberBalance(100)}`, type: 'error' }); return; }
     if (!depositForm.payment_method) { setToast({ message: 'Please select a payment method', type: 'error' }); return; }
     setSubmittingDeposit(true);
     try {
-      const { error } = await supabase.from('deposits').insert({ user_id: userId, amount, currency: 'USD', payment_method: depositForm.payment_method, payment_reference: depositForm.payment_reference || null, status: 'pending' });
+      const { error } = await supabase.from('deposits').insert({ user_id: userId, amount: amountUsd, amount_original: amount, currency_original: displayCurrency, amount_usd: amountUsd, currency: 'USD', payment_method: depositForm.payment_method, payment_reference: depositForm.payment_reference || null, status: 'pending' });
       if (error) throw error;
       setToast({ message: 'Deposit request submitted. Awaiting admin confirmation.', type: 'success' });
       setDepositForm({ amount: '', payment_method: '', payment_reference: '' });
@@ -730,8 +773,9 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
   const handleSubmitWithdrawal = async () => {
     const amount = parseFloat(withdrawalForm.amount);
     if (!amount || amount <= 0) { setToast({ message: 'Please enter a valid withdrawal amount', type: 'error' }); return; }
+    const amountUsd = amount * rateToUsd;
     if ((wallet?.realBalance ?? 0) <= 0) { setToast({ message: 'Withdrawal is not available. You have no real balance.', type: 'error' }); return; }
-    if (amount > (wallet?.realBalance ?? 0)) { setToast({ message: 'Insufficient real balance', type: 'error' }); return; }
+    if (amountUsd > (wallet?.realBalance ?? 0)) { setToast({ message: 'Insufficient real balance', type: 'error' }); return; }
     if (!withdrawalForm.payment_method) { setToast({ message: 'Please select a withdrawal method', type: 'error' }); return; }
     if (!withdrawalForm.destination_address) { setToast({ message: 'Please enter a destination account', type: 'error' }); return; }
     setSubmittingWithdrawal(true);
@@ -740,7 +784,7 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount,
+          amount: amountUsd,
           payment_method: withdrawalForm.payment_method,
           destination_address: withdrawalForm.destination_address,
         }),
@@ -759,7 +803,7 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
             withdrawal_id: inserted?.id,
             user_email: userProfile?.email || user?.email || '',
             user_name: userProfile?.full_name || '',
-            amount,
+            amount: amountUsd,
             payment_method: withdrawalForm.payment_method,
           }),
         });
@@ -774,7 +818,7 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
 
   const handleResetDemo = async () => {
     setResetting(true);
-    try { await onResetDemo(); setToast({ message: 'Demo balance reset to $100,000', type: 'success' }); }
+    try { await onResetDemo(); setToast({ message: `Demo balance reset to ${formatMemberBalance(100000)}`, type: 'success' }); }
     catch { setToast({ message: 'Failed to reset demo balance', type: 'error' }); }
     finally { setResetting(false); }
   };
@@ -782,7 +826,7 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
   const inputStyle = { background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' };
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-3 sm:space-y-4">
       {toast && <Toast toast={toast} onClose={() => setToast(null)} />}
 
       {/* Commission Notice Modal */}
@@ -844,40 +888,40 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <GlassCard className="p-4" style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(99,102,241,0.08))', borderColor: 'rgba(59,130,246,0.25)' }}>
-          <div className="flex items-center justify-between mb-3"><span className="text-[10px] font-semibold text-blue-400 uppercase tracking-wider flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" /> Demo Balance</span><button onClick={handleResetDemo} disabled={resetting} className="text-[10px] text-blue-400/60 hover:text-blue-400 transition-colors flex items-center gap-1"><RotateCcw size={10} className={resetting ? 'animate-spin' : ''} /> Reset</button></div>
-          <div className="text-2xl font-bold text-white">${formatCurrency(wallet?.demoBalance ?? 0)}</div>
-          <div className="text-[10px] text-slate-500 mt-1">Demo Account</div>
+      <div className="grid min-w-0 grid-cols-1 gap-2 min-[480px]:grid-cols-2 sm:grid-cols-3 sm:gap-3">
+        <GlassCard className="min-w-0 p-3 sm:p-4" style={{ background: 'linear-gradient(135deg, rgba(59,130,246,0.1), rgba(99,102,241,0.08))', borderColor: 'rgba(59,130,246,0.25)' }}>
+          <div className="mb-2 flex items-center justify-between sm:mb-3"><span className="flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wider text-blue-400 sm:text-[10px]"><span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-pulse" /> Demo Balance</span><button aria-label="Reset demo balance" onClick={handleResetDemo} disabled={resetting} className="flex items-center gap-1 text-[9px] text-blue-400/60 transition-colors hover:text-blue-400 sm:text-[10px]"><RotateCcw size={10} className={resetting ? 'animate-spin' : ''} /><span className="hidden sm:inline">Reset</span></button></div>
+          <div className="whitespace-nowrap text-[clamp(1rem,5vw,1.5rem)] font-bold leading-tight tracking-tight text-white tabular-nums sm:text-2xl">{formatMemberBalance(wallet?.demoBalance ?? 0)}</div>
+          <div className="mt-1 text-[9px] text-slate-500 sm:text-[10px]">Demo Account</div>
         </GlassCard>
-        <GlassCard className="p-4" style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(234,88,12,0.08))', borderColor: 'rgba(245,158,11,0.25)' }}>
-          <div className="flex items-center gap-1 mb-3"><span className="w-1.5 h-1.5 rounded-full bg-amber-400" /><span className="text-[10px] font-semibold text-amber-400 uppercase tracking-wider">Real Balance</span></div>
-          <div className="text-2xl font-bold text-white">${formatCurrency(wallet?.realBalance ?? 0)}</div>
-          <div className="text-[10px] text-slate-500 mt-1">Real Account</div>
+        <GlassCard className="min-w-0 p-3 sm:p-4" style={{ background: 'linear-gradient(135deg, rgba(245,158,11,0.1), rgba(234,88,12,0.08))', borderColor: 'rgba(245,158,11,0.25)' }}>
+          <div className="mb-2 flex items-center gap-1 sm:mb-3"><span className="h-1.5 w-1.5 rounded-full bg-amber-400" /><span className="text-[9px] font-semibold uppercase tracking-wider text-amber-400 sm:text-[10px]">Real Balance</span></div>
+          <div className="whitespace-nowrap text-[clamp(1rem,5vw,1.5rem)] font-bold leading-tight tracking-tight text-white tabular-nums sm:text-2xl">{formatMemberBalance(wallet?.realBalance ?? 0)}</div>
+          <div className="mt-1 text-[9px] text-slate-500 sm:text-[10px]">Real Account</div>
         </GlassCard>
-        <GlassCard className="p-4" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}>
-          <div className="flex items-center gap-1 mb-3"><DollarSign size={11} className="text-slate-400" /><span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Currency</span></div>
-          <div className="text-2xl font-bold text-white">USD</div>
-          <div className="text-[10px] text-slate-500 mt-1">US Dollar</div>
+        <GlassCard className="min-w-0 p-3 min-[480px]:col-span-2 sm:col-span-1 sm:p-4" style={{ background: 'rgba(255,255,255,0.03)', borderColor: 'rgba(255,255,255,0.08)' }}>
+          <div className="mb-2 flex items-center gap-1 sm:mb-3"><DollarSign size={11} className="text-slate-400" /><span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 sm:text-[10px]">Currency</span></div>
+          <div className="text-xl font-bold text-white sm:text-2xl">{displayCurrency}</div>
+          <div className="mt-1 text-[9px] text-slate-500 sm:text-[10px]">{displayCurrency === 'USD' ? 'US Dollar' : `Based on ${profile?.country}`}</div>
         </GlassCard>
       </div>
 
       <GlassCard style={{ borderColor: 'rgba(245,158,11,0.2)', background: 'rgba(245,158,11,0.03)' }}>
-        <div className="px-5 py-3.5 border-b border-white/8 flex items-center justify-between">
-          <div className="flex items-center gap-2"><CreditCard size={13} className="text-amber-400" /><span className="text-xs font-semibold text-slate-300 uppercase tracking-wider">Financial Information</span></div>
-          <button onClick={() => setEditingFinancial(v => !v)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all hover:scale-105 active:scale-95" style={{ background: editingFinancial ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)', color: editingFinancial ? '#ef4444' : '#f59e0b', border: `1px solid ${editingFinancial ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.3)'}` }}>
+        <div className="flex items-center justify-between border-b border-white/8 px-3 py-2.5 sm:px-5 sm:py-3.5">
+          <div className="flex items-center gap-1.5"><CreditCard size={13} className="text-amber-400" /><span className="text-[10px] font-semibold uppercase tracking-wider text-slate-300 sm:text-xs">Financial Information</span></div>
+          <button onClick={() => setEditingFinancial(v => !v)} className="flex items-center gap-1 rounded-xl px-2 py-1.5 text-[10px] font-semibold transition-all hover:scale-105 active:scale-95 sm:gap-1.5 sm:px-3 sm:text-xs" style={{ background: editingFinancial ? 'rgba(239,68,68,0.1)' : 'rgba(245,158,11,0.1)', color: editingFinancial ? '#ef4444' : '#f59e0b', border: `1px solid ${editingFinancial ? 'rgba(239,68,68,0.3)' : 'rgba(245,158,11,0.3)'}` }}>
             {editingFinancial ? <X size={11} /> : <Edit2 size={11} />} {editingFinancial ? 'Cancel' : 'Edit'}
           </button>
         </div>
-        <div className="p-5">
+        <div className="min-w-0 p-3 sm:p-5">
           {editingFinancial ? (
             <div className="space-y-3" style={{ animation: 'expandDown 0.25s cubic-bezier(0.34,1.56,0.64,1)' }}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Account Holder Name</label><input value={financialForm.account_holder} onChange={e => setFinancialForm(f => ({ ...f, account_holder: e.target.value }))} placeholder="Name as per bank account" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle} onFocus={e => { e.target.style.borderColor = 'rgba(245,158,11,0.5)'; }} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; }} /></div>
-                <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Bank Name</label><input value={financialForm.bank_name} onChange={e => setFinancialForm(f => ({ ...f, bank_name: e.target.value }))} placeholder="e.g. BCA, Mandiri, BRI" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle} onFocus={e => { e.target.style.borderColor = 'rgba(245,158,11,0.5)'; }} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; }} /></div>
+                <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Bank Name</label><input value={financialForm.bank_name} onChange={e => setFinancialForm(f => ({ ...f, bank_name: e.target.value }))} placeholder="Enter your bank name" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle} onFocus={e => { e.target.style.borderColor = 'rgba(245,158,11,0.5)'; }} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; }} /></div>
                 <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Account Number</label><input value={financialForm.account_number} onChange={e => setFinancialForm(f => ({ ...f, account_number: e.target.value }))} placeholder="Bank account number" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle} onFocus={e => { e.target.style.borderColor = 'rgba(245,158,11,0.5)'; }} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; }} /></div>
                 <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Payment Method</label><select value={financialForm.preferred_payment_method} onChange={e => setFinancialForm(f => ({ ...f, preferred_payment_method: e.target.value }))} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={inputStyle}><option value="">Select method</option>{countryPaymentMethods.map(m => <option key={m} value={m}>{m}</option>)}</select></div>
-                <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Currency</label><select value={financialForm.preferred_currency} onChange={e => setFinancialForm(f => ({ ...f, preferred_currency: e.target.value }))} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={inputStyle}><option value="USD">USD</option><option value="IDR">IDR</option><option value="SGD">SGD</option><option value="MYR">MYR</option><option value="EUR">EUR</option><option value="GBP">GBP</option></select></div>
+                <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Currency</label><div className="w-full rounded-xl px-3 py-2.5 text-sm text-white" style={inputStyle}>{displayCurrency}<span className="ml-2 text-[10px] text-slate-500">Based on member country</span></div></div>
               </div>
               <div className="flex items-center gap-2 pt-1">
                 <button onClick={handleSaveFinancial} disabled={savingFinancial} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50" style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', boxShadow: '0 4px 16px rgba(245,158,11,0.25)' }}>
@@ -887,9 +931,9 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {[{ label: 'Account Holder Name', value: profile?.account_holder || '—' }, { label: 'Bank Name', value: profile?.bank_name || '—' }, { label: 'Account Number', value: profile?.account_number || '—' }, { label: 'Payment Method', value: profile?.preferred_payment_method || '—' }, { label: 'Currency', value: profile?.preferred_currency || 'USD' }].map(({ label, value }) => (
-                <div key={label}><div className="text-[10px] text-slate-500 uppercase tracking-wider mb-1">{label}</div><div className="text-sm font-semibold text-white">{value}</div></div>
+            <div className="grid min-w-0 grid-cols-2 gap-3 sm:gap-4">
+              {[{ label: 'Account Holder Name', value: profile?.account_holder || '—' }, { label: 'Bank Name', value: profile?.bank_name || '—' }, { label: 'Account Number', value: profile?.account_number || '—' }, { label: 'Payment Method', value: profile?.preferred_payment_method || '—' }, { label: 'Currency', value: displayCurrency }].map(({ label, value }) => (
+                <div key={label} className="min-w-0"><div className="mb-1 text-[9px] uppercase tracking-wider text-slate-500 sm:text-[10px]">{label}</div><div className="break-words text-xs font-semibold text-white sm:text-sm">{value}</div></div>
               ))}
             </div>
           )}
@@ -899,20 +943,20 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
       <GlassCard className="overflow-hidden">
         <div className="flex border-b border-white/8">
           {([{ key: 'deposit', label: 'Deposit', icon: <ArrowDownCircle size={13} />, color: '#10b981' }, { key: 'withdrawal', label: 'Withdrawal', icon: <ArrowUpCircle size={13} />, color: '#ef4444' }, { key: 'history', label: 'History', icon: <List size={13} />, color: '#6366f1' }] as const).map(({ key, label, icon, color }) => (
-            <button key={key} onClick={() => { if (key === 'withdrawal' && (wallet?.realBalance ?? 0) <= 0) { setToast({ message: 'Withdrawal is not available. You have no real balance.', type: 'error' }); return; } setTab(key); if (key === 'withdrawal') setShowCommissionModal(true); }} className="flex-1 flex items-center justify-center gap-1.5 py-3.5 text-xs font-semibold transition-all relative" style={{ background: tab === key ? `${color}20` : 'transparent', color: tab === key ? 'white' : '#64748b' }} onMouseEnter={e => { if (tab !== key) { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = '#94a3b8'; } }} onMouseLeave={e => { if (tab !== key) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#64748b'; } }}>
+            <button key={key} onClick={() => { if (key === 'withdrawal' && (wallet?.realBalance ?? 0) <= 0) { setToast({ message: 'Withdrawal is not available. You have no real balance.', type: 'error' }); return; } setTab(key); if (key === 'withdrawal') setShowCommissionModal(true); }} className="relative flex min-w-0 flex-1 items-center justify-center gap-1 py-2.5 text-[10px] font-semibold transition-all sm:gap-1.5 sm:py-3.5 sm:text-xs" style={{ background: tab === key ? `${color}20` : 'transparent', color: tab === key ? 'white' : '#64748b' }} onMouseEnter={e => { if (tab !== key) { (e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.04)'; (e.currentTarget as HTMLElement).style.color = '#94a3b8'; } }} onMouseLeave={e => { if (tab !== key) { (e.currentTarget as HTMLElement).style.background = 'transparent'; (e.currentTarget as HTMLElement).style.color = '#64748b'; } }}>
               {icon} {label}
               {tab === key && <span className="absolute bottom-0 w-6 h-0.5 rounded-full" style={{ background: color }} />}
             </button>
           ))}
         </div>
-        <div className="p-5">
+        <div className="min-w-0 p-3 sm:p-5">
           {tab === 'deposit' && (
             <div className="space-y-4" style={{ animation: 'fadeSlideIn 0.2s ease-out' }}>
               <div className="space-y-3">
-                <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Deposit Amount (USD)</label><input type="number" value={depositForm.amount} onChange={e => setDepositForm(f => ({ ...f, amount: e.target.value }))} placeholder="Minimum $100" min="100" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle} onFocus={e => { e.target.style.borderColor = 'rgba(16,185,129,0.5)'; }} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; }} /></div>
+                <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Deposit Amount ({displayCurrency})</label><input type="number" value={depositForm.amount} onChange={e => setDepositForm(f => ({ ...f, amount: e.target.value }))} placeholder={`Minimum ${formatMemberBalance(100)}`} min={100 / rateToUsd} className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle} onFocus={e => { e.target.style.borderColor = 'rgba(16,185,129,0.5)'; }} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; }} /></div>
                 <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Payment Method</label><select value={depositForm.payment_method} onChange={e => setDepositForm(f => ({ ...f, payment_method: e.target.value }))} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={inputStyle}><option value="">Select method</option>{countryPaymentMethods.map(m => <option key={m} value={m}>{m}</option>)}</select></div>
                 <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Payment Reference (optional)</label><input value={depositForm.payment_reference} onChange={e => setDepositForm(f => ({ ...f, payment_reference: e.target.value }))} placeholder="Transaction number / payment reference" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle} onFocus={e => { e.target.style.borderColor = 'rgba(16,185,129,0.5)'; }} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; }} /></div>
-                <button onClick={handleSubmitDeposit} disabled={submittingDeposit} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50" style={{ background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 4px 16px rgba(16,185,129,0.25)' }}>
+                <button onClick={handleSubmitDeposit} disabled={submittingDeposit} className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 sm:w-auto sm:px-5 sm:text-sm" style={{ background: 'linear-gradient(135deg, #10b981, #059669)', boxShadow: '0 4px 16px rgba(16,185,129,0.25)' }}>
                   {submittingDeposit ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <ArrowDownCircle size={14} />} Send Deposit Request
                 </button>
               </div>
@@ -921,7 +965,7 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
                   <div className="space-y-2 max-h-60 overflow-y-auto">
                     {deposits.map(d => (
                       <div key={d.id} className="flex items-center justify-between py-2.5 px-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                        <div><div className="text-xs font-semibold text-white">${formatCurrency(d.amount)} {d.currency}</div><div className="text-[10px] text-slate-500">{d.payment_method || '—'} · {formatDate(d.created_at)}</div></div>
+                        <div><div className="text-xs font-semibold text-white">{formatMemberBalance(d.amount)}</div><div className="text-[10px] text-slate-500">{d.payment_method || '—'} · {formatDate(d.created_at)}</div></div>
                         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${depositStatusBadge(d.status)}`}>{depositStatusLabel(d.status)}</span>
                       </div>
                     ))}
@@ -932,7 +976,7 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
           )}
           {tab === 'withdrawal' && (
             <div className="space-y-4" style={{ animation: 'fadeSlideIn 0.2s ease-out' }}>
-              <div className="p-3 rounded-xl" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}><div className="text-[10px] text-amber-400 font-semibold mb-0.5 uppercase tracking-wider">Real Balance Available</div><div className="text-xl font-bold text-white">${formatCurrency(wallet?.realBalance ?? 0)}</div></div>
+              <div className="rounded-xl p-2.5 sm:p-3" style={{ background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}><div className="mb-0.5 text-[9px] font-semibold uppercase tracking-wider text-amber-400 sm:text-[10px]">Real Balance Available</div><div className="whitespace-nowrap text-base font-bold text-white tabular-nums sm:text-xl">{formatMemberBalance(wallet?.realBalance ?? 0)}</div></div>
               {(wallet?.realBalance ?? 0) <= 0 && (
                 <div className="p-3 rounded-xl flex items-start gap-2.5" style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)' }}>
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -940,10 +984,10 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
                 </div>
               )}
               <div className="space-y-3">
-                <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Withdrawal Amount (USD)</label><input type="number" value={withdrawalForm.amount} onChange={e => setWithdrawalForm(f => ({ ...f, amount: e.target.value }))} placeholder="Minimum $10" min="10" max={wallet?.realBalance ?? 0} className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle} onFocus={e => { e.target.style.borderColor = 'rgba(239,68,68,0.5)'; }} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; }} /></div>
+                <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Withdrawal Amount ({displayCurrency})</label><input type="number" value={withdrawalForm.amount} onChange={e => setWithdrawalForm(f => ({ ...f, amount: e.target.value }))} placeholder={`Minimum ${formatMemberBalance(10)}`} min={10 / rateToUsd} max={(wallet?.realBalance ?? 0) / rateToUsd} className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle} onFocus={e => { e.target.style.borderColor = 'rgba(239,68,68,0.5)'; }} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; }} /></div>
                 <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Withdrawal Method</label><select value={withdrawalForm.payment_method} onChange={e => setWithdrawalForm(f => ({ ...f, payment_method: e.target.value }))} className="w-full rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none transition-all" style={inputStyle}><option value="">Select method</option>{countryPaymentMethods.map(m => <option key={m} value={m}>{m}</option>)}</select></div>
                 <div><label className="text-[10px] text-slate-500 uppercase tracking-wider mb-1.5 block">Destination Account</label><input value={withdrawalForm.destination_address} onChange={e => setWithdrawalForm(f => ({ ...f, destination_address: e.target.value }))} placeholder="Account number / wallet address" className="w-full rounded-xl px-3 py-2.5 text-sm text-white placeholder-slate-600 focus:outline-none transition-all" style={inputStyle} onFocus={e => { e.target.style.borderColor = 'rgba(239,68,68,0.5)'; }} onBlur={e => { e.target.style.borderColor = 'rgba(255,255,255,0.1)'; }} /></div>
-                <button onClick={handleSubmitWithdrawal} disabled={submittingWithdrawal || (wallet?.realBalance ?? 0) <= 0} className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)', boxShadow: '0 4px 16px rgba(239,68,68,0.25)' }}>
+                <button onClick={handleSubmitWithdrawal} disabled={submittingWithdrawal || (wallet?.realBalance ?? 0) <= 0} className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold text-white transition-all hover:scale-105 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:px-5 sm:text-sm" style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)', boxShadow: '0 4px 16px rgba(239,68,68,0.25)' }}>
                   {submittingWithdrawal ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> : <ArrowUpCircle size={14} />} Send Withdrawal Request
                 </button>
               </div>
@@ -953,7 +997,7 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
                     {withdrawals.map(w => (
                       <div key={w.id} className="py-2.5 px-3 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)' }}>
                         <div className="flex items-center justify-between">
-                          <div><div className="text-xs font-semibold text-white">${formatCurrency(w.amount)} {w.currency}</div><div className="text-[10px] text-slate-500">{w.payment_method || '—'} · {formatDate(w.created_at)}</div></div>
+                          <div><div className="text-xs font-semibold text-white">{formatMemberBalance(w.amount)}</div><div className="text-[10px] text-slate-500">{w.payment_method || '—'} · {formatDate(w.created_at)}</div></div>
                           <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${withdrawalStatusBadge(w.status)}`}>{withdrawalStatusLabel(w.status)}</span>
                         </div>
                         {w.admin_note && w.status === 'rejected' && (
@@ -988,7 +1032,7 @@ function WalletSection({ userId, wallet, deposits, withdrawals, transactions, pr
                         <div><div className="text-xs font-semibold text-white capitalize">{item.type}</div><div className="text-[10px] text-slate-500">{item.method || '—'} · {formatDate(item.created_at)}</div></div>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <div className={`text-xs font-bold ${item.type === 'deposit' ? 'text-emerald-400' : 'text-red-400'}`}>{item.type === 'deposit' ? '+' : '-'}${formatCurrency(item.amount)}</div>
+                        <div className={`text-xs font-bold ${item.type === 'deposit' ? 'text-emerald-400' : 'text-red-400'}`}>{item.type === 'deposit' ? '+' : '-'}{formatMemberBalance(item.amount)}</div>
                         <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${item.type === 'deposit' ? depositStatusBadge(item.status) : withdrawalStatusBadge(item.status)}`}>{item.type === 'deposit' ? depositStatusLabel(item.status) : withdrawalStatusLabel(item.status)}</span>
                       </div>
                     </div>
@@ -1685,7 +1729,7 @@ export default function AccountPage() {
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex min-w-0 flex-1 overflow-hidden">
         <aside className="hidden md:flex flex-col w-60 flex-shrink-0 overflow-y-auto" style={{ background: 'rgba(255,255,255,0.015)', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
           <div className="p-4 border-b" style={{ borderColor: 'rgba(255,255,255,0.06)' }}>
             <div className="flex items-center gap-3">
@@ -1712,12 +1756,12 @@ export default function AccountPage() {
           </div>
         </aside>
 
-        <main className="flex-1 overflow-y-auto">
-          <div className="md:hidden sticky top-0 z-30 flex items-center justify-between px-4 py-3" style={{ background: 'rgba(5,5,5,0.9)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-            <div className="flex items-center gap-2"><span style={{ color: activeItem?.accent }}>{activeItem?.icon}</span><span className="text-sm font-semibold text-white">{activeItem?.label}</span></div>
-            <button onClick={() => setMobileSidebarOpen(true)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs text-slate-400 hover:text-white transition-colors" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}><Menu size={13} /> Menu</button>
+        <main className="min-w-0 flex-1 overflow-y-auto">
+          <div className="sticky top-0 z-30 flex items-center justify-between px-3 py-2.5 md:hidden" style={{ background: 'rgba(5,5,5,0.9)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+            <div className="flex items-center gap-1.5"><span style={{ color: activeItem?.accent }}>{activeItem?.icon}</span><span className="text-xs font-semibold text-white">{activeItem?.label}</span></div>
+            <button onClick={() => setMobileSidebarOpen(true)} className="flex items-center gap-1 rounded-xl px-2 py-1.5 text-[10px] text-slate-400 transition-colors hover:text-white" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}><Menu size={12} /> Menu</button>
           </div>
-          <div className="p-4 sm:p-6 max-w-3xl">
+          <div className="w-full min-w-0 max-w-3xl p-3 sm:p-6">
             <div className="hidden md:flex items-center gap-3 mb-6">
               <div className="w-8 h-8 rounded-xl flex items-center justify-center" style={{ background: `${activeItem?.accent}15`, color: activeItem?.accent, border: `1px solid ${activeItem?.accent}30` }}>{activeItem?.icon}</div>
               <div><h2 className="text-lg font-bold text-white">{activeItem?.label}</h2></div>

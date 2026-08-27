@@ -39,7 +39,7 @@ interface DepositModalProps {
 
 type Step = 'country' | 'method' | 'amount' | 'success';
 
-const COUNTRY_CURRENCY: Record<string, string> = {
+export const COUNTRY_CURRENCY: Record<string, string> = {
   // Asia & Pacific
   Malaysia: 'MYR',
   Singapore: 'SGD',
@@ -47,7 +47,6 @@ const COUNTRY_CURRENCY: Record<string, string> = {
   Vietnam: 'VND',
   Japan: 'JPY',
   'South Korea': 'KRW',
-  Indonesia: 'IDR',
   Philippines: 'PHP',
   China: 'CNY',
   India: 'INR',
@@ -160,7 +159,6 @@ const FLAG_EMOJI: Record<string, string> = {
   Vietnam: '🇻🇳',
   Japan: '🇯🇵',
   'South Korea': '🇰🇷',
-  Indonesia: '🇮🇩',
   Philippines: '🇵🇭',
   China: '🇨🇳',
   India: '🇮🇳',
@@ -267,7 +265,6 @@ const DEFAULT_RATES: Record<string, number> = {
   CHF: 1.12,
   MYR: 0.224,
   SGD: 0.745,
-  IDR: 0.000062,
   THB: 0.028,
   VND: 0.000039,
   JPY: 0.0067,
@@ -380,6 +377,7 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
   const [methods, setMethods] = useState<PaymentMethod[]>([]);
   const [currencyRates, setCurrencyRates] = useState<Record<string, CurrencyRate>>({});
   const [loading, setLoading] = useState(true);
+  const [memberCountry, setMemberCountry] = useState<string>('');
   const [selectedCountry, setSelectedCountry] = useState<string>('');
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null);
   const [activeType, setActiveType] = useState<string>('bank');
@@ -399,14 +397,17 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
   const fetchData = useCallback(async () => {
     setLoading(true);
     const supabase = createClient();
-    const [methodsRes, ratesRes, bonusRes] = await Promise.all([
+    const [methodsRes, ratesRes, bonusRes, profileRes] = await Promise.all([
       supabase.from('payment_methods').select('*').eq('is_active', true).order('country').order('name'),
       supabase.from('currency_rates').select('*'),
       supabase.from('bonus_settings').select('bonus_percent, min_deposit, max_bonus').eq('is_active', true).eq('applies_to', 'first_deposit').maybeSingle(),
+      supabase.from('users').select('country').eq('id', userId).maybeSingle(),
     ]);
     
     // Merge database methods with built-in default methods for Europe, South America, etc.
-    const remoteMethods = (methodsRes.data as PaymentMethod[]) || [];
+    const remoteMethods = ((methodsRes.data as PaymentMethod[]) || []).filter(
+      (method) => method.country?.trim().toLowerCase() !== 'indonesia'
+    );
     const mergedMethods = [...remoteMethods];
     DEFAULT_PAYMENT_METHODS.forEach((defMethod) => {
       if (!mergedMethods.some((m) => m.country === defMethod.country && m.name === defMethod.name)) {
@@ -414,6 +415,22 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
       }
     });
     setMethods(mergedMethods);
+
+    const profileCountry = String(profileRes.data?.country || '').trim();
+    const requestedCountry = profileCountry.toLowerCase() === 'indonesia' ? 'Global' : profileCountry;
+    const matchedCountry = Array.from(new Set(mergedMethods.map((method) => method.country || 'Global'))).find(
+      (country) => country.toLowerCase() === requestedCountry.toLowerCase()
+    );
+    const lockedCountry = matchedCountry || (mergedMethods.some((method) => (method.country || 'Global') === 'Global') ? 'Global' : '');
+    setMemberCountry(lockedCountry);
+    if (lockedCountry) {
+      const availableType = ['bank', 'ewallet', 'crypto', 'card'].find((type) =>
+        mergedMethods.some((method) => (method.country || 'Global') === lockedCountry && method.type === type)
+      );
+      setSelectedCountry(lockedCountry);
+      setActiveType(availableType || 'bank');
+      setStep('method');
+    }
     const ratesMap: Record<string, CurrencyRate> = {};
     ((ratesRes.data as CurrencyRate[]) || []).forEach((r) => {
       ratesMap[r.currency_code] = r;
@@ -434,6 +451,7 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
     if (isOpen) {
       fetchData();
       setStep('country');
+      setMemberCountry('');
       setSelectedCountry('');
       setSelectedMethod(null);
       setAmount('');
@@ -598,7 +616,7 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
   };
 
   const stepBack = () => {
-    if (step === 'method') setStep('country');
+    if (step === 'method' && !memberCountry) setStep('country');
     else if (step === 'amount') setStep('method');
   };
 
@@ -642,7 +660,7 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-white/8 flex-shrink-0">
           <div className="flex items-center gap-3">
-            {step !== 'country' && step !== 'success' && (
+            {step !== 'country' && step !== 'success' && !(step === 'method' && memberCountry) && (
               <button
                 onClick={stepBack}
                 className="w-7 h-7 rounded-lg bg-white/8 hover:bg-white/15 flex items-center justify-center text-slate-400 hover:text-white transition-all"

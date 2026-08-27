@@ -76,6 +76,10 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@100..900&display=swap" />
         <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Geist+Mono:wght@300..700&display=swap" />
+        {/* Satoshi — premium display sans used across the member dashboard
+            (see DashboardTopBar.tsx). Served from Fontshare's CDN since
+            Satoshi isn't on Google Fonts. */}
+        <link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=satoshi@300,400,500,600,700,800&display=swap" />
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {
             var _origError = window.onerror;
