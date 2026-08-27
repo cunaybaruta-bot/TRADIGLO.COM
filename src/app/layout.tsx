@@ -11,13 +11,13 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: 'Tradiglo | Signal Forex & Gold Melalui WhatsApp',
+    default: 'Trade Crypto like a pro!',
     template: '%s | Tradiglo',
   },
   description: 'Join WhatsApp Channel Tradiglo Malaysia untuk signal Forex dan Gold, market update, serta panduan risiko. Daftar melalui WhatsApp Admin Malaysia. Trading melibatkan risiko.',
   keywords: 'Tradiglo Malaysia, signal forex Malaysia, signal gold Malaysia, signal XAUUSD Malaysia, WhatsApp trading signal Malaysia, signal trading Malaysia, forex education Malaysia, gold trading Malaysia',
   openGraph: {
-    title: 'Tradiglo | Signal Forex & Gold Melalui WhatsApp',
+    title: 'Trade Crypto like a pro!',
     description: 'Market update, signal XAUUSD dan Forex, serta panduan risiko untuk trader Malaysia melalui WhatsApp Channel dan WhatsApp Admin.',
     type: 'website',
     locale: 'ms_MY',
@@ -40,7 +40,7 @@ export default function RootLayout({
   return (
     <html lang="ms">
       <head>
-        <title>Tradiglo | Signal Forex &amp; Gold Melalui WhatsApp</title>
+        <title>Trade Crypto like a pro!</title>
         {/* Google tag (gtag.js) - Google Ads AW-17361830719 */}
         <script async src="https://www.googletagmanager.com/gtag/js?id=AW-17361830719" />
         <script dangerouslySetInnerHTML={{ __html: `
