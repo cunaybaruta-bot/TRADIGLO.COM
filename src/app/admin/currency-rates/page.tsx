@@ -11,6 +11,61 @@ interface CurrencyRate {
   updated_at: string;
 }
 
+const DEFAULT_CURRENCY_RATES: Omit<CurrencyRate, 'updated_at'>[] = [
+  // Europe
+  { id: 'rate-eur', currency_code: 'EUR', currency_name: 'Euro', rate_to_usd: 1.08 },
+  { id: 'rate-gbp', currency_code: 'GBP', currency_name: 'British Pound', rate_to_usd: 1.27 },
+  { id: 'rate-chf', currency_code: 'CHF', currency_name: 'Swiss Franc', rate_to_usd: 1.12 },
+  { id: 'rate-sek', currency_code: 'SEK', currency_name: 'Swedish Krona', rate_to_usd: 0.095 },
+  { id: 'rate-nok', currency_code: 'NOK', currency_name: 'Norwegian Krone', rate_to_usd: 0.092 },
+  { id: 'rate-dkk', currency_code: 'DKK', currency_name: 'Danish Krone', rate_to_usd: 0.145 },
+  { id: 'rate-pln', currency_code: 'PLN', currency_name: 'Polish Zloty', rate_to_usd: 0.25 },
+  // South America
+  { id: 'rate-brl', currency_code: 'BRL', currency_name: 'Brazilian Real', rate_to_usd: 0.18 },
+  { id: 'rate-ars', currency_code: 'ARS', currency_name: 'Argentine Peso', rate_to_usd: 0.0011 },
+  { id: 'rate-cop', currency_code: 'COP', currency_name: 'Colombian Peso', rate_to_usd: 0.00025 },
+  { id: 'rate-clp', currency_code: 'CLP', currency_name: 'Chilean Peso', rate_to_usd: 0.00105 },
+  { id: 'rate-pen', currency_code: 'PEN', currency_name: 'Peruvian Sol', rate_to_usd: 0.27 },
+  { id: 'rate-uyu', currency_code: 'UYU', currency_name: 'Uruguayan Peso', rate_to_usd: 0.025 },
+  { id: 'rate-pyg', currency_code: 'PYG', currency_name: 'Paraguayan Guarani', rate_to_usd: 0.00013 },
+  { id: 'rate-bob', currency_code: 'BOB', currency_name: 'Bolivian Boliviano', rate_to_usd: 0.145 },
+  { id: 'rate-ves', currency_code: 'VES', currency_name: 'Venezuelan Bolívar', rate_to_usd: 0.027 },
+  // Asia & Pacific
+  { id: 'rate-myr', currency_code: 'MYR', currency_name: 'Malaysian Ringgit', rate_to_usd: 0.224 },
+  { id: 'rate-sgd', currency_code: 'SGD', currency_name: 'Singapore Dollar', rate_to_usd: 0.745 },
+  { id: 'rate-idr', currency_code: 'IDR', currency_name: 'Indonesian Rupiah', rate_to_usd: 0.000062 },
+  { id: 'rate-thb', currency_code: 'THB', currency_name: 'Thai Baht', rate_to_usd: 0.028 },
+  { id: 'rate-vnd', currency_code: 'VND', currency_name: 'Vietnamese Dong', rate_to_usd: 0.000039 },
+  { id: 'rate-jpy', currency_code: 'JPY', currency_name: 'Japanese Yen', rate_to_usd: 0.0067 },
+  { id: 'rate-krw', currency_code: 'KRW', currency_name: 'South Korean Won', rate_to_usd: 0.00072 },
+  { id: 'rate-php', currency_code: 'PHP', currency_name: 'Philippine Peso', rate_to_usd: 0.017 },
+  { id: 'rate-cny', currency_code: 'CNY', currency_name: 'Chinese Yuan', rate_to_usd: 0.138 },
+  { id: 'rate-inr', currency_code: 'INR', currency_name: 'Indian Rupee', rate_to_usd: 0.012 },
+  { id: 'rate-hkd', currency_code: 'HKD', currency_name: 'Hong Kong Dollar', rate_to_usd: 0.128 },
+  { id: 'rate-twd', currency_code: 'TWD', currency_name: 'New Taiwan Dollar', rate_to_usd: 0.0312 },
+  { id: 'rate-pkr', currency_code: 'PKR', currency_name: 'Pakistani Rupee', rate_to_usd: 0.0036 },
+  { id: 'rate-bdt', currency_code: 'BDT', currency_name: 'Bangladeshi Taka', rate_to_usd: 0.0091 },
+  { id: 'rate-lkr', currency_code: 'LKR', currency_name: 'Sri Lankan Rupee', rate_to_usd: 0.0034 },
+  { id: 'rate-mmk', currency_code: 'MMK', currency_name: 'Myanmar Kyat', rate_to_usd: 0.0005 },
+  { id: 'rate-khr', currency_code: 'KHR', currency_name: 'Cambodian Riel', rate_to_usd: 0.00024 },
+  { id: 'rate-lak', currency_code: 'LAK', currency_name: 'Lao Kip', rate_to_usd: 0.000046 },
+  { id: 'rate-npr', currency_code: 'NPR', currency_name: 'Nepalese Rupee', rate_to_usd: 0.0075 },
+  // Middle East
+  { id: 'rate-sar', currency_code: 'SAR', currency_name: 'Saudi Riyal', rate_to_usd: 0.2667 },
+  { id: 'rate-aed', currency_code: 'AED', currency_name: 'UAE Dirham', rate_to_usd: 0.2723 },
+  { id: 'rate-qar', currency_code: 'QAR', currency_name: 'Qatari Riyal', rate_to_usd: 0.2747 },
+  { id: 'rate-kwd', currency_code: 'KWD', currency_name: 'Kuwaiti Dinar', rate_to_usd: 3.25 },
+  { id: 'rate-bhd', currency_code: 'BHD', currency_name: 'Bahraini Dinar', rate_to_usd: 2.6525 },
+  { id: 'rate-omr', currency_code: 'OMR', currency_name: 'Omani Rial', rate_to_usd: 2.5974 },
+  { id: 'rate-jod', currency_code: 'JOD', currency_name: 'Jordanian Dinar', rate_to_usd: 1.4104 },
+  // North America & Global
+  { id: 'rate-usd', currency_code: 'USD', currency_name: 'US Dollar', rate_to_usd: 1.0 },
+  { id: 'rate-cad', currency_code: 'CAD', currency_name: 'Canadian Dollar', rate_to_usd: 0.74 },
+  { id: 'rate-aud', currency_code: 'AUD', currency_name: 'Australian Dollar', rate_to_usd: 0.65 },
+  { id: 'rate-nzd', currency_code: 'NZD', currency_name: 'New Zealand Dollar', rate_to_usd: 0.60 },
+  { id: 'rate-mxn', currency_code: 'MXN', currency_name: 'Mexican Peso', rate_to_usd: 0.055 },
+];
+
 export default function CurrencyRatesPage() {
   const [rates, setRates] = useState<CurrencyRate[]>([]);
   const [loading, setLoading] = useState(true);
@@ -24,7 +79,18 @@ export default function CurrencyRatesPage() {
       .from('currency_rates')
       .select('*')
       .order('currency_code');
-    setRates((data as CurrencyRate[]) || []);
+    const remoteRates = (data as CurrencyRate[]) || [];
+    const merged = [...remoteRates];
+    DEFAULT_CURRENCY_RATES.forEach((dr) => {
+      if (!merged.some((r) => r.currency_code === dr.currency_code)) {
+        merged.push({
+          ...dr,
+          updated_at: new Date().toISOString(),
+        });
+      }
+    });
+    merged.sort((a, b) => a.currency_code.localeCompare(b.currency_code));
+    setRates(merged);
     setLoading(false);
   }, []);
 
@@ -41,10 +107,11 @@ export default function CurrencyRatesPage() {
     if (isNaN(newRate) || newRate <= 0) return;
     setSaving(rate.id);
     const supabase = createClient();
-    const { error } = await supabase
-      .from('currency_rates')
-      .update({ rate_to_usd: newRate, updated_at: new Date().toISOString() })
-      .eq('id', rate.id);
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rate.id);
+    const query = isUuid
+      ? supabase.from('currency_rates').update({ rate_to_usd: newRate, updated_at: new Date().toISOString() }).eq('id', rate.id)
+      : supabase.from('currency_rates').upsert({ currency_code: rate.currency_code, currency_name: rate.currency_name, rate_to_usd: newRate, updated_at: new Date().toISOString() }, { onConflict: 'currency_code' });
+    const { error } = await query;
 
     if (!error) {
       setMessage(`✅ ${rate.currency_code} rate updated to ${newRate}`);
