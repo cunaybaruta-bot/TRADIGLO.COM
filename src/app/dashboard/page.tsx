@@ -10,6 +10,7 @@ import DashboardTopBar from '@/components/dashboard/DashboardTopBar';
 import DepositModal from '@/components/dashboard/DepositModal';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useRealtimeDashboard, type PriceMap, mergePriceUpdate } from '@/lib/hooks/useRealtimeDashboard';
+import { getLivePriceForSymbol } from '@/lib/services/tradePriceLookup';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -39,6 +40,7 @@ interface AssetItem {
   symbol: string;
   name: string;
   category: string;
+  exchange?: string;
 }
 
 interface CopyTradeProvider {
@@ -198,37 +200,67 @@ const CURRENCY_FLAG_MAP: Record<string, string> = {
 };
 
 // Commodity symbol → icon config (emoji + gradient background)
+// Metals have no accurate dedicated emoji in Unicode, so instead of guessing
+// with an unrelated icon, they use the metal's real chemical element symbol
+// (Au, Ag, Pt, Pd, Cu, Al, Zn, Ni, Pb, Sn) — the same convention exchanges
+// like the LME (London Metal Exchange) and COMEX use on their own tickers
+// and price boards. Kept in sync with AssetSelectorModal.tsx's copy.
 const COMMODITY_ICONS: Record<string, { bg: string; emoji: string }> = {
-  // Precious Metals
-  XAUUSD:   { bg: 'linear-gradient(135deg,#b8860b,#ffd700)', emoji: '🥇' },
-  XAGUSD:   { bg: 'linear-gradient(135deg,#708090,#c0c0c0)', emoji: '🥈' },
-  XPTUSD:   { bg: 'linear-gradient(135deg,#4a4a6a,#a8a9ad)', emoji: '💎' },
-  XPDUSD:   { bg: 'linear-gradient(135deg,#2c3e50,#4ca1af)', emoji: '⚙️' },
-  // Energy
+  // Spot metals (forex/CFD convention)
+  XAUUSD:   { bg: 'linear-gradient(135deg,#b8860b,#ffd700)', emoji: 'Au' },
+  XAGUSD:   { bg: 'linear-gradient(135deg,#708090,#c0c0c0)', emoji: 'Ag' },
+  // Energy indices (TVC)
   USOIL:    { bg: 'linear-gradient(135deg,#1a1a2e,#4a4a6e)', emoji: '🛢️' },
   UKOIL:    { bg: 'linear-gradient(135deg,#0f3460,#533483)', emoji: '🛢️' },
-  NGAS:     { bg: 'linear-gradient(135deg,#f46b45,#eea849)', emoji: '🔥' },
-  // Grains & Crops
-  WHEAT:    { bg: 'linear-gradient(135deg,#c8a951,#e8d5a3)', emoji: '🌾' },
-  CORN:     { bg: 'linear-gradient(135deg,#f7971e,#ffd200)', emoji: '🌽' },
-  SOYBEAN:  { bg: 'linear-gradient(135deg,#56ab2f,#a8e063)', emoji: '🫘' },
-  RICE:     { bg: 'linear-gradient(135deg,#e8d5a3,#c8a951)', emoji: '🍚' },
-  // Soft Commodities
-  COFFEE:   { bg: 'linear-gradient(135deg,#4b2c20,#8b5e3c)', emoji: '☕' },
-  COCOA:    { bg: 'linear-gradient(135deg,#3d1c02,#7b3f00)', emoji: '🍫' },
-  SUGAR:    { bg: 'linear-gradient(135deg,#e96c6c,#f7c59f)', emoji: '🍬' },
-  COTTON:   { bg: 'linear-gradient(135deg,#c8e6fa,#e8f4fd)', emoji: '🌸' },
-  // Base Metals
-  COPPER:   { bg: 'linear-gradient(135deg,#b5541c,#e07b39)', emoji: '🔶' },
-  ALUMINIUM:{ bg: 'linear-gradient(135deg,#9e9e9e,#e0e0e0)', emoji: '🔩' },
-  ALUMINUM: { bg: 'linear-gradient(135deg,#9e9e9e,#e0e0e0)', emoji: '🔩' },
-  ZINC:     { bg: 'linear-gradient(135deg,#607d8b,#90a4ae)', emoji: '⚙️' },
-  NICKEL:   { bg: 'linear-gradient(135deg,#455a64,#78909c)', emoji: '🔩' },
-  LEAD:     { bg: 'linear-gradient(135deg,#546e7a,#b0bec5)', emoji: '⚙️' },
-  TIN:      { bg: 'linear-gradient(135deg,#78909c,#cfd8dc)', emoji: '🔩' },
-  // Livestock
-  CATTLE:   { bg: 'linear-gradient(135deg,#8d6e63,#d7ccc8)', emoji: '🐄' },
-  HOGS:     { bg: 'linear-gradient(135deg,#f48fb1,#f8bbd0)', emoji: '🐷' },
+  NATGAS:   { bg: 'linear-gradient(135deg,#f46b45,#eea849)', emoji: '🔥' },
+  // Exchange continuous futures — suffix 1! is the TradingView front-month series.
+  'PL1!':   { bg: 'linear-gradient(135deg,#4a4a6a,#a8a9ad)', emoji: 'Pt' },
+  'PA1!':   { bg: 'linear-gradient(135deg,#2c3e50,#4ca1af)', emoji: 'Pd' },
+  'HG1!':   { bg: 'linear-gradient(135deg,#b5541c,#e07b39)', emoji: 'Cu' },
+  'AH1!':   { bg: 'linear-gradient(135deg,#9e9e9e,#e0e0e0)', emoji: 'Al' },
+  'ZS1!':   { bg: 'linear-gradient(135deg,#607d8b,#90a4ae)', emoji: 'Zn' },
+  'NI1!':   { bg: 'linear-gradient(135deg,#455a64,#78909c)', emoji: 'Ni' },
+  'PB1!':   { bg: 'linear-gradient(135deg,#546e7a,#b0bec5)', emoji: 'Pb' },
+  'SN1!':   { bg: 'linear-gradient(135deg,#78909c,#cfd8dc)', emoji: 'Sn' },
+  'ZW1!':   { bg: 'linear-gradient(135deg,#c8a951,#e8d5a3)', emoji: '🌾' },
+  'ZC1!':   { bg: 'linear-gradient(135deg,#f7971e,#ffd200)', emoji: '🌽' },
+  'ZR1!':   { bg: 'linear-gradient(135deg,#e8d5a3,#c8a951)', emoji: '🍚' },
+  'KC1!':   { bg: 'linear-gradient(135deg,#4b2c20,#8b5e3c)', emoji: '☕' },
+  'CC1!':   { bg: 'linear-gradient(135deg,#3d1c02,#7b3f00)', emoji: '🍫' },
+  'CT1!':   { bg: 'linear-gradient(135deg,#c8e6fa,#e8f4fd)', emoji: '🧶' },
+  'SB1!':   { bg: 'linear-gradient(135deg,#e96c6c,#f7c59f)', emoji: '🍬' },
+  'LBR1!':  { bg: 'linear-gradient(135deg,#8d6e63,#bcaaa4)', emoji: '🪵' },
+  'OJ1!':   { bg: 'linear-gradient(135deg,#ff8c00,#ffd700)', emoji: '🍊' },
+  'LE1!':   { bg: 'linear-gradient(135deg,#8d6e63,#d7ccc8)', emoji: '🐄' },
+  'HE1!':   { bg: 'linear-gradient(135deg,#f48fb1,#f8bbd0)', emoji: '🐷' },
+};
+
+const COMMODITY_LOGO_URLS: Record<string, string> = {
+  XAUUSD: 'https://s3-symbol-logo.tradingview.com/metal/gold--600.png',
+  XAGUSD: 'https://s3-symbol-logo.tradingview.com/metal/silver--600.png',
+  USOIL: 'https://s3-symbol-logo.tradingview.com/crude-oil--600.png',
+  UKOIL: 'https://s3-symbol-logo.tradingview.com/crude-oil--600.png',
+  'NG1!': 'https://s3-symbol-logo.tradingview.com/natural-gas--600.png',
+  'PL1!': 'https://s3-symbol-logo.tradingview.com/metal/platinum--600.png',
+  'PA1!': 'https://s3-symbol-logo.tradingview.com/metal/palladium--600.png',
+  'HG1!': 'https://s3-symbol-logo.tradingview.com/metal/copper--600.png',
+  'AH1!': 'https://s3-symbol-logo.tradingview.com/metal/aluminum--600.png',
+  'LME:ZS1!': 'https://s3-symbol-logo.tradingview.com/metal/zinc--600.png',
+  'CBOT:ZS1!': 'https://s3-symbol-logo.tradingview.com/commodity/soybean--600.png',
+  'NI1!': 'https://s3-symbol-logo.tradingview.com/metal/nickel--600.png',
+  'PB1!': 'https://s3-symbol-logo.tradingview.com/metal/lead--600.png',
+  'SN1!': 'https://s3-symbol-logo.tradingview.com/metal/tin--600.png',
+  'ZW1!': 'https://s3-symbol-logo.tradingview.com/commodity/wheat--600.png',
+  'ZC1!': 'https://s3-symbol-logo.tradingview.com/commodity/corn--600.png',
+  'ZR1!': 'https://s3-symbol-logo.tradingview.com/commodity/rice--600.png',
+  'KC1!': 'https://s3-symbol-logo.tradingview.com/commodity/coffee--600.png',
+  'CC1!': 'https://s3-symbol-logo.tradingview.com/cocoa--600.png',
+  'CT1!': 'https://s3-symbol-logo.tradingview.com/commodity/cotton--600.png',
+  'SB1!': 'https://s3-symbol-logo.tradingview.com/commodity/sugar--600.png',
+  'LBR1!': 'https://s3-symbol-logo.tradingview.com/commodity/softs--600.png',
+  'OJ1!': 'https://s3-symbol-logo.tradingview.com/orange-juice--600.png',
+  'LE1!': 'https://s3-symbol-logo.tradingview.com/cattle--600.png',
+  'HE1!': 'https://s3-symbol-logo.tradingview.com/hog--600.png',
 };
 
 function getCurrencyFlag(symbol: string): string | null {
@@ -242,7 +274,7 @@ function getCurrencyFlag(symbol: string): string | null {
   return countryCode ? `https://flagcdn.com/w40/${countryCode}.png` : null;
 }
 
-function AssetButtonIcon({ symbol, category }: { symbol: string; category: string }) {
+function AssetButtonIcon({ symbol, category, exchange }: { symbol: string; category: string; exchange?: string }) {
   const [imgError, setImgError] = useState(false);
   const [stockFallback, setStockFallback] = useState(0); // 0=clearbit, 1=google favicon, 2=initials
   const [flagError, setFlagError] = useState(false);
@@ -341,13 +373,23 @@ function AssetButtonIcon({ symbol, category }: { symbol: string; category: strin
 
   if (isCommodity) {
     const key = symbol.replace('/', '').toUpperCase();
+    const logoUrl = COMMODITY_LOGO_URLS[exchange ? `${exchange.toUpperCase()}:${key}` : ''] ?? COMMODITY_LOGO_URLS[key];
+    if (logoUrl) {
+      return <img src={logoUrl} alt="" aria-hidden="true" width={20} height={20} style={{ width: 20, height: 20, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }} />;
+    }
     const config = COMMODITY_ICONS[key];
     if (config) {
+      // Element-symbol entries (e.g. "Cu", "Al") are plain text, not an
+      // emoji glyph — size/weight them like a ticker badge instead.
+      const isElementSymbol = /^[A-Z][a-z]?$/.test(config.emoji);
       return (
         <div style={{
           width: 20, height: 20, borderRadius: '50%', background: config.bg,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          flexShrink: 0, fontSize: 11,
+          flexShrink: 0,
+          fontSize: isElementSymbol ? 8 : 11,
+          fontWeight: isElementSymbol ? 700 : 400,
+          color: isElementSymbol ? '#fff' : undefined,
         }}>
           {config.emoji}
         </div>
@@ -1200,7 +1242,7 @@ export default function DashboardPage() {
       try {
         const { data, error } = await supabase
           .from('assets')
-          .select('id, symbol, name, category_id, asset_categories(name)')
+          .select('id, symbol, name, exchange, category_id, asset_categories(name)')
           .eq('is_active', true)
           .order('name');
 
@@ -1210,6 +1252,7 @@ export default function DashboardPage() {
             symbol: a.symbol,
             name: a.name,
             category: a.asset_categories?.name ?? 'crypto',
+            exchange: a.exchange ?? undefined,
           }));
           setAssets(mapped);
           if (mapped.length > 0 && !selectedAsset) {
@@ -1529,12 +1572,22 @@ export default function DashboardPage() {
 
   const handleCloseTrade = useCallback(async (trade: Trade) => {
     if (closingTradeIds.has(trade.id)) return;
-    const chartPrice = chartRef.current?.getCurrentPrice() ?? null;
-    if (!chartPrice) {
-      setToast({ message: 'Chart not ready, please wait', type: 'error' });
+    setClosingTradeIds((prev) => new Set([...prev, trade.id]));
+    let chartPrice: number;
+    try {
+      // Resolve the price for THIS trade's own asset — not whatever
+      // instrument the chart currently has open — so a trade can never be
+      // settled against the wrong instrument's price.
+      chartPrice = await getLivePriceForSymbol(trade.asset_symbol);
+    } catch {
+      setToast({ message: 'Failed to fetch price, please try again', type: 'error' });
+      setClosingTradeIds((prev) => {
+        const next = new Set(prev);
+        next.delete(trade.id);
+        return next;
+      });
       return;
     }
-    setClosingTradeIds((prev) => new Set([...prev, trade.id]));
     try {
       const { error } = await supabase.rpc('settle_trade', {
         p_trade_id: trade.id,
@@ -1588,18 +1641,19 @@ export default function DashboardPage() {
 
   const handleCloseAll = useCallback(async () => {
     setShowCloseAllConfirm(false);
-    const chartPrice = chartRef.current?.getCurrentPrice() ?? null;
-    if (!chartPrice) {
-      setToast({ message: 'Chart not ready, please wait', type: 'error' });
-      return;
-    }
     setCloseAllLoading(true);
     try {
       const tradesToClose = [...openTrades];
+      // Resolve each trade's own asset price individually — "Close All" can
+      // span multiple instruments, so no single chart price is ever reused
+      // across trades of different assets.
+      let lastExitPrice: number | null = null;
       for (const trade of tradesToClose) {
+        const exitPriceForTrade = await getLivePriceForSymbol(trade.asset_symbol);
+        lastExitPrice = exitPriceForTrade;
         await supabase.rpc('settle_trade', {
           p_trade_id: trade.id,
-          p_exit_price: chartPrice,
+          p_exit_price: exitPriceForTrade,
         });
       }
       // Dismiss notification if it belongs to any of the closed trades
@@ -1611,10 +1665,10 @@ export default function DashboardPage() {
       });
 
       // Show WIN/LOSS result for the last trade (or aggregate)
-      if (tradesToClose.length > 0) {
+      if (tradesToClose.length > 0 && lastExitPrice !== null) {
         const lastTrade = tradesToClose[tradesToClose.length - 1];
         const entryPrice = lastTrade.entry_price;
-        const exitPrice = chartPrice;
+        const exitPrice = lastExitPrice;
         let result: 'win' | 'loss';
         if (lastTrade.order_type === 'buy') {
           result = exitPrice >= entryPrice ? 'win' : 'loss';
@@ -1822,7 +1876,7 @@ export default function DashboardPage() {
                   }}
                 >
                   {selectedAsset ? (
-                    <AssetButtonIcon symbol={selectedAsset.symbol} category={selectedAsset.category} />
+                    <AssetButtonIcon symbol={selectedAsset.symbol} category={selectedAsset.category} exchange={selectedAsset.exchange} />
                   ) : (
                     <div style={{ width: 20, height: 20, borderRadius: '50%', background: '#334155' }} />
                   )}
@@ -1917,6 +1971,7 @@ export default function DashboardPage() {
                     ref={chartRef}
                     symbol={selectedAsset.symbol}
                     category={selectedAsset.category}
+                    exchange={selectedAsset.exchange}
                     openTrades={openTrades.map((t) => ({
                       id: t.id,
                       entry_price: t.entry_price,

@@ -103,6 +103,17 @@ function normalizeSymbol(binanceSymbol: string): string | null {
   return binanceSymbol.slice(0, -USDT_SUFFIX.length); // e.g. BTCUSDT → BTC
 }
 
+// ─── Symbol Aliases (free real-time proxy feeds) ─────────────────────────────
+// Some tracked instruments have no free real-time feed of their own. Where a
+// tightly-tracking tokenized asset already streams from Binance, its ticker
+// is also written to the proxied asset's row — in addition to (not instead
+// of) its own row, if one exists.
+// PAXG (Pax Gold, backed 1:1 by physical gold) tracks spot XAU/USD, so its
+// ticker doubles as a free real-time feed for the XAUUSD asset.
+const SYMBOL_ALIASES: Record<string, string[]> = {
+  PAXG: ['XAUUSD'],
+};
+
 // ─── Batch Upsert ─────────────────────────────────────────────────────────────
 
 async function flushPendingUpdates(): Promise<void> {
@@ -147,19 +158,28 @@ function handleMessage(raw: string): void {
     const base = normalizeSymbol(ticker.s);
     if (!base) continue;
 
-    const assetId = assetCache.get(base);
-    if (!assetId) continue;
+    // Update the ticker's own asset (if tracked) plus any aliased assets
+    // that use this ticker as their real-time proxy feed.
+    const targets = [base, ...(SYMBOL_ALIASES[base] ?? [])];
+    let matchedAny = false;
 
-    pendingUpdates.set(assetId, {
-      asset_id: assetId,
-      price: parseFloat(ticker.c),
-      price_change_pct_24h: parseFloat(ticker.P),
-      volume_24h: parseFloat(ticker.v),
-      high_24h: parseFloat(ticker.h),
-      low_24h: parseFloat(ticker.l),
-      timestamp: now,
-    });
-    matched++;
+    for (const target of targets) {
+      const assetId = assetCache.get(target);
+      if (!assetId) continue;
+
+      pendingUpdates.set(assetId, {
+        asset_id: assetId,
+        price: parseFloat(ticker.c),
+        price_change_pct_24h: parseFloat(ticker.P),
+        volume_24h: parseFloat(ticker.v),
+        high_24h: parseFloat(ticker.h),
+        low_24h: parseFloat(ticker.l),
+        timestamp: now,
+      });
+      matchedAny = true;
+    }
+
+    if (matchedAny) matched++;
   }
 
   if (matched > 0) {

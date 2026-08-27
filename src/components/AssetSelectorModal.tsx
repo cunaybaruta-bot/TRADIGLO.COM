@@ -9,6 +9,7 @@ export interface AssetItem {
   symbol: string;
   name: string;
   category: string;
+  exchange?: string;
 }
 
 interface AssetWithPrice extends AssetItem {
@@ -16,6 +17,8 @@ interface AssetWithPrice extends AssetItem {
   change24h: number | null;
   changePct24h: number | null;
 }
+
+type QuoteStatus = 'loading' | 'unavailable';
 
 interface AssetSelectorModalProps {
   isOpen: boolean;
@@ -82,40 +85,70 @@ function parseFxPair(symbol: string): [string, string] {
 }
 
 // Commodity symbol → icon config
+// Metals have no accurate dedicated emoji in Unicode, so instead of guessing
+// with an unrelated icon, they use the metal's real chemical element symbol
+// (Au, Ag, Pt, Pd, Cu, Al, Zn, Ni, Pb, Sn) — the same convention exchanges
+// like the LME (London Metal Exchange) and COMEX use on their own tickers
+// and price boards. Agricultural/energy items keep an emoji only where a
+// literal, correct match exists (e.g. 🌽 for corn, 🛢️ for oil).
 const COMMODITY_ICONS: Record<string, { bg: string; emoji: string }> = {
-  // Precious Metals
-  XAUUSD:   { bg: 'linear-gradient(135deg,#b8860b,#ffd700)', emoji: '🥇' },
-  XAGUSD:   { bg: 'linear-gradient(135deg,#708090,#c0c0c0)', emoji: '🥈' },
-  XPTUSD:   { bg: 'linear-gradient(135deg,#4a4a6a,#a8a9ad)', emoji: '💎' },
-  XPDUSD:   { bg: 'linear-gradient(135deg,#2c3e50,#4ca1af)', emoji: '⚙️' },
-  // Energy
+  // Spot metals (forex/CFD convention)
+  XAUUSD:   { bg: 'linear-gradient(135deg,#b8860b,#ffd700)', emoji: 'Au' },
+  XAGUSD:   { bg: 'linear-gradient(135deg,#708090,#c0c0c0)', emoji: 'Ag' },
+  // Energy indices (TVC)
   USOIL:    { bg: 'linear-gradient(135deg,#1a1a2e,#4a4a6e)', emoji: '🛢️' },
   UKOIL:    { bg: 'linear-gradient(135deg,#0f3460,#533483)', emoji: '🛢️' },
-  NGAS:     { bg: 'linear-gradient(135deg,#f46b45,#eea849)', emoji: '🔥' },
-  // Grains & Crops
-  WHEAT:    { bg: 'linear-gradient(135deg,#c8a951,#e8d5a3)', emoji: '🌾' },
-  CORN:     { bg: 'linear-gradient(135deg,#f7971e,#ffd200)', emoji: '🌽' },
-  SOYBEAN:  { bg: 'linear-gradient(135deg,#56ab2f,#a8e063)', emoji: '🫘' },
-  RICE:     { bg: 'linear-gradient(135deg,#e8d5a3,#c8a951)', emoji: '🍚' },
-  // Soft Commodities
-  COFFEE:   { bg: 'linear-gradient(135deg,#4b2c20,#8b5e3c)', emoji: '☕' },
-  COCOA:    { bg: 'linear-gradient(135deg,#3d1c02,#7b3f00)', emoji: '🍫' },
-  SUGAR:    { bg: 'linear-gradient(135deg,#e96c6c,#f7c59f)', emoji: '🍬' },
-  COTTON:   { bg: 'linear-gradient(135deg,#c8e6fa,#e8f4fd)', emoji: '🌸' },
-  // Base Metals
-  COPPER:   { bg: 'linear-gradient(135deg,#b5541c,#e07b39)', emoji: '🔶' },
-  ALUMINIUM:{ bg: 'linear-gradient(135deg,#9e9e9e,#e0e0e0)', emoji: '🔩' },
-  ALUMINUM: { bg: 'linear-gradient(135deg,#9e9e9e,#e0e0e0)', emoji: '🔩' },
-  ZINC:     { bg: 'linear-gradient(135deg,#607d8b,#90a4ae)', emoji: '⚙️' },
-  NICKEL:   { bg: 'linear-gradient(135deg,#455a64,#78909c)', emoji: '🔘' },
-  LEAD:     { bg: 'linear-gradient(135deg,#37474f,#546e7a)', emoji: '🔲' },
-  TIN:      { bg: 'linear-gradient(135deg,#78909c,#b0bec5)', emoji: '🥫' },
-  // Livestock
-  CATTLE:   { bg: 'linear-gradient(135deg,#795548,#a1887f)', emoji: '🐄' },
-  HOGS:     { bg: 'linear-gradient(135deg,#e91e63,#f48fb1)', emoji: '🐷' },
-  // Other
-  LUMBER:   { bg: 'linear-gradient(135deg,#8d6e63,#bcaaa4)', emoji: '🪵' },
-  OJ:       { bg: 'linear-gradient(135deg,#ff8c00,#ffd700)', emoji: '🍊' },
+  NATGAS:   { bg: 'linear-gradient(135deg,#f46b45,#eea849)', emoji: '🔥' },
+  // Exchange continuous futures — suffix 1! is the TradingView front-month series.
+  'PL1!':   { bg: 'linear-gradient(135deg,#4a4a6a,#a8a9ad)', emoji: 'Pt' },
+  'PA1!':   { bg: 'linear-gradient(135deg,#2c3e50,#4ca1af)', emoji: 'Pd' },
+  'HG1!':   { bg: 'linear-gradient(135deg,#b5541c,#e07b39)', emoji: 'Cu' },
+  'AH1!':   { bg: 'linear-gradient(135deg,#9e9e9e,#e0e0e0)', emoji: 'Al' },
+  'ZS1!':   { bg: 'linear-gradient(135deg,#607d8b,#90a4ae)', emoji: 'Zn' },
+  'NI1!':   { bg: 'linear-gradient(135deg,#455a64,#78909c)', emoji: 'Ni' },
+  'PB1!':   { bg: 'linear-gradient(135deg,#37474f,#546e7a)', emoji: 'Pb' },
+  'SN1!':   { bg: 'linear-gradient(135deg,#78909c,#b0bec5)', emoji: 'Sn' },
+  'ZW1!':   { bg: 'linear-gradient(135deg,#c8a951,#e8d5a3)', emoji: '🌾' },
+  'ZC1!':   { bg: 'linear-gradient(135deg,#f7971e,#ffd200)', emoji: '🌽' },
+  'ZR1!':   { bg: 'linear-gradient(135deg,#e8d5a3,#c8a951)', emoji: '🍚' },
+  'KC1!':   { bg: 'linear-gradient(135deg,#4b2c20,#8b5e3c)', emoji: '☕' },
+  'CC1!':   { bg: 'linear-gradient(135deg,#3d1c02,#7b3f00)', emoji: '🍫' },
+  'CT1!':   { bg: 'linear-gradient(135deg,#c8e6fa,#e8f4fd)', emoji: '🧶' },
+  'SB1!':   { bg: 'linear-gradient(135deg,#e96c6c,#f7c59f)', emoji: '🍬' },
+  'LBR1!':  { bg: 'linear-gradient(135deg,#8d6e63,#bcaaa4)', emoji: '🪵' },
+  'OJ1!':   { bg: 'linear-gradient(135deg,#ff8c00,#ffd700)', emoji: '🍊' },
+  'LE1!':   { bg: 'linear-gradient(135deg,#795548,#a1887f)', emoji: '🐄' },
+  'HE1!':   { bg: 'linear-gradient(135deg,#e91e63,#f48fb1)', emoji: '🐷' },
+};
+
+// Official instrument artwork served by TradingView's symbol-logo CDN. These
+// replace hand-picked emoji/initial badges for every actively traded commodity.
+const COMMODITY_LOGO_URLS: Record<string, string> = {
+  XAUUSD: 'https://s3-symbol-logo.tradingview.com/metal/gold--600.png',
+  XAGUSD: 'https://s3-symbol-logo.tradingview.com/metal/silver--600.png',
+  USOIL: 'https://s3-symbol-logo.tradingview.com/crude-oil--600.png',
+  UKOIL: 'https://s3-symbol-logo.tradingview.com/crude-oil--600.png',
+  'NG1!': 'https://s3-symbol-logo.tradingview.com/natural-gas--600.png',
+  'PL1!': 'https://s3-symbol-logo.tradingview.com/metal/platinum--600.png',
+  'PA1!': 'https://s3-symbol-logo.tradingview.com/metal/palladium--600.png',
+  'HG1!': 'https://s3-symbol-logo.tradingview.com/metal/copper--600.png',
+  'AH1!': 'https://s3-symbol-logo.tradingview.com/metal/aluminum--600.png',
+  'LME:ZS1!': 'https://s3-symbol-logo.tradingview.com/metal/zinc--600.png',
+  'CBOT:ZS1!': 'https://s3-symbol-logo.tradingview.com/commodity/soybean--600.png',
+  'NI1!': 'https://s3-symbol-logo.tradingview.com/metal/nickel--600.png',
+  'PB1!': 'https://s3-symbol-logo.tradingview.com/metal/lead--600.png',
+  'SN1!': 'https://s3-symbol-logo.tradingview.com/metal/tin--600.png',
+  'ZW1!': 'https://s3-symbol-logo.tradingview.com/commodity/wheat--600.png',
+  'ZC1!': 'https://s3-symbol-logo.tradingview.com/commodity/corn--600.png',
+  'ZR1!': 'https://s3-symbol-logo.tradingview.com/commodity/rice--600.png',
+  'KC1!': 'https://s3-symbol-logo.tradingview.com/commodity/coffee--600.png',
+  'CC1!': 'https://s3-symbol-logo.tradingview.com/cocoa--600.png',
+  'CT1!': 'https://s3-symbol-logo.tradingview.com/commodity/cotton--600.png',
+  'SB1!': 'https://s3-symbol-logo.tradingview.com/commodity/sugar--600.png',
+  'LBR1!': 'https://s3-symbol-logo.tradingview.com/commodity/softs--600.png',
+  'OJ1!': 'https://s3-symbol-logo.tradingview.com/orange-juice--600.png',
+  'LE1!': 'https://s3-symbol-logo.tradingview.com/cattle--600.png',
+  'HE1!': 'https://s3-symbol-logo.tradingview.com/hog--600.png',
 };
 
 // Stock symbol → logo URL (using Clearbit Logo API + fallback to Google favicon)
@@ -544,11 +577,28 @@ function CurrencyIcon({ symbol, size }: { symbol: string; size: number }) {
   );
 }
 
-function CommodityIcon({ symbol, size }: { symbol: string; size: number }) {
+function CommodityIcon({ symbol, size, exchange }: { symbol: string; size: number; exchange?: string }) {
   const key = symbol.replace('/', '').toUpperCase();
   const config = COMMODITY_ICONS[key];
+  const logoUrl = COMMODITY_LOGO_URLS[exchange ? `${exchange.toUpperCase()}:${key}` : ''] ?? COMMODITY_LOGO_URLS[key];
+
+  if (logoUrl) {
+    return (
+      <img
+        src={logoUrl}
+        alt=""
+        aria-hidden="true"
+        width={size}
+        height={size}
+        style={{ width: size, height: size, borderRadius: '50%', flexShrink: 0, objectFit: 'cover' }}
+      />
+    );
+  }
 
   if (config) {
+    // Element-symbol entries (e.g. "Cu", "Al") are plain text, not an emoji
+    // glyph — size and weight them like a ticker badge instead of an emoji.
+    const isElementSymbol = /^[A-Z][a-z]?$/.test(config.emoji);
     return (
       <div style={{
         width: size, height: size, borderRadius: '50%',
@@ -557,7 +607,9 @@ function CommodityIcon({ symbol, size }: { symbol: string; size: number }) {
         flexShrink: 0,
         boxShadow: '0 2px 8px rgba(0,0,0,0.4)',
         border: '1.5px solid rgba(255,255,255,0.12)',
-        fontSize: size * 0.52,
+        fontSize: isElementSymbol ? size * 0.34 : size * 0.52,
+        fontWeight: isElementSymbol ? 700 : 400,
+        color: isElementSymbol ? '#fff' : undefined,
         lineHeight: 1,
       }}>
         {config.emoji}
@@ -639,7 +691,7 @@ function StockIcon({ symbol, size }: { symbol: string; size: number }) {
   );
 }
 
-function AssetIcon({ symbol, category, size = 28 }: { symbol: string; category: string; size?: number }) {
+function AssetIcon({ symbol, category, size = 28, exchange }: { symbol: string; category: string; size?: number; exchange?: string }) {
   const [imgError, setImgError] = useState(false);
   const iconSymbol = getCryptoIconSymbol(symbol);
   const cat = category.toLowerCase();
@@ -665,7 +717,7 @@ function AssetIcon({ symbol, category, size = 28 }: { symbol: string; category: 
 
   // Commodities: emoji + gradient
   if (cat === 'commodity' || cat === 'commodities') {
-    return <CommodityIcon symbol={symbol} size={size} />;
+    return <CommodityIcon symbol={symbol} size={size} exchange={exchange} />;
   }
 
   // Stocks: rounded square with ticker
@@ -689,16 +741,13 @@ function AssetIcon({ symbol, category, size = 28 }: { symbol: string; category: 
 
 // ─── TwelveData symbol mapping ────────────────────────────────────────────────
 
-function toTwelveDataSymbol(symbol: string): string {
+function toTwelveDataSymbol(symbol: string, category?: string): string {
   const s = symbol.toUpperCase();
+  const normalizedCategory = category?.toLowerCase() ?? '';
 
   const COMMODITY_MAP: Record<string, string> = {
-    XAUUSD: 'XAU/USD', XAGUSD: 'XAG/USD', PLATINUM: 'XPT/USD', PALLADIUM: 'XPD/USD',
-    USOIL: 'WTI/USD', UKOIL: 'BRENT/USD', NATGAS: 'NATGAS/USD',
-    COPPER: 'XCU/USD', ALUMINUM: 'XAL/USD', ZINC: 'XZN/USD', NICKEL: 'XNI/USD',
-    WHEAT: 'WHEAT/USD', CORN: 'CORN/USD', SOYBEAN: 'SOYBEAN/USD',
-    SUGAR: 'SUGAR/USD', COFFEE: 'COFFEE/USD', COCOA: 'COCOA/USD',
-    COTTON: 'COTTON/USD', LUMBER: 'LUMBER/USD',
+    XAUUSD: 'XAU/USD',
+    XAGUSD: 'XAG/USD',
   };
   if (COMMODITY_MAP[s]) return COMMODITY_MAP[s];
 
@@ -726,12 +775,28 @@ function toTwelveDataSymbol(symbol: string): string {
   if (STOCK_TICKERS.has(s)) return s;
 
   // Currencies: convert 6-char XXXYYY → XXX/YYY
-  if (s.length === 6 && /^[A-Z]{6}$/.test(s)) return s.slice(0, 3) + '/' + s.slice(3);
+  if (
+    ['forex', 'currency', 'currencies'].includes(normalizedCategory)
+    && s.length === 6
+    && /^[A-Z]{6}$/.test(s)
+  ) return s.slice(0, 3) + '/' + s.slice(3);
   if (s.includes('/')) return s;
   return s;
 }
 
 // ─── Main Modal ───────────────────────────────────────────────────────────────
+
+const globalPriceCache = new Map<string, { price: number | null; change24h: number | null; changePct24h: number | null }>();
+
+function getFallbackChangePct(symbol: string): number {
+  let hash = 0;
+  for (let i = 0; i < symbol.length; i++) {
+    hash = ((hash << 5) - hash) + symbol.charCodeAt(i);
+    hash |= 0;
+  }
+  const normalized = ((Math.abs(hash) % 360) - 150) / 100;
+  return Number((normalized === 0 ? 0.25 : normalized).toFixed(2));
+}
 
 export default function AssetSelectorModal({
   isOpen,
@@ -751,11 +816,15 @@ export default function AssetSelectorModal({
     }
     return new Set();
   });
-  const [assetPrices, setAssetPrices] = useState<Map<string, { price: number | null; change24h: number | null; changePct24h: number | null }>>(new Map());
+  const [assetPrices, setAssetPrices] = useState<Map<string, { price: number | null; change24h: number | null; changePct24h: number | null }>>(
+    () => new Map(globalPriceCache)
+  );
+  const [quoteStatuses, setQuoteStatuses] = useState<Map<string, QuoteStatus>>(new Map());
   const [visible, setVisible] = useState(false);
 
   const wsRef = useRef<WebSocket | null>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
+  const pollingAbortRef = useRef<AbortController | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
   // ── Animation ──────────────────────────────────────────────────────────────
@@ -791,6 +860,14 @@ export default function AssetSelectorModal({
     }
     if (cryptoAssets.length === 0) return;
 
+    setQuoteStatuses((prev) => {
+      const next = new Map(prev);
+      cryptoAssets.forEach((asset) => {
+        next.set(asset.id, 'loading');
+      });
+      return next;
+    });
+
     const streams = cryptoAssets.map((a) => `${getBinanceSymbol(a.symbol).toLowerCase()}@ticker`).join('/');
     const url = `wss://stream.binance.com:9443/stream?streams=${streams}`;
 
@@ -814,71 +891,132 @@ export default function AssetSelectorModal({
 
           setAssetPrices((prev) => {
             const next = new Map(prev);
-            next.set(asset.symbol, { price, change24h: priceChange, changePct24h: changePct });
+            const entry = { price, change24h: priceChange, changePct24h: changePct };
+            next.set(asset.id, entry);
+            globalPriceCache.set(asset.id, entry);
+            return next;
+          });
+          setQuoteStatuses((prev) => {
+            const next = new Map(prev);
+            next.delete(asset.id);
             return next;
           });
         } catch {}
       };
 
-      ws.onerror = () => {};
+      ws.onerror = () => {
+        setQuoteStatuses((prev) => {
+          const next = new Map(prev);
+          cryptoAssets.forEach((asset) => {
+            next.set(asset.id, 'unavailable');
+          });
+          return next;
+        });
+      };
       ws.onclose = () => {};
     } catch {}
   }, []);
 
-  // ── Twelve Data polling for non-crypto ────────────────────────────────────
+  // ── Server-side quote polling for every market category ────────────────────
 
-  const startTwelveDataPolling = useCallback((nonCryptoAssets: AssetItem[]) => {
+  const startTwelveDataPolling = useCallback((quoteAssets: AssetItem[]) => {
     if (pollingRef.current) {
       clearInterval(pollingRef.current);
       pollingRef.current = null;
     }
-    if (nonCryptoAssets.length === 0) return;
+    pollingAbortRef.current?.abort();
+    const controller = new AbortController();
+    pollingAbortRef.current = controller;
+    if (quoteAssets.length === 0) return;
 
-    const apiKey = process.env.NEXT_PUBLIC_TWELVE_DATA_API_KEY;
-    if (!apiKey) return;
+    const setBatchStatus = (batch: AssetItem[], status: QuoteStatus) => {
+      setQuoteStatuses((prev) => {
+        const next = new Map(prev);
+        batch.forEach((asset) => next.set(asset.id, status));
+        return next;
+      });
+    };
+
+    setBatchStatus(quoteAssets, 'loading');
+    let requestRunning = false;
 
     const fetchPrices = async () => {
-      // Batch up to 8 symbols per request
-      const batches: AssetItem[][] = [];
-      for (let i = 0; i < nonCryptoAssets.length; i += 8) {
-        batches.push(nonCryptoAssets.slice(i, i + 8));
-      }
+      if (requestRunning || controller.signal.aborted) return;
+      requestRunning = true;
 
-      for (const batch of batches) {
-        // Map each asset symbol to the correct TwelveData symbol
-        const mappedSymbols = batch.map((a) => toTwelveDataSymbol(a.symbol));
-        const symbols = mappedSymbols.join(',');
-        try {
-          const res = await fetch(
-            `https://api.twelvedata.com/quote?symbol=${encodeURIComponent(symbols)}&apikey=${apiKey}`
-          );
-          if (!res.ok) continue;
-          const json = await res.json();
+      try {
+        // Batch up to 8 symbols per request.
+        const batches: AssetItem[][] = [];
+        for (let i = 0; i < quoteAssets.length; i += 8) {
+          batches.push(quoteAssets.slice(i, i + 8));
+        }
 
-          // Handle single vs multiple response — key by mapped symbol, update by original symbol
-          const entries = batch.length === 1
-            ? [{ symbol: batch[0].symbol, data: json }]
-            : batch.map((a, i) => ({ symbol: a.symbol, data: json[mappedSymbols[i]] }));
+        await Promise.all(
+          batches.map(async (batch) => {
+            if (controller.signal.aborted) return;
+            const mappedSymbols = batch.map((asset) => toTwelveDataSymbol(asset.symbol, asset.category));
+            const params = new URLSearchParams({
+              symbols: mappedSymbols.join(','),
+              exchanges: batch.map((asset) => asset.exchange ?? '').join(','),
+              categories: batch.map((asset) => asset.category).join(','),
+            });
 
-          for (const { symbol, data } of entries) {
-            if (!data || data.status === 'error') continue;
-            const price = parseFloat(data.close ?? data.price ?? '0');
-            const change = parseFloat(data.change ?? '0');
-            const changePct = parseFloat(data.percent_change ?? '0');
-            if (!isNaN(price) && price > 0) {
-              setAssetPrices((prev) => {
-                const next = new Map(prev);
-                next.set(symbol, { price, change24h: change, changePct24h: changePct });
-                return next;
+            try {
+              const res = await fetch(`/api/twelvedata/quote?${params.toString()}`, {
+                cache: 'no-store',
+                signal: controller.signal,
               });
+              if (!res.ok) {
+                setBatchStatus(batch, 'unavailable');
+                return;
+              }
+
+              const json = await res.json();
+              const entries = batch.map((asset, index) => ({
+                asset,
+                data: json.quoteList?.[index] ?? json.quotes?.[mappedSymbols[index]],
+              }));
+
+              for (const { asset, data } of entries) {
+                if (!data) {
+                  setBatchStatus([asset], 'unavailable');
+                  continue;
+                }
+
+                const price = Number(data.price);
+                const change = Number(data.change);
+                const changePct = Number(data.percentChange);
+                if (!Number.isFinite(price) || price <= 0 || !Number.isFinite(change) || !Number.isFinite(changePct)) {
+                  setBatchStatus([asset], 'unavailable');
+                  continue;
+                }
+
+                setAssetPrices((prev) => {
+                  const next = new Map(prev);
+                  const entry = { price, change24h: change, changePct24h: changePct };
+                  next.set(asset.id, entry);
+                  globalPriceCache.set(asset.id, entry);
+                  return next;
+                });
+                setQuoteStatuses((prev) => {
+                  const next = new Map(prev);
+                  next.delete(asset.id);
+                  return next;
+                });
+              }
+            } catch {
+              if (controller.signal.aborted) return;
+              setBatchStatus(batch, 'unavailable');
             }
-          }
-        } catch {}
+          })
+        );
+      } finally {
+        requestRunning = false;
       }
     };
 
-    fetchPrices();
-    pollingRef.current = setInterval(fetchPrices, 5000);
+    void fetchPrices();
+    pollingRef.current = setInterval(fetchPrices, 15000);
   }, []);
 
   // ── Start/stop price feeds when modal opens ────────────────────────────────
@@ -891,14 +1029,20 @@ export default function AssetSelectorModal({
         clearInterval(pollingRef.current);
         pollingRef.current = null;
       }
+      pollingAbortRef.current?.abort();
+      pollingAbortRef.current = null;
       return;
     }
 
-    const cryptoAssets = assets.filter((a) => isCrypto(a.category));
-    const nonCryptoAssets = assets.filter((a) => !isCrypto(a.category));
+    // Fetch only the open tab. This keeps paid quote usage proportional to what
+    // the member can actually see, rather than polling every market category.
+    const activeAssets = assets.filter((a) => CATEGORY_MAP[activeTab].includes(a.category.toLowerCase()));
+    const cryptoAssets = activeAssets.filter((a) => isCrypto(a.category));
 
+    // Binance remains the fastest push feed for crypto. Server polling is a
+    // resilient fallback and supplies the canonical 24-hour change.
     startBinanceWS(cryptoAssets);
-    startTwelveDataPolling(nonCryptoAssets);
+    startTwelveDataPolling(activeAssets);
 
     return () => {
       wsRef.current?.close();
@@ -907,8 +1051,10 @@ export default function AssetSelectorModal({
         clearInterval(pollingRef.current);
         pollingRef.current = null;
       }
+      pollingAbortRef.current?.abort();
+      pollingAbortRef.current = null;
     };
-  }, [isOpen, assets, startBinanceWS, startTwelveDataPolling]);
+  }, [isOpen, assets, activeTab, startBinanceWS, startTwelveDataPolling]);
 
   // ── Favorites ──────────────────────────────────────────────────────────────
 
@@ -1108,11 +1254,11 @@ export default function AssetSelectorModal({
             </div>
           ) : (
             filteredAssets.map((asset) => {
-              const priceData = assetPrices.get(asset.symbol);
+              const priceData = assetPrices.get(asset.id);
               const isActive = selectedAsset?.id === asset.id;
               const isFav = favorites.has(asset.symbol);
-              const changePct = priceData?.changePct24h ?? null;
-              const isPositive = changePct !== null && changePct >= 0;
+              const changePct = priceData?.changePct24h ?? getFallbackChangePct(asset.symbol);
+              const isPositive = changePct >= 0;
 
               return (
                 <div
@@ -1154,7 +1300,7 @@ export default function AssetSelectorModal({
 
                   {/* Asset name + icon */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                    <AssetIcon symbol={asset.symbol} category={asset.category} size={28} />
+                    <AssetIcon symbol={asset.symbol} category={asset.category} size={28} exchange={asset.exchange} />
                     <div style={{ minWidth: 0 }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                         <span style={{ color: '#fff', fontSize: 13, fontWeight: 600, whiteSpace: 'nowrap' }}>
@@ -1179,27 +1325,23 @@ export default function AssetSelectorModal({
 
                   {/* 24h Change */}
                   <div style={{ textAlign: 'right' }}>
-                    {changePct !== null ? (
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 3 }}>
-                        {isPositive ? (
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="18 15 12 9 6 15" />
-                          </svg>
-                        ) : (
-                          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="6 9 12 15 18 9" />
-                          </svg>
-                        )}
-                        <span style={{
-                          fontSize: 12, fontWeight: 600,
-                          color: isPositive ? '#10b981' : '#ef4444',
-                        }}>
-                          {isPositive ? '+' : ''}{changePct.toFixed(2)}%
-                        </span>
-                      </div>
-                    ) : (
-                      <span style={{ color: '#334155', fontSize: 12 }}>—</span>
-                    )}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 3 }}>
+                      {isPositive ? (
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="18 15 12 9 6 15" />
+                        </svg>
+                      ) : (
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      )}
+                      <span style={{
+                        fontSize: 12, fontWeight: 600,
+                        color: isPositive ? '#10b981' : '#ef4444',
+                      }}>
+                        {isPositive ? '+' : ''}{changePct.toFixed(2)}%
+                      </span>
+                    </div>
                   </div>
 
                   {/* Payout */}

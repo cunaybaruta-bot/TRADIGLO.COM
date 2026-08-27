@@ -62,9 +62,18 @@ export default function CurrencyRatesPage() {
   };
 
   const CURRENCY_FLAGS: Record<string, string> = {
-    MYR: '🇲🇾', SGD: '🇸🇬', THB: '🇹🇭', VND: '🇻🇳',
-    JPY: '🇯🇵', KRW: '🇰🇷', USD: '🇺🇸', IDR: '🇮🇩', PHP: '🇵🇭',
-    EUR: '🇪🇺',
+    // Europe
+    EUR: '🇪🇺', GBP: '🇬🇧', CHF: '🇨🇭', SEK: '🇸🇪', NOK: '🇳🇴', DKK: '🇩🇰', PLN: '🇵🇱',
+    // South America
+    BRL: '🇧🇷', ARS: '🇦🇷', COP: '🇨🇴', CLP: '🇨🇱', PEN: '🇵🇪', UYU: '🇺🇾', PYG: '🇵🇾', BOB: '🇧🇴', VES: '🇻🇪',
+    // Asia & Pacific
+    MYR: '🇲🇾', SGD: '🇸🇬', THB: '🇹🇭', VND: '🇻🇳', JPY: '🇯🇵', KRW: '🇰🇷', IDR: '🇮🇩', PHP: '🇵🇭',
+    CNY: '🇨🇳', INR: '🇮🇳', HKD: '🇭🇰', TWD: '🇹🇼', PKR: '🇵🇰', BDT: '🇧🇩', LKR: '🇱🇰', MMK: '🇲🇲',
+    KHR: '🇰🇭', LAK: '🇱🇦', NPR: '🇳🇵', AUD: '🇦🇺', NZD: '🇳🇿',
+    // Middle East
+    SAR: '🇸🇦', AED: '🇦🇪', QAR: '🇶🇦', KWD: '🇰🇼', BHD: '🇧🇭', OMR: '🇴🇲', JOD: '🇯🇴',
+    // North America & Global
+    USD: '🇺🇸', CAD: '🇨🇦', MXN: '🇲🇽',
   };
 
   return (
