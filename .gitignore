@@ -2,6 +2,17 @@
 node_modules/
 package-lock.json
 
+# Local secrets
+.env
+.env.*
+!.env.sample
+
+# Local agent runtime state
+.claude/
+
+# Local Supabase CLI state
+supabase/.temp/
+
 # Next.js build output
 .next/
 out/

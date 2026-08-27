@@ -43,14 +43,29 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const KNOWN_COUNTRIES = [
+  // Asia & Pacific
   'Malaysia', 'Singapore', 'Thailand', 'Vietnam', 'Japan', 'South Korea',
   'Philippines', 'China', 'India', 'Hong Kong', 'Taiwan', 'Pakistan',
-  'Bangladesh', 'Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Oman', 'Sri Lanka',
-  'Myanmar', 'Indonesia', 'Cambodia', 'Laos', 'Nepal', 'United States', 'Global',
-  'Jordan', 'Bahrain', 'Portugal',
+  'Bangladesh', 'Sri Lanka', 'Myanmar', 'Indonesia', 'Cambodia', 'Laos', 'Nepal',
+  'Australia', 'New Zealand',
+
+  // Middle East
+  'Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Oman', 'Jordan', 'Bahrain',
+
+  // Europe
+  'Germany', 'United Kingdom', 'France', 'Italy', 'Spain', 'Netherlands',
+  'Switzerland', 'Belgium', 'Austria', 'Portugal', 'Ireland', 'Finland',
+  'Sweden', 'Norway', 'Denmark', 'Poland', 'Greece',
+
+  // South America
+  'Brazil', 'Argentina', 'Colombia', 'Chile', 'Peru', 'Uruguay', 'Paraguay', 'Bolivia', 'Ecuador', 'Venezuela',
+
+  // North America & Global
+  'United States', 'Canada', 'Mexico', 'Global',
 ];
 
 const FLAG_EMOJI: Record<string, string> = {
+  // Asia & Pacific
   Malaysia: '🇲🇾',
   Singapore: '🇸🇬',
   Thailand: '🇹🇭',
@@ -70,8 +85,13 @@ const FLAG_EMOJI: Record<string, string> = {
   Cambodia: '🇰🇭',
   Laos: '🇱🇦',
   Nepal: '🇳🇵',
+  Australia: '🇦🇺',
+  'New Zealand': '🇳🇿',
+
+  // Middle East
   'Saudi Arabia': '🇸🇦',
   UAE: '🇦🇪',
+  'United Arab Emirates': '🇦🇪',
   Qatar: '🇶🇦',
   Kuwait: '🇰🇼',
   Oman: '🇴🇲',
@@ -80,16 +100,44 @@ const FLAG_EMOJI: Record<string, string> = {
   Lebanon: '🇱🇧',
   Iraq: '🇮🇶',
   Turkey: '🇹🇷',
-  Portugal: '🇵🇹',
-  'United Kingdom': '🇬🇧',
+
+  // Europe
   Germany: '🇩🇪',
+  'United Kingdom': '🇬🇧',
+  UK: '🇬🇧',
   France: '🇫🇷',
+  Italy: '🇮🇹',
   Spain: '🇪🇸',
-  'United States': '🇺🇸',
-  Canada: '🇨🇦',
+  Netherlands: '🇳🇱',
+  Switzerland: '🇨🇭',
+  Belgium: '🇧🇪',
+  Austria: '🇦🇹',
+  Portugal: '🇵🇹',
+  Ireland: '🇮🇪',
+  Finland: '🇫🇮',
+  Sweden: '🇸🇪',
+  Norway: '🇳🇴',
+  Denmark: '🇩🇰',
+  Poland: '🇵🇱',
+  Greece: '🇬🇷',
+
+  // South America
   Brazil: '🇧🇷',
-  Australia: '🇦🇺',
-  'New Zealand': '🇳🇿',
+  Argentina: '🇦🇷',
+  Colombia: '🇨🇴',
+  Chile: '🇨🇱',
+  Peru: '🇵🇪',
+  Uruguay: '🇺🇾',
+  Paraguay: '🇵🇾',
+  Bolivia: '🇧🇴',
+  Ecuador: '🇪🇨',
+  Venezuela: '🇻🇪',
+
+  // North America, Africa & Global
+  'United States': '🇺🇸',
+  USA: '🇺🇸',
+  Canada: '🇨🇦',
+  Mexico: '🇲🇽',
   Nigeria: '🇳🇬',
   'South Africa': '🇿🇦',
   Kenya: '🇰🇪',

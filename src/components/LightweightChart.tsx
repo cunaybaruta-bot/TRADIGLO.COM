@@ -25,6 +25,7 @@ export interface LightweightChartHandle {
 interface LightweightChartProps {
   symbol: string;
   category?: string;
+  exchange?: string;
   openTrades?: Array<{ id: string; entry_price: number; order_type: 'buy' | 'sell'; status: string }>;
   onChartReady?: () => void;
   onPriceUpdate?: (price: number, change: number, changePct: number) => void;
@@ -94,6 +95,9 @@ const TIMEFRAMES: TimeframeConfig[] = [
 
 const WS_TIMEOUT_MS = 10_000;
 const CHART_HEIGHT = 380;
+const INITIAL_HISTORY_LIMIT = 500;
+const HISTORY_PAGE_SIZE = 500;
+const HISTORY_LOAD_THRESHOLD = 25;
 
 // ─── Fetch timeout helper ─────────────────────────────────────────────────────
 function fetchWithTimeout(url: string, timeoutMs = 5000, cacheSeconds = 0): Promise<Response> {
@@ -112,40 +116,46 @@ function isCrypto(category?: string, symbol?: string): boolean {
   return !!(symbol && CRYPTO_SYMBOLS.includes(symbol.toUpperCase().replace('USDT','').replace('/USDT','')));
 }
 
+// ── Free real-time proxy feeds ──────────────────────────────────────────────
+// Some non-crypto instruments don't have a free, reliable real-time feed of
+// their own (e.g. TwelveData gates commodities behind a paid plan). Where a
+// tightly-tracking tokenized asset trades on Binance, use its live ticker as
+// a free real-time stand-in instead of falling back to a simulated price.
+// XAUUSD -> PAXG (Pax Gold, backed 1:1 by physical gold, tracks spot XAU/USD).
+const BINANCE_PROXY_SYMBOLS: Record<string, string> = {
+  XAUUSD: 'PAXGUSDT',
+};
+
+function usesBinanceProxy(symbol: string): boolean {
+  return !!BINANCE_PROXY_SYMBOLS[symbol.toUpperCase()];
+}
+
+// lightweight-charts always formats time-axis labels in UTC. Every candle
+// timestamp we feed it is shifted by the viewer's own timezone offset so the
+// axis reads as their real local wall-clock time instead of UTC — the data
+// itself (price, elapsed time between candles) is untouched, only the label
+// shown to this viewer is corrected to match their real clock.
+function toLocalDisplayTime(unixSeconds: number): Time {
+  return (unixSeconds - new Date().getTimezoneOffset() * 60) as Time;
+}
+
 function toBinanceSymbol(symbol: string): string {
   const clean = symbol.replace('/', '').toUpperCase();
+  if (BINANCE_PROXY_SYMBOLS[clean]) return BINANCE_PROXY_SYMBOLS[clean];
   if (clean.endsWith('USDT')) return clean;
   return clean + 'USDT';
 }
 
-function toTwelveDataSymbol(symbol: string): string {
+function toTwelveDataSymbol(symbol: string, category?: string): string {
   const s = symbol.toUpperCase();
+  const normalizedCategory = category?.toLowerCase() ?? '';
 
-  // ── Commodities: use TwelveData-supported symbols ──────────────────────────
+  // ── Commodities with a verified Twelve Data mapping ────────────────────────
+  // Exchange futures (HG1!, ZC1!, KC1!, etc.) deliberately pass through
+  // untouched. They must not be relabelled as a made-up USD pair.
   const COMMODITY_MAP: Record<string, string> = {
-    // Precious metals
     XAUUSD: 'XAU/USD',
     XAGUSD: 'XAG/USD',
-    PLATINUM: 'XPT/USD',
-    PALLADIUM: 'XPD/USD',
-    // Energy
-    USOIL: 'WTI/USD',
-    UKOIL: 'BRENT/USD',
-    NATGAS: 'NATGAS/USD',
-    // Base metals — TwelveData uses these forex-style symbols
-    COPPER: 'XCU/USD',
-    ALUMINUM: 'XAL/USD',
-    ZINC: 'XZN/USD',
-    NICKEL: 'XNI/USD',
-    // Agricultural — TwelveData commodity symbols
-    WHEAT: 'WHEAT/USD',
-    CORN: 'CORN/USD',
-    SOYBEAN: 'SOYBEAN/USD',
-    SUGAR: 'SUGAR/USD',
-    COFFEE: 'COFFEE/USD',
-    COCOA: 'COCOA/USD',
-    COTTON: 'COTTON/USD',
-    LUMBER: 'LUMBER/USD',
   };
   if (COMMODITY_MAP[s]) return COMMODITY_MAP[s];
 
@@ -181,7 +191,11 @@ function toTwelveDataSymbol(symbol: string): string {
   if (STOCK_TICKERS.has(s)) return s;
 
   // ── Currencies: convert 6-char XXXYYY → XXX/YYY ──────────────────────────
-  if (s.length === 6 && /^[A-Z]{6}$/.test(s)) return s.slice(0, 3) + '/' + s.slice(3);
+  if (
+    ['forex', 'currency', 'currencies'].includes(normalizedCategory)
+    && s.length === 6
+    && /^[A-Z]{6}$/.test(s)
+  ) return s.slice(0, 3) + '/' + s.slice(3);
   if (s.includes('/')) return s;
 
   // Fallback: return as-is
@@ -190,10 +204,11 @@ function toTwelveDataSymbol(symbol: string): string {
 
 // ─── Binance fetch ────────────────────────────────────────────────────────────
 
-async function fetchBinanceKlines(binanceSymbol: string, interval: string, limit = 150): Promise<any[]> {
+async function fetchBinanceKlines(binanceSymbol: string, interval: string, limit = 150, endTime?: number): Promise<any[]> {
+  const endTimeParam = endTime ? `&endTime=${endTime}` : '';
   const urls = [
-    `https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&limit=${limit}`,
-    `https://data-api.binance.vision/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&limit=${limit}`,
+    `https://api.binance.com/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&limit=${limit}${endTimeParam}`,
+    `https://data-api.binance.vision/api/v3/klines?symbol=${binanceSymbol}&interval=${interval}&limit=${limit}${endTimeParam}`,
   ];
   try {
     const result = await Promise.any(
@@ -213,91 +228,34 @@ async function fetchBinanceKlines(binanceSymbol: string, interval: string, limit
 
 // ─── Twelve Data fetch ────────────────────────────────────────────────────────
 
-// Realistic base prices for common forex pairs and other non-crypto assets
-const FOREX_BASE_PRICES: Record<string, number> = {
-  // Forex pairs
-  'AUD/CAD': 0.8950, 'AUD/CHF': 0.5720, 'AUD/JPY': 98.50, 'AUD/NZD': 1.0820,
-  'AUD/USD': 0.6480, 'EUR/AUD': 1.6550, 'EUR/CAD': 1.5620, 'EUR/CHF': 0.9420,
-  'EUR/GBP': 0.8560, 'EUR/JPY': 162.40, 'EUR/NZD': 1.7980, 'EUR/USD': 1.0850,
-  'GBP/AUD': 1.9340, 'GBP/CAD': 1.8240, 'GBP/CHF': 1.1020, 'GBP/JPY': 189.80,
-  'GBP/NZD': 2.1020, 'GBP/USD': 1.2680, 'NZD/CAD': 0.8270, 'NZD/CHF': 0.5280,
-  'NZD/JPY': 90.80, 'NZD/USD': 0.5980, 'USD/CAD': 1.3620, 'USD/CHF': 0.8840,
-  'USD/JPY': 149.80, 'USD/MXN': 17.20, 'USD/SGD': 1.3420, 'USD/ZAR': 18.60,
-  // Precious metals
-  'XAU/USD': 3300.0, 'XAG/USD': 32.50, 'XPT/USD': 980.0, 'XPD/USD': 1050.0,
-  // Energy
-  'WTI/USD': 78.50, 'BRENT/USD': 82.20, 'NATGAS/USD': 2.85,
-  // Base metals
-  'XCU/USD': 4.50, 'XAL/USD': 2450.0, 'XZN/USD': 2800.0, 'XNI/USD': 16500.0,
-  // Agricultural
-  'WHEAT/USD': 540.0, 'CORN/USD': 440.0, 'SOYBEAN/USD': 1180.0,
-  'SUGAR/USD': 19.50, 'COFFEE/USD': 185.0, 'COCOA/USD': 8500.0,
-  'COTTON/USD': 78.0, 'LUMBER/USD': 520.0,
-  // Stocks — accurate prices (May 2026) used as synthetic fallback when TwelveData is unavailable
-  'AAPL': 213.0, 'MSFT': 450.0, 'GOOGL': 393.0, 'GOOG': 393.0,
-  'AMZN': 215.0, 'META': 620.0, 'TSLA': 340.0, 'NVDA': 135.0,
-  'NFLX': 1180.0, 'AMD': 110.0, 'INTC': 20.0, 'ADBE': 390.0,
-  'CRM': 310.0, 'AVGO': 240.0, 'QCOM': 160.0, 'TXN': 190.0,
-  'MU': 110.0, 'PANW': 190.0, 'CRWD': 420.0, 'SNOW': 160.0,
-  'JPM': 260.0, 'BAC': 45.0, 'WFC': 75.0, 'GS': 620.0,
-  'MS': 130.0, 'V': 360.0, 'MA': 560.0,
-  'ABBV': 210.0, 'JNJ': 160.0, 'PFE': 24.0, 'LLY': 900.0,
-  'UNH': 310.0, 'MRK': 95.0,
-  'XOM': 115.0, 'CVX': 155.0,
-  'WMT': 100.0, 'HD': 390.0, 'KO': 70.0, 'DIS': 105.0,
-  'BABA': 120.0, 'TSM': 195.0, 'NIO': 4.20,
-  'BA': 195.0, 'CAT': 380.0,
-};
-
-function generateSyntheticCandles(symbol: string, interval: string, limit: number): CandlestickData[] {
-  const basePrice = FOREX_BASE_PRICES[symbol] ?? 1.0;
-  const now = Math.floor(Date.now() / 1000);
-
-  // Determine candle duration in seconds based on interval
-  const intervalSeconds: Record<string, number> = {
-    '1min': 60, '5min': 300, '15min': 900, '30min': 1800,
-    '1h': 3600, '4h': 14400, '12h': 43200, '1day': 86400,
-    '1week': 604800, '1month': 2592000,
-  };
-  const candleSecs = intervalSeconds[interval] ?? 86400;
-
-  let candles: CandlestickData[] = [];
-  // Start slightly below basePrice so the walk ends near basePrice
-  let price = basePrice * 0.98;
-  const volatility = basePrice * 0.0008; // 0.08% per candle
-
-  for (let i = limit - 1; i >= 0; i--) {
-    const time = (now - i * candleSecs) as Time;
-    const open = price;
-    // Mean-reversion: gently pull price back toward basePrice
-    const meanReversion = (basePrice - price) * 0.02;
-    const change = meanReversion + (Math.random() - 0.5) * 2 * volatility;
-    const close = Math.max(open * 0.98, open + change);
-    const high = Math.max(open, close) + Math.random() * volatility * 0.5;
-    const low = Math.min(open, close) - Math.random() * volatility * 0.5;
-    candles.push({ time, open, high, low, close });
-    price = close;
-  }
-  return candles;
-}
-
-async function fetchTwelveDataKlines(symbol: string, interval: string, limit = 150): Promise<CandlestickData[]> {
+async function fetchTwelveDataKlines(
+  symbol: string,
+  interval: string,
+  limit = 150,
+  endDate?: string,
+  exchange?: string,
+  category?: string,
+): Promise<CandlestickData[]> {
   try {
-    const url = `/api/twelvedata/timeseries?symbol=${encodeURIComponent(symbol)}&interval=${interval}&outputsize=${limit}`;
+    const params = new URLSearchParams({ symbol, interval, outputsize: String(limit) });
+    if (endDate) params.set('end_date', endDate);
+    if (exchange) params.set('exchange', exchange);
+    if (category) params.set('category', category);
+    const url = `/api/twelvedata/timeseries?${params.toString()}`;
     const res = await fetchWithTimeout(url, 8000, 30);
     if (!res.ok) {
       console.warn('[TwelveData] HTTP error for symbol:', symbol, 'status:', res.status);
-      return generateSyntheticCandles(symbol, interval, limit);
+      return [];
     }
     const json = await res.json();
     if (!json.values || !Array.isArray(json.values)) {
       console.warn('[TwelveData] No values for symbol:', symbol, json?.message ?? json);
-      return generateSyntheticCandles(symbol, interval, limit);
+      return [];
     }
     let candles: CandlestickData[] = json.values
       .reverse()
       .map((v: any) => ({
-        time: Math.floor(new Date(v.datetime).getTime() / 1000) as Time,
+        time: toLocalDisplayTime(Math.floor(new Date(v.datetime).getTime() / 1000)),
         open: parseFloat(v.open),
         high: parseFloat(v.high),
         low: parseFloat(v.low),
@@ -307,7 +265,7 @@ async function fetchTwelveDataKlines(symbol: string, interval: string, limit = 1
     return candles;
   } catch (err) {
     console.warn('[TwelveData] Fetch error for symbol:', symbol, err);
-    return generateSyntheticCandles(symbol, interval, limit);
+    return [];
   }
 }
 
@@ -695,7 +653,10 @@ function pointNearSegmentExtended(pt: Point, a: Point, b: Point, threshold: numb
 // ─── Component ────────────────────────────────────────────────────────────────
 
 const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProps>(
-  ({ symbol, category, openTrades = [], onChartReady, onPriceUpdate }, ref) => {
+  ({ symbol, category, exchange, openTrades = [], onChartReady, onPriceUpdate }, ref) => {
+    // Keep a stable dependency-array shape during Fast Refresh while still
+    // reloading when either the market category or exchange changes.
+    const marketDataKey = `${category ?? ''}|${exchange ?? ''}`;
     const containerRef = useRef<HTMLDivElement>(null);
     const rsiContainerRef = useRef<HTMLDivElement>(null);
     const macdContainerRef = useRef<HTMLDivElement>(null);
@@ -712,7 +673,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
 
     const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
     const wsRef = useRef<WebSocket | null>(null);
-    const tdWsRef = useRef<WebSocket | null>(null);
+    const bookTickerWsRef = useRef<WebSocket | null>(null);
     const lastBarRef = useRef<CandlestickData | null>(null);
     const entryLinesRef = useRef<Map<string, IPriceLine>>(new Map());
 
@@ -739,10 +700,14 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     const pivotLinesRef = useRef<IPriceLine[]>([]);
 
     const candleDataRef = useRef<CandlestickData[]>([]);
+    const loadingOlderHistoryRef = useRef(false);
+    const hasOlderHistoryRef = useRef(true);
+    const loadOlderHistoryRef = useRef<() => void>(() => {});
 
     const fetchAbortRef = useRef<AbortController | null>(null);
 
-    const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const binancePollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const marketQuotePollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
     const lastWsMsgTimeRef = useRef<number>(0);
 
@@ -755,6 +720,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
 
     const [timeframe, setTimeframe] = useState('1m');
     const [isLoading, setIsLoading] = useState(true);
+    const [dataUnavailable, setDataUnavailable] = useState(false);
     const [activeIndicators, setActiveIndicators] = useState<Set<IndicatorKey>>(new Set());
     const [chartHeight, setChartHeight] = useState<number>(CHART_HEIGHT);
 
@@ -777,6 +743,76 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     useEffect(() => { drawingsRef.current = drawings; }, [drawings]);
     useEffect(() => { pendingTrendP1Ref.current = pendingTrendP1; }, [pendingTrendP1]);
     useEffect(() => { pendingMousePosRef.current = pendingMousePos; }, [pendingMousePos]);
+
+    const loadOlderHistory = useCallback(async () => {
+      if (loadingOlderHistoryRef.current || !hasOlderHistoryRef.current || !seriesRef.current || !chartRef.current) return;
+
+      const current = candleDataRef.current;
+      const oldest = current[0];
+      if (!oldest) return;
+
+      loadingOlderHistoryRef.current = true;
+      try {
+        const tfConfig = TIMEFRAMES.find((t) => t.label === timeframe) ?? TIMEFRAMES[0];
+        const crypto = isCrypto(category, symbol) || usesBinanceProxy(symbol);
+        const sourceTimestamp = Number(oldest.time) + new Date().getTimezoneOffset() * 60;
+        let older: CandlestickData[];
+
+        if (crypto) {
+          const raw = await fetchBinanceKlines(
+            toBinanceSymbol(symbol),
+            tfConfig.binanceInterval,
+            HISTORY_PAGE_SIZE,
+            sourceTimestamp * 1000 - 1,
+          );
+          older = raw.map((k: any) => ({
+            time: toLocalDisplayTime(Math.floor(k[0] / 1000)),
+            open: parseFloat(k[1]),
+            high: parseFloat(k[2]),
+            low: parseFloat(k[3]),
+            close: parseFloat(k[4]),
+          }));
+        } else {
+          const endDate = new Date((sourceTimestamp - 1) * 1000).toISOString().slice(0, 19);
+          older = await fetchTwelveDataKlines(
+            toTwelveDataSymbol(symbol, category),
+            tfConfig.tdInterval,
+            HISTORY_PAGE_SIZE,
+            endDate,
+            exchange,
+            category,
+          );
+        }
+
+        const existingTimes = new Set(current.map((c) => Number(c.time)));
+        const additions = older.filter((c) => !existingTimes.has(Number(c.time)) && Number(c.time) < Number(oldest.time));
+        if (additions.length === 0) {
+          hasOlderHistoryRef.current = false;
+          return;
+        }
+
+        const visibleRange = chartRef.current.timeScale().getVisibleLogicalRange();
+        const merged = [...additions, ...current].sort((a, b) => Number(a.time) - Number(b.time));
+        seriesRef.current.setData(merged);
+        candleDataRef.current = merged;
+
+        if (visibleRange) {
+          chartRef.current.timeScale().setVisibleLogicalRange({
+            from: visibleRange.from + additions.length,
+            to: visibleRange.to + additions.length,
+          });
+        }
+
+        if (additions.length < HISTORY_PAGE_SIZE) hasOlderHistoryRef.current = false;
+      } catch {
+        // Keep the current chart intact. A later left-edge visit can retry the page request.
+      } finally {
+        loadingOlderHistoryRef.current = false;
+      }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [marketDataKey, symbol, timeframe]);
+
+    useEffect(() => { loadOlderHistoryRef.current = () => { void loadOlderHistory(); }; }, [loadOlderHistory]);
 
     useEffect(() => {
       const updateHeight = () => {
@@ -877,12 +913,13 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         try { wsRef.current.close(); } catch {}
         wsRef.current = null;
       }
-      if (tdWsRef.current) {
-        tdWsRef.current.onclose = null; tdWsRef.current.onerror = null; tdWsRef.current.onmessage = null;
-        try { tdWsRef.current.close(); } catch {}
-        tdWsRef.current = null;
+      if (bookTickerWsRef.current) {
+        bookTickerWsRef.current.onclose = null; bookTickerWsRef.current.onerror = null; bookTickerWsRef.current.onmessage = null;
+        try { bookTickerWsRef.current.close(); } catch {}
+        bookTickerWsRef.current = null;
       }
-      if (pollIntervalRef.current) { clearInterval(pollIntervalRef.current); pollIntervalRef.current = null; }
+      if (binancePollIntervalRef.current) { clearInterval(binancePollIntervalRef.current); binancePollIntervalRef.current = null; }
+      if (marketQuotePollIntervalRef.current) { clearInterval(marketQuotePollIntervalRef.current); marketQuotePollIntervalRef.current = null; }
       lastWsMsgTimeRef.current = 0;
     }, []);
 
@@ -897,10 +934,12 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         vertLine: { color: 'rgba(255,255,255,0.2)', labelBackgroundColor: '#1e293b' },
         horzLine: { color: 'rgba(255,255,255,0.2)', labelBackgroundColor: '#1e293b' },
       },
-      rightPriceScale: { borderColor: 'rgba(255,255,255,0.1)', textColor: '#94a3b8' },
+      rightPriceScale: { borderColor: 'rgba(255,255,255,0.1)', textColor: '#94a3b8', scaleMargins: { top: 0.15, bottom: 0.15 } },
       timeScale: { borderColor: 'rgba(255,255,255,0.1)', timeVisible: true, secondsVisible: false, minBarSpacing: 1 },
       handleScroll: true,
-      handleScale: true,
+      // Same price-axis lock as the main chart — prevents the last-value
+      // label from being dragged to the pane edge and clipped there.
+      handleScale: { axisPressedMouseMove: { time: true, price: false }, mouseWheel: true, pinch: true },
     });
 
     // ── Remove indicator series from main chart ───────────────────────────────
@@ -1230,10 +1269,14 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
             vertLine: { color: 'rgba(255,255,255,0.2)', labelBackgroundColor: '#1e293b' },
             horzLine: { color: 'rgba(255,255,255,0.2)', labelBackgroundColor: '#1e293b' },
           },
-          rightPriceScale: { borderColor: 'rgba(255,255,255,0.1)', textColor: '#94a3b8', scaleMargins: { top: 0.1, bottom: 0.1 } },
+          rightPriceScale: { borderColor: 'rgba(255,255,255,0.1)', textColor: '#94a3b8', scaleMargins: { top: 0.15, bottom: 0.15 } },
           timeScale: { borderColor: 'rgba(255,255,255,0.1)', timeVisible: true, secondsVisible: false, minBarSpacing: 1 },
           handleScroll: true,
-          handleScale: true,
+          // Price axis stays locked to auto-scale — only the time axis can be
+          // manually zoomed/dragged. Manually dragging the price axis used to
+          // let the last-price label get pushed to the pane's pixel edge and
+          // render clipped there.
+          handleScale: { axisPressedMouseMove: { time: true, price: false }, mouseWheel: true, pinch: true },
         });
 
         chartRef.current = chart;
@@ -1247,7 +1290,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         });
         seriesRef.current = series;
 
-        chart.timeScale().subscribeVisibleLogicalRangeChange(() => {
+        chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
           requestAnimationFrame(() => {
             drawAllOnCanvas(
               canvasRef.current!,
@@ -1258,6 +1301,10 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
               drawColorRef.current
             );
           });
+
+          if (range && range.from < HISTORY_LOAD_THRESHOLD) {
+            loadOlderHistoryRef.current();
+          }
         });
 
         const resizeObserver = new ResizeObserver((entries) => {
@@ -1457,33 +1504,63 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
       lastBarRef.current = null;
       firstCloseRef.current = null;
       candleDataRef.current = [];
+      try { seriesRef.current?.setData([]); } catch {}
+      hasOlderHistoryRef.current = true;
+      loadingOlderHistoryRef.current = false;
 
       removeMainIndicators();
       removeSubPanels();
 
       setIsLoading(true);
+      setDataUnavailable(false);
 
       const loadData = async () => {
         if (abort.signal.aborted || !seriesRef.current) return;
 
         const tfConfig = TIMEFRAMES.find((t) => t.label === timeframe) ?? TIMEFRAMES[0];
-        const crypto = isCrypto(category, symbol);
+        const crypto = isCrypto(category, symbol) || usesBinanceProxy(symbol);
 
         let candles: CandlestickData[] = [];
 
         if (crypto) {
           const binanceSym = toBinanceSymbol(symbol);
-          const raw = await fetchBinanceKlines(binanceSym, tfConfig.binanceInterval, tfConfig.limit);
+          const raw = await fetchBinanceKlines(
+            binanceSym,
+            tfConfig.binanceInterval,
+            Math.max(tfConfig.limit, INITIAL_HISTORY_LIMIT),
+          );
           if (abort.signal.aborted) return;
           candles = raw.map((k: any) => ({
-            time: Math.floor(k[0] / 1000) as Time,
+            time: toLocalDisplayTime(Math.floor(k[0] / 1000)),
             open: parseFloat(k[1]),
             high: parseFloat(k[2]),
             low: parseFloat(k[3]),
             close: parseFloat(k[4]),
           }));
+
+          // Binance is not reachable in every region/network. Use the same
+          // server-side TradingView feed as the other markets when its public
+          // REST endpoints return no candles.
+          if (candles.length === 0) {
+            candles = await fetchTwelveDataKlines(
+              toTwelveDataSymbol(symbol, category),
+              tfConfig.tdInterval,
+              Math.max(tfConfig.limit, INITIAL_HISTORY_LIMIT),
+              undefined,
+              exchange,
+              category,
+            );
+          }
+
         } else {
-          candles = await fetchTwelveDataKlines(toTwelveDataSymbol(symbol), tfConfig.tdInterval, tfConfig.limit);
+          candles = await fetchTwelveDataKlines(
+            toTwelveDataSymbol(symbol, category),
+            tfConfig.tdInterval,
+            Math.max(tfConfig.limit, INITIAL_HISTORY_LIMIT),
+            undefined,
+            exchange,
+            category,
+          );
           if (abort.signal.aborted) return;
         }
 
@@ -1534,17 +1611,21 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
               } catch {}
             }
           });
+        } else {
+          setDataUnavailable(true);
         }
 
         setIsLoading(false);
         onChartReadyRef.current?.();
 
-        if (!abort.signal.aborted) {
+        if (!abort.signal.aborted && candles.length > 0) {
           if (crypto) {
             startBinanceWS(symbol, timeframe, abort);
+            if (usesBinanceProxy(symbol)) {
+              startBinanceBookTickerWS(symbol, abort);
+            }
           } else {
-            startTwelveDataWS(symbol, abort);
-            startTwelveDataPoll(symbol, tfConfig.tdInterval, abort);
+            startMarketQuotePoll(symbol, tfConfig.tdInterval, abort);
           }
         }
       };
@@ -1553,7 +1634,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
 
       return () => { abort.abort(); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [symbol, timeframe, category]);
+    }, [symbol, timeframe, marketDataKey]);
 
     // ── Binance WebSocket ─────────────────────────────────────────────────────
 
@@ -1580,7 +1661,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
               if (!k) return;
               lastWsMsgTimeRef.current = Date.now();
               const bar: CandlestickData = {
-                time: Math.floor(k.t / 1000) as Time,
+                time: toLocalDisplayTime(Math.floor(k.t / 1000)),
                 open: parseFloat(k.o),
                 high: parseFloat(k.h),
                 low: parseFloat(k.l),
@@ -1619,7 +1700,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           if (klines.length > 0 && seriesRef.current && !abort.signal.aborted) {
             const k = klines[klines.length - 1];
             const bar: CandlestickData = {
-              time: Math.floor(k[0] / 1000) as Time,
+              time: toLocalDisplayTime(Math.floor(k[0] / 1000)),
               open: parseFloat(k[1]),
               high: parseFloat(k[2]),
               low: parseFloat(k[3]),
@@ -1636,84 +1717,152 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         } catch {}
       };
 
+      if (binancePollIntervalRef.current) {
+        clearInterval(binancePollIntervalRef.current);
+        binancePollIntervalRef.current = null;
+      }
       setTimeout(() => {
         if (!abort.signal.aborted) {
-          pollIntervalRef.current = setInterval(pollTick, 1000);
+          binancePollIntervalRef.current = setInterval(pollTick, 1000);
         }
       }, 1000);
     };
 
-    // ── Twelve Data WebSocket ─────────────────────────────────────────────────
+    // ── Binance book-ticker (continuous real bid/ask) ───────────────────────────
+    // Trade-based klines only update when a trade actually happens. Thin
+    // markets like PAXG can go whole minutes with zero trades, leaving real
+    // gaps in the candle series. The book ticker stream instead pushes every
+    // change to the best bid/ask — market makers requote continuously even
+    // with no trades — so it ticks in real time with no gaps, and it's still
+    // a genuine live market price, never a filled/fabricated value.
+    // Used only as a supplementary live-price source (on top of the kline
+    // feed above) for proxied instruments such as XAUUSD -> PAXG.
+    const startBinanceBookTickerWS = (sym: string, abort: AbortController) => {
+      const binanceSym = toBinanceSymbol(sym).toLowerCase();
+      const wsEndpoints = [
+        `wss://stream.binance.com:9443/ws/${binanceSym}@bookTicker`,
+        `wss://stream.binance.com:443/ws/${binanceSym}@bookTicker`,
+        `wss://data-stream.binance.vision/ws/${binanceSym}@bookTicker`,
+      ];
+      let wsIdx = 0;
 
-    const startTwelveDataWS = (sym: string, abort: AbortController) => {
-      try {
-        const apiKey = process.env.NEXT_PUBLIC_TWELVE_DATA_API_KEY || '';
-        const wsUrl = apiKey
-          ? `wss://ws.twelvedata.com/v1/quotes/price?apikey=${apiKey}`
-          : 'wss://ws.twelvedata.com/v1/quotes/price';
-        const ws = new WebSocket(wsUrl);
-        tdWsRef.current = ws;
-        const tdSymbol = toTwelveDataSymbol(sym);
-        ws.onopen = () => {
-          if (abort.signal.aborted) return;
-          ws.send(JSON.stringify({ action: 'subscribe', params: { symbols: tdSymbol } }));
-        };
-        ws.onmessage = (event) => {
-          if (abort.signal.aborted) return;
-          try {
-            const msg = JSON.parse(event.data);
-            if (msg.event === 'price' && msg.price && lastBarRef.current) {
-              lastWsMsgTimeRef.current = Date.now();
-              let price = parseFloat(msg.price);
+      const connectWS = (url: string) => {
+        if (abort.signal.aborted) return;
+        try {
+          const ws = new WebSocket(url);
+          bookTickerWsRef.current = ws;
+          ws.onmessage = (event) => {
+            if (abort.signal.aborted || !seriesRef.current || !lastBarRef.current) return;
+            try {
+              const msg = JSON.parse(event.data);
+              const bid = parseFloat(msg.b);
+              const ask = parseFloat(msg.a);
+              if (!Number.isFinite(bid) || !Number.isFinite(ask)) return;
+              const mid = (bid + ask) / 2;
+
               const bar: CandlestickData = {
                 ...lastBarRef.current,
-                close: price,
-                high: Math.max(lastBarRef.current.high as number, price),
-                low: Math.min(lastBarRef.current.low as number, price),
+                close: mid,
+                high: Math.max(lastBarRef.current.high as number, mid),
+                low: Math.min(lastBarRef.current.low as number, mid),
               };
-              if (seriesRef.current) {
-                try { seriesRef.current.update(bar); } catch {}
-                lastBarRef.current = bar;
-                if (firstCloseRef.current !== null) {
-                  const change = price - firstCloseRef.current;
-                  const changePct = (change / firstCloseRef.current) * 100;
-                  onPriceUpdateRef.current?.(price, change, changePct);
-                }
+              try { seriesRef.current.update(bar); } catch {}
+              lastBarRef.current = bar;
+              if (firstCloseRef.current !== null) {
+                const change = mid - firstCloseRef.current;
+                const changePct = (change / firstCloseRef.current) * 100;
+                onPriceUpdateRef.current?.(mid, change, changePct);
               }
+            } catch {}
+          };
+          ws.onerror = () => {};
+          ws.onclose = () => {
+            wsIdx++;
+            if (!abort.signal.aborted && wsIdx < wsEndpoints.length) {
+              setTimeout(() => { if (!abort.signal.aborted) connectWS(wsEndpoints[wsIdx]); }, 1500);
             }
-          } catch {}
-        };
-        ws.onerror = () => {};
-        ws.onclose = () => {};
-      } catch {}
+          };
+        } catch {}
+      };
+
+      connectWS(wsEndpoints[wsIdx]);
     };
 
-    // ── Twelve Data REST polling ──────────────────────────────────────────────
+    // ── Shared live quote polling ─────────────────────────────────────────────
 
-    const startTwelveDataPoll = (sym: string, interval: string, abort: AbortController) => {
+    const startMarketQuotePoll = (sym: string, interval: string, abort: AbortController) => {
+      const intervalSeconds: Record<string, number> = {
+        '1min': 60,
+        '5min': 300,
+        '15min': 900,
+        '30min': 1800,
+        '1h': 3600,
+        '4h': 14_400,
+        '12h': 43_200,
+        '1day': 86_400,
+        '1week': 604_800,
+        '1month': 2_592_000,
+      };
+
       const pollTick = async () => {
         if (abort.signal.aborted || !seriesRef.current) return;
         const wsIsLive = (Date.now() - lastWsMsgTimeRef.current) < WS_TIMEOUT_MS;
         if (wsIsLive) return;
         try {
-          let candles = await fetchTwelveDataKlines(toTwelveDataSymbol(sym), interval, 2);
-          if (candles.length > 0 && seriesRef.current && !abort.signal.aborted) {
-            const bar = candles[candles.length - 1];
-            try { seriesRef.current.update(bar); } catch {}
-            lastBarRef.current = bar;
-            if (firstCloseRef.current !== null) {
-              const change = bar.close - firstCloseRef.current;
-              const changePct = (change / firstCloseRef.current) * 100;
-              onPriceUpdateRef.current?.(bar.close, change, changePct);
-            }
-          }
+          const params = new URLSearchParams({
+            symbols: toTwelveDataSymbol(sym, category),
+            exchanges: exchange ?? '',
+            categories: category ?? '',
+          });
+          const response = await fetch(`/api/twelvedata/quote?${params.toString()}`, {
+            cache: 'no-store',
+            signal: abort.signal,
+          });
+          if (!response.ok || abort.signal.aborted || !seriesRef.current || !lastBarRef.current) return;
+
+          const payload = await response.json();
+          const quote = payload.quoteList?.[0];
+          const price = Number(quote?.price);
+          const change = Number(quote?.change);
+          const changePct = Number(quote?.percentChange);
+          if (!Number.isFinite(price) || price <= 0) return;
+
+          const sourceTime = Number.isFinite(Number(quote?.timestamp))
+            ? Number(quote.timestamp)
+            : Math.floor(Date.now() / 1000);
+          const bucketSize = intervalSeconds[interval] ?? 60;
+          const bucketTime = toLocalDisplayTime(Math.floor(sourceTime / bucketSize) * bucketSize);
+          const lastTime = Number(lastBarRef.current.time);
+          const previousClose = Number(lastBarRef.current.close);
+          const bar: CandlestickData = Number(bucketTime) > lastTime
+            ? { time: bucketTime, open: previousClose, high: Math.max(previousClose, price), low: Math.min(previousClose, price), close: price }
+            : {
+                ...lastBarRef.current,
+                high: Math.max(Number(lastBarRef.current.high), price),
+                low: Math.min(Number(lastBarRef.current.low), price),
+                close: price,
+              };
+
+          try { seriesRef.current.update(bar); } catch {}
+          lastBarRef.current = bar;
+          onPriceUpdateRef.current?.(
+            price,
+            Number.isFinite(change) ? change : price - previousClose,
+            Number.isFinite(changePct) ? changePct : ((price - previousClose) / previousClose) * 100,
+          );
         } catch {}
       };
+
+      if (marketQuotePollIntervalRef.current) {
+        clearInterval(marketQuotePollIntervalRef.current);
+        marketQuotePollIntervalRef.current = null;
+      }
+      void pollTick();
       setTimeout(() => {
         if (!abort.signal.aborted) {
-          pollIntervalRef.current = setInterval(pollTick, 5000);
+          marketQuotePollIntervalRef.current = setInterval(pollTick, 5000);
         }
-      }, 2000);
+      }, 5000);
     };
 
     // ── Indicator buttons config ──────────────────────────────────────────────
@@ -1897,6 +2046,17 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
             <div className="flex flex-col items-center gap-2">
               <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
               <span className="text-slate-400 text-xs font-medium">Loading...</span>
+            </div>
+          </div>
+        )}
+        {dataUnavailable && !isLoading && (
+          <div
+            className="absolute flex items-center justify-center pointer-events-none"
+            style={{ top: 34, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.72)' }}
+          >
+            <div className="text-center px-4">
+              <p className="text-slate-200 text-xs font-semibold">Live market data unavailable</p>
+              <p className="text-slate-500 text-[10px] mt-1">No substitute price is shown for this instrument.</p>
             </div>
           </div>
         )}
