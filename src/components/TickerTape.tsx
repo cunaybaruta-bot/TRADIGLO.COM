@@ -49,7 +49,7 @@ export default function TickerTape() {
     <div
       style={{
         width: '100%',
-        background: 'rgba(15, 17, 45, 0.95)',
+        background: '#000000',
         borderBottom: '1px solid rgba(99, 102, 241, 0.2)',
         overflow: 'hidden',
         height: '44px',

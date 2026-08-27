@@ -635,7 +635,7 @@ export default function MarketsPage() {
                   className="flex-1 py-3 text-white font-extrabold text-base tracking-widest transition-all flex items-center justify-center gap-2 hover:opacity-90"
                   style={{ background: '#e53935', borderRadius: '0 0 0 12px' }}
                 >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /></svg>
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l-8-8h5V4h6v8h5z" /></svg>
                   {t('dash_sell')}
                 </Link>
                 <Link
@@ -655,7 +655,7 @@ export default function MarketsPage() {
                   className="flex-1 py-3 disabled:opacity-60 disabled:cursor-not-allowed text-white font-extrabold text-base tracking-widest transition-all flex items-center justify-center gap-2"
                   style={{ background: '#e53935', borderRadius: '0 0 0 12px' }}
                 >
-                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /></svg>
+                  <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 20l-8-8h5V4h6v8h5z" /></svg>
                   {t('dash_sell')}
                 </button>
                 <button
