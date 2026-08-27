@@ -151,11 +151,12 @@ VALUES
 ON CONFLICT DO NOTHING;
 
 -- OMAN 🇴🇲
-INSERT INTO public.payment_methods (country, type, name, is_active, min_deposit, max_deposit, instructions)
-VALUES
-  ('Oman', 'bank', 'Bank Muscat', true, 10, 50000, 'Online bank transfer via Bank Muscat.'),
-  ('Oman', 'bank', 'National Bank of Oman (NBO)', true, 10, 50000, 'NBO online bank transfer.')
-ON CONFLICT DO NOTHING;
+-- Skipped: 'Bank Muscat' and 'National Bank of Oman (NBO)' already exist for
+-- Oman from migration 20260406162000_add_complete_local_banks_all_countries.sql.
+-- payment_methods has no unique constraint on (country, type, name), so
+-- ON CONFLICT DO NOTHING would NOT have caught this and would have inserted
+-- exact duplicates (the same bug already cleaned up once in
+-- 20260406170000_remove_duplicate_banks.sql).
 
 -- CAMBODIA 🇰🇭
 INSERT INTO public.payment_methods (country, type, name, is_active, min_deposit, max_deposit, instructions)
