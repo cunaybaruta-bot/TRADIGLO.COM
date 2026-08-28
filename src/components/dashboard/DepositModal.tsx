@@ -418,10 +418,14 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
 
     const profileCountry = String(profileRes.data?.country || '').trim();
     const requestedCountry = profileCountry.toLowerCase() === 'indonesia' ? 'Global' : profileCountry;
-    const matchedCountry = Array.from(new Set(mergedMethods.map((method) => method.country || 'Global'))).find(
-      (country) => country.toLowerCase() === requestedCountry.toLowerCase()
-    );
-    const lockedCountry = matchedCountry || (mergedMethods.some((method) => (method.country || 'Global') === 'Global') ? 'Global' : '');
+    // Only auto-lock to the member's country when their profile actually has one set.
+    // A new member with no country on file must go through the Country selection step.
+    const matchedCountry = profileCountry
+      ? Array.from(new Set(mergedMethods.map((method) => method.country || 'Global'))).find(
+          (country) => country.toLowerCase() === requestedCountry.toLowerCase()
+        )
+      : undefined;
+    const lockedCountry = matchedCountry || '';
     setMemberCountry(lockedCountry);
     if (lockedCountry) {
       const availableType = ['bank', 'ewallet', 'crypto', 'card'].find((type) =>
