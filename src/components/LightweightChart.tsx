@@ -191,6 +191,7 @@ const TIMEFRAMES: TimeframeConfig[] = [
 ];
 
 const WS_TIMEOUT_MS = 10_000;
+const LIVE_EDGE_BUFFER_BARS = 2;
 // Chart is the primary content of the trade screen — sized generously per
 // breakpoint so it dominates the layout instead of competing for space with
 // the Open Trades panel below it (which is capped separately).
@@ -828,6 +829,10 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     const [chartType, setChartType] = useState<ChartType>('candles');
     const chartTypeRef = useRef<ChartType>('candles');
     useEffect(() => { chartTypeRef.current = chartType; }, [chartType]);
+
+    // ── "Return to live" — shown once the user has scrolled/zoomed away
+    // from the right (real-time) edge of the chart. ──────────────────────────
+    const [isAwayFromLive, setIsAwayFromLive] = useState(false);
 
     // ── OHLC legend (hovered bar, or the latest live bar when not hovering) ──
     const [ohlcBar, setOhlcBar] = useState<CandlestickData | null>(null);
@@ -1536,6 +1541,13 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           if (range && range.from < HISTORY_LOAD_THRESHOLD) {
             loadOlderHistoryRef.current();
           }
+
+          // "Return to live": true once the visible right edge has drifted
+          // more than a couple bars away from the latest candle.
+          if (range) {
+            const totalBars = candleDataRef.current.length;
+            setIsAwayFromLive(totalBars > 0 && range.to < totalBars - 1 - LIVE_EDGE_BUFFER_BARS);
+          }
         });
 
         // OHLC legend: show the hovered candle's O/H/L/C while the crosshair
@@ -1750,6 +1762,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
       entryLinesRef.current.clear();
       lastBarRef.current = null;
       setOhlcBar(null);
+      setIsAwayFromLive(false);
       firstCloseRef.current = null;
       candleDataRef.current = [];
       try { seriesRef.current?.setData([]); } catch {}
@@ -1829,6 +1842,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
             setOhlcBar(unique[unique.length - 1] ?? null);
             firstCloseRef.current = unique[0]?.close ?? null;
             chartRef.current?.timeScale().fitContent();
+            setIsAwayFromLive(false);
 
             const last = unique[unique.length - 1];
             const first = unique[0];
@@ -2239,6 +2253,33 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
               </div>
             )}
           </div>
+
+          {/* "Return to live" — appears once the user has scrolled/zoomed
+              away from the real-time edge; jumps back without changing the
+              current zoom level. */}
+          {isAwayFromLive && (
+            <button
+              onClick={() => {
+                chartRef.current?.timeScale().scrollToRealTime();
+                setIsAwayFromLive(false);
+              }}
+              title="Return to live"
+              className="absolute flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold text-white transition-all hover:brightness-110"
+              style={{
+                bottom: 8,
+                right: 84,
+                zIndex: 15,
+                background: 'rgba(15,17,23,0.9)',
+                border: '1px solid rgba(255,255,255,0.15)',
+              }}
+            >
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+              Live
+            </button>
+          )}
+
           <canvas
             ref={canvasRef}
             style={{
