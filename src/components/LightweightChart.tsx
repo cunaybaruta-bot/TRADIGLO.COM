@@ -829,6 +829,16 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     const chartTypeRef = useRef<ChartType>('candles');
     useEffect(() => { chartTypeRef.current = chartType; }, [chartType]);
 
+    // ── OHLC legend (hovered bar, or the latest live bar when not hovering) ──
+    const [ohlcBar, setOhlcBar] = useState<CandlestickData | null>(null);
+    const isHoveringChartRef = useRef(false);
+    // Records a new live bar and, unless the user is currently hovering the
+    // chart (inspecting a past candle), refreshes the OHLC legend with it.
+    const updateLastBar = useCallback((bar: CandlestickData) => {
+      updateLastBar(bar);
+      if (!isHoveringChartRef.current) setOhlcBar(bar);
+    }, []);
+
     // ── Indicator legends ─────────────────────────────────────────────────
     // Overlay/oscillator values live here (a compact top-left legend per
     // pane) instead of as price-axis labels — with many indicators active
@@ -1528,6 +1538,22 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           }
         });
 
+        // OHLC legend: show the hovered candle's O/H/L/C while the crosshair
+        // is over the chart, and fall back to the latest live candle once
+        // the mouse leaves. Looked up from candleDataRef (always full OHLC)
+        // rather than the series' own data, so it stays correct in Line/
+        // Area/Baseline chart types too, which only carry a close value.
+        chart.subscribeCrosshairMove((param) => {
+          if (!param.time) {
+            isHoveringChartRef.current = false;
+            setOhlcBar(lastBarRef.current);
+            return;
+          }
+          isHoveringChartRef.current = true;
+          const bar = candleDataRef.current.find((b) => b.time === param.time);
+          if (bar) setOhlcBar(bar);
+        });
+
         const resizeObserver = new ResizeObserver((entries) => {
           for (const entry of entries) {
             const cw = entry.contentRect.width;
@@ -1723,6 +1749,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
       stopRealtimeFeeds();
       entryLinesRef.current.clear();
       lastBarRef.current = null;
+      setOhlcBar(null);
       firstCloseRef.current = null;
       candleDataRef.current = [];
       try { seriesRef.current?.setData([]); } catch {}
@@ -1799,6 +1826,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           try {
             seriesRef.current.setData(barsToSeriesData(unique, chartTypeRef.current) as any);
             lastBarRef.current = unique[unique.length - 1];
+            setOhlcBar(unique[unique.length - 1] ?? null);
             firstCloseRef.current = unique[0]?.close ?? null;
             chartRef.current?.timeScale().fitContent();
 
@@ -1890,7 +1918,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
               };
               if (seriesRef.current) {
                 try { seriesRef.current.update(barToSeriesPoint(bar, chartTypeRef.current) as any); } catch {}
-                lastBarRef.current = bar;
+                updateLastBar(bar);
                 if (firstCloseRef.current !== null) {
                   const change = bar.close - firstCloseRef.current;
                   const changePct = (change / firstCloseRef.current) * 100;
@@ -1928,7 +1956,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
               close: parseFloat(k[4]),
             };
             try { seriesRef.current.update(barToSeriesPoint(bar, chartTypeRef.current) as any); } catch {}
-            lastBarRef.current = bar;
+            updateLastBar(bar);
             if (firstCloseRef.current !== null) {
               const change = bar.close - firstCloseRef.current;
               const changePct = (change / firstCloseRef.current) * 100;
@@ -1988,7 +2016,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
                 low: Math.min(lastBarRef.current.low as number, mid),
               };
               try { seriesRef.current.update(barToSeriesPoint(bar, chartTypeRef.current) as any); } catch {}
-              lastBarRef.current = bar;
+              updateLastBar(bar);
               if (firstCloseRef.current !== null) {
                 const change = mid - firstCloseRef.current;
                 const changePct = (change / firstCloseRef.current) * 100;
@@ -2065,7 +2093,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
               };
 
           try { seriesRef.current.update(barToSeriesPoint(bar, chartTypeRef.current) as any); } catch {}
-          lastBarRef.current = bar;
+          updateLastBar(bar);
           onPriceUpdateRef.current?.(
             price,
             Number.isFinite(change) ? change : price - previousClose,
@@ -2174,21 +2202,43 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
               display: 'block',
             }}
           />
-          {/* Overlay indicator legend — top-left, so values live here instead
-              of stacking as price-axis labels on the right edge when many
-              overlays (MA/EMA/BB/Ichimoku/SAR/VWAP) are active at once. */}
-          {mainLegend.length > 0 && (
-            <div
-              className="absolute top-1.5 left-1.5 flex flex-wrap gap-x-2 gap-y-0.5 pointer-events-none"
-              style={{ maxWidth: 'calc(100% - 12px)', zIndex: 5 }}
-            >
-              {mainLegend.map((item, i) => (
-                <span key={`${item.label}-${i}`} className="text-[10px] font-medium whitespace-nowrap" style={{ color: item.color, textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>
-                  {item.label} {item.value}
-                </span>
-              ))}
-            </div>
-          )}
+          {/* Overlay legends — top-left: OHLC bar first, then indicator
+              values below it, so nothing stacks as price-axis labels on the
+              right edge when many overlays are active at once. */}
+          <div
+            className="absolute top-1.5 left-1.5 flex flex-col gap-y-0.5 pointer-events-none"
+            style={{ maxWidth: 'calc(100% - 12px)', zIndex: 5 }}
+          >
+            {/* OHLC legend — the hovered candle, or the latest live one when
+                not hovering. Read from candleDataRef (always full OHLC) so
+                it stays correct even in Line/Area/Baseline chart types. */}
+            {ohlcBar && (() => {
+              const change = ohlcBar.close - ohlcBar.open;
+              const changePct = ohlcBar.open !== 0 ? (change / ohlcBar.open) * 100 : 0;
+              const isUp = change >= 0;
+              const changeColor = isUp ? UP_COLOR : DOWN_COLOR;
+              return (
+                <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-[10px] font-medium" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>
+                  <span className="text-slate-400">O<span className="text-white ml-0.5">{fmtLegendVal(ohlcBar.open)}</span></span>
+                  <span className="text-slate-400">H<span style={{ color: UP_COLOR }} className="ml-0.5">{fmtLegendVal(ohlcBar.high)}</span></span>
+                  <span className="text-slate-400">L<span style={{ color: DOWN_COLOR }} className="ml-0.5">{fmtLegendVal(ohlcBar.low)}</span></span>
+                  <span className="text-slate-400">C<span style={{ color: changeColor }} className="ml-0.5">{fmtLegendVal(ohlcBar.close)}</span></span>
+                  <span style={{ color: changeColor }}>
+                    {isUp ? '+' : ''}{fmtLegendVal(change)} ({isUp ? '+' : ''}{changePct.toFixed(2)}%)
+                  </span>
+                </div>
+              );
+            })()}
+            {mainLegend.length > 0 && (
+              <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+                {mainLegend.map((item, i) => (
+                  <span key={`${item.label}-${i}`} className="text-[10px] font-medium whitespace-nowrap" style={{ color: item.color, textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>
+                    {item.label} {item.value}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
           <canvas
             ref={canvasRef}
             style={{
