@@ -213,6 +213,14 @@ const TIMEFRAMES: TimeframeConfig[] = [
   { label: 'ALL', binanceInterval: '1M',  tdInterval: '1month', limit: 150 },
 ];
 
+// Candle width (pixels between bar centers) — one consistent size across
+// every timeframe (was too thin/small on short intraday timeframes like 1m
+// with the library's own default of 6). 'ALL' is left out on purpose: it can
+// hold years of history, so it keeps auto-fitting to the chart width instead
+// of forcing a fixed (and likely absurdly wide) candle size.
+const FIXED_BAR_SPACING = 10;
+const DEFAULT_BAR_SPACING = 6; // library default, used for 'ALL' and any unmapped label
+
 const WS_TIMEOUT_MS = 10_000;
 const LIVE_EDGE_BUFFER_BARS = 2;
 // Chart is the primary content of the trade screen — sized generously per
@@ -797,14 +805,14 @@ function pointNearDrawing(pt: Point, drawing: Drawing, threshold = 8): boolean {
     }
     return false;
   } else if (drawing.type === 'fibonacci') {
-    const left = Math.min(drawing.p1.x, drawing.p2.x);
-    const right = Math.max(drawing.p1.x, drawing.p2.x);
-    if (pt.x < left - threshold || pt.x > right + threshold) return false;
-    for (const { ratio } of FIB_LEVELS) {
-      const y = drawing.p1.y + (drawing.p2.y - drawing.p1.y) * ratio;
-      if (Math.abs(pt.y - y) <= threshold) return true;
-    }
-    return false;
+    // Whole swing rectangle is clickable, not just the thin level lines —
+    // those are only a few pixels tall each, much harder to land a click on
+    // precisely than the full-width lines Trend Line/Horizontal use.
+    const left = Math.min(drawing.p1.x, drawing.p2.x) - threshold;
+    const right = Math.max(drawing.p1.x, drawing.p2.x) + threshold;
+    const top = Math.min(drawing.p1.y, drawing.p2.y) - threshold;
+    const bottom = Math.max(drawing.p1.y, drawing.p2.y) + threshold;
+    return pt.x >= left && pt.x <= right && pt.y >= top && pt.y <= bottom;
   }
   return false;
 }
@@ -896,7 +904,9 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     useEffect(() => { onPriceUpdateRef.current = onPriceUpdate; }, [onPriceUpdate]);
     useEffect(() => { onChartReadyRef.current = onChartReady; }, [onChartReady]);
 
-    const [timeframe, setTimeframe] = useState('1m');
+    const [timeframe, setTimeframe] = useState('1h');
+    const timeframeRef = useRef(timeframe);
+    useEffect(() => { timeframeRef.current = timeframe; }, [timeframe]);
     const [isLoading, setIsLoading] = useState(true);
     const [dataUnavailable, setDataUnavailable] = useState(false);
     const [activeIndicators, setActiveIndicators] = useState<Set<IndicatorKey>>(new Set());
@@ -1625,6 +1635,21 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
             const totalBars = candleDataRef.current.length;
             setIsAwayFromLive(totalBars > 0 && range.to < totalBars - 1 - LIVE_EDGE_BUFFER_BARS);
           }
+
+          // Self-healing candle width: this fires on every visible-range
+          // change for any reason (data load, resize, scroll, zoom, symbol/
+          // timeframe switch), so it's a more reliable place to enforce a
+          // consistent barSpacing than any single call site — those raced
+          // against ResizeObserver/fitContent settling and sometimes lost.
+          // The equality guard prevents this from looping: once barSpacing
+          // matches, applying it again is a no-op that fires no further
+          // range-change event.
+          if (timeframeRef.current !== 'ALL' && chartRef.current) {
+            const current = chartRef.current.timeScale().options().barSpacing;
+            if (Math.abs(current - FIXED_BAR_SPACING) > 0.5) {
+              chartRef.current.timeScale().applyOptions({ barSpacing: FIXED_BAR_SPACING });
+            }
+          }
         });
 
         // OHLC legend: show the hovered candle's O/H/L/C while the crosshair
@@ -1915,7 +1940,16 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
             lastBarRef.current = unique[unique.length - 1];
             setOhlcBar(unique[unique.length - 1] ?? null);
             firstCloseRef.current = unique[0]?.close ?? null;
-            chartRef.current?.timeScale().fitContent();
+            if (timeframe === 'ALL') {
+              chartRef.current?.timeScale().fitContent();
+            } else {
+              chartRef.current?.timeScale().scrollToRealTime();
+              // barSpacing itself is enforced by the visible-range-change
+              // subscription below (self-healing on every render pass) —
+              // setting it here too raced against other effects settling
+              // (ResizeObserver, fitContent from a prior 'ALL' selection,
+              // etc.) and sometimes silently lost.
+            }
             setIsAwayFromLive(false);
 
             const last = unique[unique.length - 1];
