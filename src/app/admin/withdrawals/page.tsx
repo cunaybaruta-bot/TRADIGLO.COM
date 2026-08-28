@@ -69,8 +69,8 @@ function DetailModal({ withdrawal, onClose, onAction }: DetailModalProps) {
       >
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-orange-500/15 border border-orange-500/25 flex items-center justify-center">
-              <ArrowUpTrayIcon className="w-5 h-5 text-orange-400" />
+            <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center">
+              <ArrowUpTrayIcon className="w-5 h-5 text-white" />
             </div>
             <div>
               <h3 className="text-white font-bold text-base">Withdrawal Details</h3>
@@ -90,7 +90,7 @@ function DetailModal({ withdrawal, onClose, onAction }: DetailModalProps) {
               </div>
               <div>
                 <p className="text-slate-500 text-[11px] uppercase tracking-wider mb-1">Amount</p>
-                <p className="text-orange-400 text-xl font-bold">${Number(withdrawal.amount).toFixed(2)}</p>
+                <p className="text-white text-xl font-bold">${Number(withdrawal.amount).toFixed(2)}</p>
                 <p className="text-slate-500 text-xs">{withdrawal.currency}</p>
               </div>
               <div>
@@ -181,10 +181,10 @@ function ActionModal({ withdrawal, action, onConfirm, onClose, processing }: Act
         <div className="px-4 pt-4 pb-3 flex items-center gap-3">
           <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${
             isApprove
-              ? 'bg-blue-500/15 border border-blue-500/30' :'bg-red-500/15 border border-red-500/30'
+              ? 'bg-emerald-500/15 border border-emerald-500/30' :'bg-red-500/15 border border-red-500/30'
           }`}>
             {isApprove
-              ? <ArrowUpTrayIcon className="w-4 h-4 text-blue-400" />
+              ? <ArrowUpTrayIcon className="w-4 h-4 text-emerald-400" />
               : <XCircleIcon className="w-4 h-4 text-red-400" />
             }
           </div>
@@ -202,7 +202,7 @@ function ActionModal({ withdrawal, action, onConfirm, onClose, processing }: Act
             <div className="flex items-start justify-between px-3 pt-2.5 pb-2">
               <div>
                 <p className="text-slate-500 text-[10px] uppercase tracking-widest font-semibold mb-0.5">Amount</p>
-                <p className="text-orange-400 text-xl font-extrabold leading-none">
+                <p className="text-white text-xl font-extrabold leading-none">
                   ${Number(withdrawal.amount).toFixed(2)}
                 </p>
               </div>
@@ -249,7 +249,7 @@ function ActionModal({ withdrawal, action, onConfirm, onClose, processing }: Act
               onChange={(e) => setNote(e.target.value)}
               placeholder={isApprove ? 'Add a note for the member (optional)...' : 'Reason for rejection (required)...'}
               rows={2}
-              className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-blue-500/50 focus:ring-1 focus:ring-blue-500/20 resize-none transition-all"
+              className="w-full bg-white/[0.04] border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/20 resize-none transition-all"
             />
           </div>
 
@@ -267,7 +267,7 @@ function ActionModal({ withdrawal, action, onConfirm, onClose, processing }: Act
               disabled={processing || (!isApprove && !note.trim())}
               className={`flex-1 py-2 rounded-lg text-sm font-bold text-white transition-all disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg ${
                 isApprove
-                  ? 'bg-gradient-to-r from-blue-600 to-violet-600 hover:from-blue-500 hover:to-violet-500 shadow-blue-500/20'
+                  ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20'
                   : 'bg-red-600 hover:bg-red-500 shadow-red-500/25'
               }`}
             >
@@ -299,12 +299,12 @@ function CopyButton({ text }: { text: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="relative inline-flex items-center text-slate-500 hover:text-orange-400 transition-colors flex-shrink-0"
+      className="relative inline-flex items-center text-slate-500 hover:text-white transition-colors flex-shrink-0"
       title="Copy to clipboard"
     >
       <ClipboardDocumentIcon className="w-3.5 h-3.5" />
       {copied && (
-        <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-orange-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap z-10">
+        <span className="absolute -top-6 left-1/2 -translate-x-1/2 bg-emerald-400 text-black text-[10px] font-bold px-1.5 py-0.5 rounded whitespace-nowrap z-10">
           Copied!
         </span>
       )}
@@ -440,8 +440,8 @@ export default function WithdrawalsPage() {
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <div className="flex items-center gap-2.5 mb-1">
-            <div className="w-8 h-8 rounded-lg bg-orange-500/15 border border-orange-500/25 flex items-center justify-center">
-              <ArrowUpTrayIcon className="w-4 h-4 text-orange-400" />
+            <div className="w-8 h-8 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
+              <ArrowUpTrayIcon className="w-4 h-4 text-white" />
             </div>
             <h2 className="text-white text-lg font-bold">Withdrawals</h2>
             {pendingCount > 0 && (
@@ -518,13 +518,13 @@ export default function WithdrawalsPage() {
                 onClick={() => setFilter(tab.key)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${
                   filter === tab.key
-                    ? 'bg-blue-500/15 text-blue-400 border border-blue-500/25' :'text-slate-500 hover:text-slate-300 hover:bg-white/5'
+                    ? 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/25' :'text-slate-500 hover:text-slate-300 hover:bg-white/5'
                 }`}
               >
                 {tab.label}
                 {tab.count > 0 && (
                   <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
-                    filter === tab.key ? 'bg-blue-500/20 text-blue-400' : 'bg-slate-700 text-slate-400'
+                    filter === tab.key ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-700 text-slate-400'
                   }`}>
                     {tab.count}
                   </span>
@@ -539,7 +539,7 @@ export default function WithdrawalsPage() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by email, method..."
-              className="bg-white/5 border border-white/8 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-blue-500/50 w-52 transition-all"
+              className="bg-white/5 border border-white/8 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-emerald-500/50 w-52 transition-all"
             />
           </div>
         </div>
@@ -563,7 +563,7 @@ export default function WithdrawalsPage() {
                 <tr>
                   <td colSpan={8} className="text-center py-16">
                     <div className="flex flex-col items-center gap-3">
-                      <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+                      <div className="w-6 h-6 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
                       <span className="text-slate-500 text-sm">Loading withdrawals...</span>
                     </div>
                   </td>
@@ -610,7 +610,7 @@ export default function WithdrawalsPage() {
                       </div>
                     </td>
                     <td className="px-5 py-3.5">
-                      <span className="text-orange-400 text-sm font-bold">${Number(w.amount).toFixed(2)}</span>
+                      <span className="text-white text-sm font-bold">${Number(w.amount).toFixed(2)}</span>
                       <div className="text-slate-600 text-[10px]">{w.currency}</div>
                     </td>
                     <td className="px-5 py-3.5">
