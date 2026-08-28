@@ -64,6 +64,11 @@ type DrawingTool = 'trendline' | 'horizontal' | 'freehand' | 'delete' | null;
 
 type ChartType = 'candles' | 'bars' | 'line' | 'area' | 'baseline';
 
+// TradingView's own charting UI font stack — applied only within the chart
+// component (toolbar, dropdowns, axis/crosshair labels), not the rest of the
+// app, which keeps its own Inter/Geist Mono typography.
+const TRADINGVIEW_FONT = '-apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif';
+
 const UP_COLOR = '#22c55e';
 const DOWN_COLOR = '#ef4444';
 
@@ -1083,7 +1088,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     const subPanelOptions = (height: number) => ({
       width: containerRef.current?.clientWidth || 800,
       height,
-      layout: { background: { color: '#000000' }, textColor: '#94a3b8' },
+      layout: { background: { color: '#000000' }, textColor: '#94a3b8', fontFamily: TRADINGVIEW_FONT },
       grid: { vertLines: { color: 'rgba(255,255,255,0.04)' }, horzLines: { color: 'rgba(255,255,255,0.04)' } },
       crosshair: {
         vertLine: { color: 'rgba(255,255,255,0.2)', labelBackgroundColor: '#1e293b' },
@@ -1485,7 +1490,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         const chart = createChart(containerRef.current, {
           width: w,
           height: chartH,
-          layout: { background: { color: '#000000' }, textColor: '#94a3b8' },
+          layout: { background: { color: '#000000' }, textColor: '#94a3b8', fontFamily: TRADINGVIEW_FONT },
           grid: { vertLines: { color: 'rgba(255,255,255,0.04)' }, horzLines: { color: 'rgba(255,255,255,0.04)' } },
           crosshair: {
             vertLine: { color: 'rgba(255,255,255,0.2)', labelBackgroundColor: '#1e293b' },
@@ -2114,7 +2119,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     const canvasPointerEvents = activeTool ? 'auto' : 'none';
 
     return (
-      <div className="w-full relative" style={{ background: '#000' }}>
+      <div className="w-full relative" style={{ background: '#000', fontFamily: TRADINGVIEW_FONT }}>
         {/* ── Single compact toolbar row ── */}
         <div
           className="flex items-center border-b border-white/10"
