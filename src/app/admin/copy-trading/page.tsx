@@ -109,7 +109,7 @@ function OverviewTab() {
       ) : (
         <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
           {cards.map((c) => (
-            <div key={c.label} className={`bg-[#1e293b] rounded-xl p-5 border ${c.border}`}>
+            <div key={c.label} className={`bg-[#0a0f1e] rounded-xl p-5 border ${c.border}`}>
               <div className="text-slate-400 text-xs mb-2">{c.label}</div>
               <div className={`text-2xl font-bold ${c.color}`}>{c.value}</div>
             </div>
@@ -162,11 +162,11 @@ function FollowersTab() {
         <span className="text-slate-500 text-xs ml-auto">{filtered.length} followers</span>
       </div>
 
-      <div className="bg-[#1e293b] rounded-xl border border-slate-700 overflow-hidden">
+      <div className="bg-[#0a0f1e] rounded-xl border border-white/8 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-700 text-slate-400 text-xs">
+              <tr className="border-b border-white/8 text-slate-400 text-xs">
                 <th className="px-5 py-3 text-left font-medium">User</th>
                 <th className="px-5 py-3 text-left font-medium">Joined</th>
                 <th className="px-5 py-3 text-left font-medium">Allocated Balance</th>
@@ -300,7 +300,7 @@ function ExecuteTradeTab({ providerId }: { providerId: string }) {
         </div>
       )}
 
-      <div className="bg-[#1e293b] rounded-xl border border-slate-700 p-6 space-y-4">
+      <div className="bg-[#0a0f1e] rounded-xl border border-white/8 p-6 space-y-4">
         <h3 className="text-white font-semibold">Execute Copy Trade</h3>
         <p className="text-slate-400 text-xs">This will create a trade and deduct balance from all active followers.</p>
 
@@ -312,7 +312,7 @@ function ExecuteTradeTab({ providerId }: { providerId: string }) {
               value={form.asset_symbol}
               onChange={(e) => setForm((p) => ({ ...p, asset_symbol: e.target.value.toUpperCase() }))}
               placeholder="e.g. BTC, ETH, EUR/USD"
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2 bg-[#0a0f1e] border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
             />
           </div>
           <div>
@@ -320,7 +320,7 @@ function ExecuteTradeTab({ providerId }: { providerId: string }) {
             <select
               value={form.direction}
               onChange={(e) => setForm((p) => ({ ...p, direction: e.target.value as 'BUY' | 'SELL' }))}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2 bg-[#0a0f1e] border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
             >
               <option value="BUY">BUY</option>
               <option value="SELL">SELL</option>
@@ -334,7 +334,7 @@ function ExecuteTradeTab({ providerId }: { providerId: string }) {
               onChange={(e) => setForm((p) => ({ ...p, amount_per_follower: e.target.value }))}
               placeholder="e.g. 100"
               min="1"
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2 bg-[#0a0f1e] border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
             />
           </div>
           <div>
@@ -346,7 +346,7 @@ function ExecuteTradeTab({ providerId }: { providerId: string }) {
               placeholder="e.g. 65000"
               min="0"
               step="any"
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2 bg-[#0a0f1e] border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
             />
           </div>
           <div className="col-span-2">
@@ -354,7 +354,7 @@ function ExecuteTradeTab({ providerId }: { providerId: string }) {
             <select
               value={form.duration_seconds}
               onChange={(e) => setForm((p) => ({ ...p, duration_seconds: e.target.value }))}
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+              className="w-full px-3 py-2 bg-[#0a0f1e] border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
             >
               <option value="300">5 minutes</option>
               <option value="900">15 minutes</option>
@@ -504,11 +504,11 @@ function TradeResultsTab() {
         </div>
       )}
 
-      <div className="bg-[#1e293b] rounded-xl border border-slate-700 overflow-hidden">
+      <div className="bg-[#0a0f1e] rounded-xl border border-white/8 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-700 text-slate-400 text-xs">
+              <tr className="border-b border-white/8 text-slate-400 text-xs">
                 <th className="px-4 py-3 text-left font-medium">Asset</th>
                 <th className="px-4 py-3 text-left font-medium">Direction</th>
                 <th className="px-4 py-3 text-left font-medium">Amount/Follower</th>
@@ -571,7 +571,7 @@ function TradeResultsTab() {
       {/* Close Trade Modal */}
       {closeModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
-          <div className="bg-[#1e293b] border border-slate-700 rounded-xl p-6 w-80 max-w-[90vw]">
+          <div className="bg-[#0a0f1e] border border-white/8 rounded-xl p-6 w-80 max-w-[90vw]">
             <h3 className="text-white font-semibold mb-1">Close Trade</h3>
             <p className="text-slate-400 text-xs mb-4">
               {closeModal.trade.asset_symbol} {closeModal.trade.direction} — Entry: ${Number(closeModal.trade.entry_price).toLocaleString()}
@@ -583,7 +583,7 @@ function TradeResultsTab() {
               onChange={(e) => setExitPrice(e.target.value)}
               placeholder="Enter exit price"
               step="any"
-              className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 mb-4"
+              className="w-full px-3 py-2 bg-[#0a0f1e] border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 mb-4"
             />
             <div className="flex gap-2">
               <button onClick={() => setCloseModal(null)} className="flex-1 py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 text-sm rounded-lg transition-colors">Cancel</button>
@@ -678,25 +678,25 @@ function SettingsTab({ provider, onSaved }: { provider: Provider | null; onSaved
         </div>
       )}
 
-      <div className="bg-[#1e293b] rounded-xl border border-slate-700 p-6 space-y-4">
+      <div className="bg-[#0a0f1e] rounded-xl border border-white/8 p-6 space-y-4">
         <h3 className="text-white font-semibold">Provider Settings</h3>
 
         <div>
           <label className="text-slate-400 text-xs block mb-1.5">Provider Name</label>
           <input type="text" value={form.name} onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
-            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
+            className="w-full px-3 py-2 bg-[#0a0f1e] border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
         </div>
 
         <div>
           <label className="text-slate-400 text-xs block mb-1.5">Description</label>
           <textarea value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} rows={2}
-            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 resize-none" />
+            className="w-full px-3 py-2 bg-[#0a0f1e] border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500 resize-none" />
         </div>
 
         <div>
           <label className="text-slate-400 text-xs block mb-1.5">Minimum Balance (USD)</label>
           <input type="number" value={form.min_balance_usd} onChange={(e) => setForm((p) => ({ ...p, min_balance_usd: e.target.value }))} min="0"
-            className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
+            className="w-full px-3 py-2 bg-[#0a0f1e] border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500" />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
@@ -710,7 +710,7 @@ function SettingsTab({ provider, onSaved }: { provider: Provider | null; onSaved
                 min="0"
                 max={f.max}
                 step="0.1"
-                className="w-full px-3 py-2 bg-slate-800 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
+                className="w-full px-3 py-2 bg-[#0a0f1e] border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-blue-500"
               />
             </div>
           ))}
@@ -761,7 +761,7 @@ export default function AdminCopyTradingPage() {
 
       {/* Provider Info Banner */}
       {!providerLoading && provider && (
-        <div className="bg-[#1e293b] border border-slate-700 rounded-xl px-5 py-4 flex items-center gap-4">
+        <div className="bg-[#0a0f1e] border border-white/8 rounded-xl px-5 py-4 flex items-center gap-4">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0">
             <span className="text-white font-black text-sm">IV</span>
           </div>
@@ -783,7 +783,7 @@ export default function AdminCopyTradingPage() {
       )}
 
       {/* Tabs */}
-      <div className="flex items-center gap-1 border-b border-slate-700 overflow-x-auto">
+      <div className="flex items-center gap-1 border-b border-white/8 overflow-x-auto">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           return (

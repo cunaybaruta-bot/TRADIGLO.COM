@@ -103,7 +103,7 @@ export default function BonusSettingsPage() {
       </div>
 
       {message && (
-        <div className="bg-slate-800 border border-slate-700 text-slate-200 text-sm px-4 py-3 rounded-xl">
+        <div className="bg-[#0a0f1e] border border-white/8 text-slate-200 text-sm px-4 py-3 rounded-xl">
           {message}
         </div>
       )}
@@ -113,7 +113,7 @@ export default function BonusSettingsPage() {
           <div className="w-6 h-6 border-2 border-yellow-400 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : settings.length === 0 ? (
-        <div className="bg-[#1e293b] border border-slate-700 rounded-xl p-10 text-center text-slate-500 text-sm">
+        <div className="bg-[#0a0f1e] border border-white/8 rounded-xl p-10 text-center text-slate-500 text-sm">
           No bonus settings found. Run the migration to create the default welcome bonus.
         </div>
       ) : (
@@ -126,9 +126,9 @@ export default function BonusSettingsPage() {
             const { exampleDeposit, bonus, total } = calcExample(bp, md, mb);
 
             return (
-              <div key={s.id} className="bg-[#1e293b] border border-slate-700 rounded-2xl overflow-hidden">
+              <div key={s.id} className="bg-[#0a0f1e] border border-white/8 rounded-2xl overflow-hidden">
                 {/* Header */}
-                <div className="flex items-center justify-between px-6 py-4 border-b border-slate-700">
+                <div className="flex items-center justify-between px-6 py-4 border-b border-white/8">
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-xl bg-yellow-500/15 flex items-center justify-center">
                       <GiftIcon className="w-5 h-5 text-yellow-400" />
@@ -237,7 +237,7 @@ export default function BonusSettingsPage() {
                   <div className="text-xs font-semibold text-yellow-400 uppercase tracking-wider mb-3">📊 Example Calculation</div>
                   <div className="flex items-center gap-2 flex-wrap text-sm">
                     <span className="text-slate-300">User deposits</span>
-                    <span className="px-2.5 py-1 bg-slate-800 rounded-lg text-white font-bold">${exampleDeposit.toLocaleString()}</span>
+                    <span className="px-2.5 py-1 bg-[#0a0f1e] rounded-lg text-white font-bold">${exampleDeposit.toLocaleString()}</span>
                     <span className="text-slate-500">→ receives</span>
                     <span className="px-2.5 py-1 bg-yellow-500/15 rounded-lg text-yellow-400 font-bold">+${bonus.toLocaleString()} bonus</span>
                     <span className="text-slate-500">→ total credited</span>

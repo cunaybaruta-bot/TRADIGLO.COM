@@ -148,7 +148,7 @@ export default function AdminFAQPage() {
 
       {/* Add/Edit Form */}
       {showForm && (
-        <div className="bg-[#1e293b] border border-[#22c55e]/30 rounded-xl p-5 space-y-4">
+        <div className="bg-[#0a0f1e] border border-[#22c55e]/30 rounded-xl p-5 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="text-white font-semibold text-sm">{editingId ? 'Edit FAQ' : 'Add New FAQ'}</h3>
             <button onClick={() => setShowForm(false)} className="text-slate-400 hover:text-white">
@@ -171,7 +171,7 @@ export default function AdminFAQPage() {
                     setCustomCategory('');
                   }
                 }}
-                className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#22c55e]/50"
+                className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#22c55e]/50"
               >
                 {DEFAULT_CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                 <option value="__custom__">+ Custom category</option>
@@ -182,7 +182,7 @@ export default function AdminFAQPage() {
                   placeholder="Enter custom category name"
                   value={customCategory}
                   onChange={(e) => setCustomCategory(e.target.value)}
-                  className="w-full mt-2 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#22c55e]/50"
+                  className="w-full mt-2 bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#22c55e]/50"
                 />
               )}
             </div>
@@ -192,7 +192,7 @@ export default function AdminFAQPage() {
                 type="number"
                 value={form.sort_order}
                 onChange={(e) => setForm({ ...form, sort_order: parseInt(e.target.value) || 0 })}
-                className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#22c55e]/50"
+                className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#22c55e]/50"
               />
             </div>
           </div>
@@ -204,7 +204,7 @@ export default function AdminFAQPage() {
               value={form.question}
               onChange={(e) => setForm({ ...form, question: e.target.value })}
               placeholder="Enter the question..."
-              className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#22c55e]/50"
+              className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#22c55e]/50"
             />
           </div>
 
@@ -215,7 +215,7 @@ export default function AdminFAQPage() {
               onChange={(e) => setForm({ ...form, answer: e.target.value })}
               placeholder="Enter the answer..."
               rows={4}
-              className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#22c55e]/50 resize-none"
+              className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#22c55e]/50 resize-none"
             />
           </div>
 
@@ -255,7 +255,7 @@ export default function AdminFAQPage() {
             if (catFaqs.length === 0) return null;
             const isExpanded = expandedCategories.has(cat);
             return (
-              <div key={cat} className="bg-[#1e293b] border border-slate-700 rounded-xl overflow-hidden">
+              <div key={cat} className="bg-[#0a0f1e] border border-white/8 rounded-xl overflow-hidden">
                 <button
                   onClick={() => toggleCategory(cat)}
                   className="w-full flex items-center justify-between px-4 py-3 hover:bg-slate-700/30 transition-colors"
@@ -269,7 +269,7 @@ export default function AdminFAQPage() {
                 </button>
 
                 {isExpanded && (
-                  <div className="border-t border-slate-700 divide-y divide-slate-700/50">
+                  <div className="border-t border-white/8 divide-y divide-slate-700/50">
                     {catFaqs.map((faq) => (
                       <div key={faq.id} className="px-4 py-3">
                         <div className="flex items-start justify-between gap-3">

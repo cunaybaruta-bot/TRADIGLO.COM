@@ -121,7 +121,7 @@ export default function TradesPage() {
           <div className="relative">
             <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input type="text" placeholder="Search user or asset..." value={search} onChange={(e) => setSearch(e.target.value)}
-              className="bg-[#1e293b] border border-slate-700 text-white text-sm rounded-lg pl-9 pr-4 py-2 w-56 focus:outline-none focus:border-[#22c55e] placeholder-slate-500" />
+              className="bg-[#0a0f1e] border border-white/8 text-white text-sm rounded-lg pl-9 pr-4 py-2 w-56 focus:outline-none focus:border-[#22c55e] placeholder-slate-500" />
           </div>
         )}
       </div>
@@ -129,7 +129,7 @@ export default function TradesPage() {
       {message && <div className="bg-green-500/10 border border-green-500/20 text-green-400 text-sm px-4 py-2 rounded-lg">{message}</div>}
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-[#1e293b] rounded-lg p-1 w-fit border border-slate-700">
+      <div className="flex gap-1 bg-[#0a0f1e] rounded-lg p-1 w-fit border border-white/8">
         {(['open', 'history', 'analytics'] as const).map((t) => (
           <button key={t} onClick={() => setTab(t)}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors capitalize ${tab === t ? 'bg-[#22c55e] text-black' : 'text-slate-400 hover:text-white'}`}>
@@ -149,13 +149,13 @@ export default function TradesPage() {
               { label: 'Total Volume', value: `$${analytics.totalVolume.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: 'text-purple-400' },
               { label: 'Platform Profit', value: `$${analytics.totalProfit.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`, color: 'text-emerald-400' },
             ].map(({ label, value, color }) => (
-              <div key={label} className="bg-[#1e293b] rounded-xl p-5 border border-slate-700">
+              <div key={label} className="bg-[#0a0f1e] rounded-xl p-5 border border-white/8">
                 <div className="text-slate-400 text-xs mb-2">{label}</div>
                 <div className={`text-2xl font-bold ${color}`}>{value}</div>
               </div>
             ))}
           </div>
-          <div className="bg-[#1e293b] rounded-xl p-5 border border-slate-700">
+          <div className="bg-[#0a0f1e] rounded-xl p-5 border border-white/8">
             <div className="flex items-center gap-2 mb-3">
               <ChartBarIcon className="w-5 h-5 text-[#22c55e]" />
               <h3 className="text-white font-semibold">Win Rate Analysis</h3>
@@ -173,11 +173,11 @@ export default function TradesPage() {
           </div>
         </div>
       ) : (
-        <div className="bg-[#1e293b] rounded-xl border border-slate-700 overflow-hidden">
+        <div className="bg-[#0a0f1e] rounded-xl border border-white/8 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-700">
+                <tr className="border-b border-white/8">
                   <th className="text-left text-slate-400 text-xs font-medium px-5 py-3">User</th>
                   <th className="text-left text-slate-400 text-xs font-medium px-5 py-3">Asset</th>
                   <th className="text-left text-slate-400 text-xs font-medium px-5 py-3">Type</th>

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { KNOWN_COUNTRIES as SHARED_COUNTRIES, COUNTRY_CURRENCY } from '@/lib/deposit-countries';
 
 interface PaymentMethod {
   id: string;
@@ -45,12 +46,10 @@ const TYPE_LABELS: Record<string, string> = {
   card: 'Card',
 };
 
-const KNOWN_COUNTRIES = [
-  'Malaysia', 'Singapore', 'Thailand', 'Vietnam', 'Japan', 'South Korea',
-  'Philippines', 'China', 'India', 'Hong Kong', 'Taiwan', 'Pakistan',
-  'Bangladesh', 'Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Oman', 'Sri Lanka',
-  'Myanmar', 'United States', 'Global', 'Portugal', 'Jordan',
-];
+// 'Indonesia' and 'South Africa' aren't part of the shared deposit-country list
+// (Indonesia is deliberately excluded from the live deposit flow; South Africa
+// has no payment-method entries yet) but are kept selectable here for records.
+const KNOWN_COUNTRIES = [...SHARED_COUNTRIES.slice(0, -1), 'Indonesia', 'South Africa', 'Global'];
 
 const CURRENCIES = [
   // Americas
@@ -58,6 +57,16 @@ const CURRENCIES = [
   { code: 'CAD', label: 'CAD – Canadian Dollar' },
   { code: 'BRL', label: 'BRL – Brazilian Real' },
   { code: 'MXN', label: 'MXN – Mexican Peso' },
+  { code: 'ARS', label: 'ARS – Argentine Peso' },
+  { code: 'COP', label: 'COP – Colombian Peso' },
+  { code: 'CLP', label: 'CLP – Chilean Peso' },
+  { code: 'PEN', label: 'PEN – Peruvian Sol' },
+  { code: 'UYU', label: 'UYU – Uruguayan Peso' },
+  { code: 'PYG', label: 'PYG – Paraguayan Guaraní' },
+  { code: 'BOB', label: 'BOB – Bolivian Boliviano' },
+  { code: 'VES', label: 'VES – Venezuelan Bolívar' },
+  { code: 'GYD', label: 'GYD – Guyanese Dollar' },
+  { code: 'SRD', label: 'SRD – Surinamese Dollar' },
   // Europe
   { code: 'EUR', label: 'EUR – Euro' },
   { code: 'GBP', label: 'GBP – British Pound' },
@@ -65,10 +74,20 @@ const CURRENCIES = [
   { code: 'SEK', label: 'SEK – Swedish Krona' },
   { code: 'NOK', label: 'NOK – Norwegian Krone' },
   { code: 'DKK', label: 'DKK – Danish Krone' },
+  { code: 'ISK', label: 'ISK – Icelandic Króna' },
   { code: 'PLN', label: 'PLN – Polish Zloty' },
   { code: 'CZK', label: 'CZK – Czech Koruna' },
   { code: 'HUF', label: 'HUF – Hungarian Forint' },
   { code: 'RON', label: 'RON – Romanian Leu' },
+  { code: 'BGN', label: 'BGN – Bulgarian Lev' },
+  { code: 'ALL', label: 'ALL – Albanian Lek' },
+  { code: 'BAM', label: 'BAM – Bosnia-Herz. Mark' },
+  { code: 'MKD', label: 'MKD – Macedonian Denar' },
+  { code: 'RSD', label: 'RSD – Serbian Dinar' },
+  { code: 'UAH', label: 'UAH – Ukrainian Hryvnia' },
+  { code: 'MDL', label: 'MDL – Moldovan Leu' },
+  { code: 'BYN', label: 'BYN – Belarusian Ruble' },
+  { code: 'RUB', label: 'RUB – Russian Ruble' },
   // Southeast Asia
   { code: 'IDR', label: 'IDR – Indonesian Rupiah' },
   { code: 'MYR', label: 'MYR – Malaysian Ringgit' },
@@ -76,16 +95,23 @@ const CURRENCIES = [
   { code: 'THB', label: 'THB – Thai Baht' },
   { code: 'PHP', label: 'PHP – Philippine Peso' },
   { code: 'VND', label: 'VND – Vietnamese Dong' },
+  { code: 'KHR', label: 'KHR – Cambodian Riel' },
+  { code: 'LAK', label: 'LAK – Lao Kip' },
   // East & South Asia
   { code: 'JPY', label: 'JPY – Japanese Yen' },
   { code: 'CNY', label: 'CNY – Chinese Yuan' },
   { code: 'HKD', label: 'HKD – Hong Kong Dollar' },
+  { code: 'TWD', label: 'TWD – Taiwan Dollar' },
   { code: 'KRW', label: 'KRW – South Korean Won' },
   { code: 'INR', label: 'INR – Indian Rupee' },
   { code: 'BDT', label: 'BDT – Bangladeshi Taka' },
   { code: 'PKR', label: 'PKR – Pakistani Rupee' },
   { code: 'LKR', label: 'LKR – Sri Lankan Rupee' },
   { code: 'MMK', label: 'MMK – Myanmar Kyat' },
+  { code: 'NPR', label: 'NPR – Nepalese Rupee' },
+  // Oceania
+  { code: 'AUD', label: 'AUD – Australian Dollar' },
+  { code: 'NZD', label: 'NZD – New Zealand Dollar' },
   // Middle East & Africa
   { code: 'AED', label: 'AED – UAE Dirham' },
   { code: 'SAR', label: 'SAR – Saudi Riyal' },
@@ -101,61 +127,14 @@ const CURRENCIES = [
   { code: 'USDC', label: 'USDC – USD Coin' },
 ];
 
+// Shared with DepositModal + Countries admin page, plus a few extras (Africa,
+// Indonesia) that aren't offered in the live deposit flow but are still valid
+// here for record-keeping.
 const COUNTRY_DEFAULT_CURRENCY: Record<string, string> = {
-  'Malaysia': 'MYR',
-  'Singapore': 'SGD',
-  'Thailand': 'THB',
-  'Vietnam': 'VND',
-  'Japan': 'JPY',
-  'South Korea': 'KRW',
-  'Philippines': 'PHP',
-  'China': 'CNY',
-  'India': 'INR',
-  'Hong Kong': 'HKD',
-  'Taiwan': 'TWD',
-  'Pakistan': 'PKR',
-  'Bangladesh': 'BDT',
-  'Saudi Arabia': 'SAR',
-  'UAE': 'AED',
-  'Qatar': 'QAR',
-  'Kuwait': 'KWD',
-  'Oman': 'OMR',
-  'Sri Lanka': 'LKR',
-  'Myanmar': 'MMK',
-  'United States': 'USD',
-  'Global': 'USD',
-  'Jordan': 'JOD',
-  // European countries
-  'Portugal': 'EUR',
-  'Spain': 'EUR',
-  'France': 'EUR',
-  'Germany': 'EUR',
-  'Italy': 'EUR',
-  'Netherlands': 'EUR',
-  'Belgium': 'EUR',
-  'Austria': 'EUR',
-  'Greece': 'EUR',
-  'Finland': 'EUR',
-  'Ireland': 'EUR',
-  'Luxembourg': 'EUR',
-  'United Kingdom': 'GBP',
-  'Switzerland': 'CHF',
-  'Sweden': 'SEK',
-  'Norway': 'NOK',
-  'Denmark': 'DKK',
-  'Poland': 'PLN',
-  'Czech Republic': 'CZK',
-  'Hungary': 'HUF',
-  'Romania': 'RON',
-  // Americas
-  'Canada': 'CAD',
-  'Brazil': 'BRL',
-  'Mexico': 'MXN',
-  // Africa
+  ...COUNTRY_CURRENCY,
+  Indonesia: 'IDR',
   'South Africa': 'ZAR',
-  'Egypt': 'EGP',
-  // Bahrain
-  'Bahrain': 'BHD',
+  Egypt: 'EGP',
 };
 
 const EMPTY_FORM: NewMethodForm = {
@@ -367,7 +346,7 @@ export default function AdminPaymentMethodsPage() {
       )}
 
       {/* Filters */}
-      <div className="bg-[#1e293b] rounded-xl border border-slate-700 p-4">
+      <div className="bg-[#0a0f1e] rounded-xl border border-white/8 p-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {/* Search */}
           <div className="relative">
@@ -379,7 +358,7 @@ export default function AdminPaymentMethodsPage() {
               placeholder="Search methods..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full bg-slate-800 border border-slate-600 rounded-lg pl-8 pr-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+              className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg pl-8 pr-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
             />
           </div>
 
@@ -387,7 +366,7 @@ export default function AdminPaymentMethodsPage() {
           <select
             value={filterType}
             onChange={(e) => setFilterType(e.target.value)}
-            className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+            className="bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
           >
             <option value="all">All Types</option>
             {types.map((t) => <option key={t} value={t}>{TYPE_LABELS[t] || t}</option>)}
@@ -397,7 +376,7 @@ export default function AdminPaymentMethodsPage() {
           <select
             value={filterCountry}
             onChange={(e) => setFilterCountry(e.target.value)}
-            className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+            className="bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
           >
             <option value="all">All Countries</option>
             {countries.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -407,7 +386,7 @@ export default function AdminPaymentMethodsPage() {
           <select
             value={filterActive}
             onChange={(e) => setFilterActive(e.target.value)}
-            className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+            className="bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
           >
             <option value="all">All Status</option>
             <option value="active">Active Only</option>
@@ -442,11 +421,11 @@ export default function AdminPaymentMethodsPage() {
                     </span>
                   </div>
 
-                  <div className="bg-[#1e293b] rounded-xl border border-slate-700 overflow-hidden">
+                  <div className="bg-[#0a0f1e] rounded-xl border border-white/8 overflow-hidden">
                     <div className="overflow-x-auto">
                       <table className="w-full">
                         <thead>
-                          <tr className="border-b border-slate-700">
+                          <tr className="border-b border-white/8">
                             <th className="text-left text-slate-400 text-xs font-medium px-4 py-2.5 whitespace-nowrap">Name</th>
                             <th className="text-left text-slate-400 text-xs font-medium px-4 py-2.5 whitespace-nowrap">Account Number</th>
                             <th className="text-left text-slate-400 text-xs font-medium px-4 py-2.5 whitespace-nowrap">Account Name</th>
@@ -473,7 +452,7 @@ export default function AdminPaymentMethodsPage() {
                                     value={getValue(method, 'account_number')}
                                     onChange={(e) => handleFieldChange(method.id, 'account_number', e.target.value)}
                                     placeholder="e.g. 1234567890"
-                                    className="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white w-32 focus:outline-none focus:border-emerald-500/50"
+                                    className="bg-[#0a0f1e] border border-slate-600 rounded px-2 py-1 text-xs text-white w-32 focus:outline-none focus:border-emerald-500/50"
                                   />
                                 </td>
                                 <td className="px-4 py-2.5">
@@ -482,7 +461,7 @@ export default function AdminPaymentMethodsPage() {
                                     value={getValue(method, 'account_name')}
                                     onChange={(e) => handleFieldChange(method.id, 'account_name', e.target.value)}
                                     placeholder="Account holder"
-                                    className="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white w-28 focus:outline-none focus:border-emerald-500/50"
+                                    className="bg-[#0a0f1e] border border-slate-600 rounded px-2 py-1 text-xs text-white w-28 focus:outline-none focus:border-emerald-500/50"
                                   />
                                 </td>
                                 <td className="px-4 py-2.5">
@@ -491,7 +470,7 @@ export default function AdminPaymentMethodsPage() {
                                     value={getValue(method, 'network')}
                                     onChange={(e) => handleFieldChange(method.id, 'network', e.target.value)}
                                     placeholder="e.g. TRC20"
-                                    className="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white w-20 focus:outline-none focus:border-emerald-500/50"
+                                    className="bg-[#0a0f1e] border border-slate-600 rounded px-2 py-1 text-xs text-white w-20 focus:outline-none focus:border-emerald-500/50"
                                   />
                                 </td>
                                 <td className="px-4 py-2.5">
@@ -499,7 +478,7 @@ export default function AdminPaymentMethodsPage() {
                                     type="number"
                                     value={getValue(method, 'min_deposit')}
                                     onChange={(e) => handleFieldChange(method.id, 'min_deposit', parseFloat(e.target.value))}
-                                    className="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white w-16 focus:outline-none focus:border-emerald-500/50"
+                                    className="bg-[#0a0f1e] border border-slate-600 rounded px-2 py-1 text-xs text-white w-16 focus:outline-none focus:border-emerald-500/50"
                                   />
                                 </td>
                                 <td className="px-4 py-2.5">
@@ -507,7 +486,7 @@ export default function AdminPaymentMethodsPage() {
                                     type="number"
                                     value={getValue(method, 'max_deposit')}
                                     onChange={(e) => handleFieldChange(method.id, 'max_deposit', parseFloat(e.target.value))}
-                                    className="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white w-20 focus:outline-none focus:border-emerald-500/50"
+                                    className="bg-[#0a0f1e] border border-slate-600 rounded px-2 py-1 text-xs text-white w-20 focus:outline-none focus:border-emerald-500/50"
                                   />
                                 </td>
                                 <td className="px-4 py-2.5">
@@ -516,7 +495,7 @@ export default function AdminPaymentMethodsPage() {
                                     value={getValue(method, 'instructions')}
                                     onChange={(e) => handleFieldChange(method.id, 'instructions', e.target.value)}
                                     placeholder="Payment instructions..."
-                                    className="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white w-40 focus:outline-none focus:border-emerald-500/50"
+                                    className="bg-[#0a0f1e] border border-slate-600 rounded px-2 py-1 text-xs text-white w-40 focus:outline-none focus:border-emerald-500/50"
                                   />
                                 </td>
                                 <td className="px-4 py-2.5">
@@ -600,9 +579,9 @@ export default function AdminPaymentMethodsPage() {
           style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}
           onClick={(e) => { if (e.target === e.currentTarget) setShowAddModal(false); }}
         >
-          <div className="bg-[#0f172a] border border-slate-700 rounded-2xl w-full max-w-md mx-4 overflow-hidden">
+          <div className="bg-[#0f172a] border border-white/8 rounded-2xl w-full max-w-md mx-4 overflow-hidden">
             {/* Modal header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
               <h3 className="text-white font-bold text-base">Add Payment Method</h3>
               <button
                 onClick={() => setShowAddModal(false)}
@@ -626,7 +605,7 @@ export default function AdminPaymentMethodsPage() {
                     const defaultCurrency = COUNTRY_DEFAULT_CURRENCY[country] || 'USD';
                     setAddForm((f) => ({ ...f, country, currency: defaultCurrency }));
                   }}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                 >
                   <option value="">Select country...</option>
                   {allCountries.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -642,7 +621,7 @@ export default function AdminPaymentMethodsPage() {
                 <select
                   value={addForm.currency ?? 'USD'}
                   onChange={(e) => setAddForm((f) => ({ ...f, currency: e.target.value }))}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                 >
                   {CURRENCIES.map((c) => (
                     <option key={c.code} value={c.code}>{c.label}</option>
@@ -656,7 +635,7 @@ export default function AdminPaymentMethodsPage() {
                 <select
                   value={addForm.type}
                   onChange={(e) => setAddForm((f) => ({ ...f, type: e.target.value }))}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                 >
                   <option value="bank">Bank Transfer</option>
                   <option value="ewallet">E-Wallet</option>
@@ -673,7 +652,7 @@ export default function AdminPaymentMethodsPage() {
                   value={addForm.name}
                   onChange={(e) => setAddForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="e.g. Maybank, GoPay, USDT TRC20"
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
                 />
               </div>
 
@@ -685,7 +664,7 @@ export default function AdminPaymentMethodsPage() {
                   value={addForm.account_number}
                   onChange={(e) => setAddForm((f) => ({ ...f, account_number: e.target.value }))}
                   placeholder="e.g. 1234567890 or wallet address"
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
                 />
               </div>
 
@@ -697,7 +676,7 @@ export default function AdminPaymentMethodsPage() {
                   value={addForm.account_name}
                   onChange={(e) => setAddForm((f) => ({ ...f, account_name: e.target.value }))}
                   placeholder="e.g. PT. Example Company"
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
                 />
               </div>
 
@@ -709,7 +688,7 @@ export default function AdminPaymentMethodsPage() {
                   value={addForm.network}
                   onChange={(e) => setAddForm((f) => ({ ...f, network: e.target.value }))}
                   placeholder="e.g. TRC20, ERC20, BEP20"
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
                 />
               </div>
 
@@ -721,7 +700,7 @@ export default function AdminPaymentMethodsPage() {
                     type="number"
                     value={addForm.min_deposit}
                     onChange={(e) => setAddForm((f) => ({ ...f, min_deposit: parseFloat(e.target.value) || 0 }))}
-                    className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                   />
                 </div>
                 <div>
@@ -730,7 +709,7 @@ export default function AdminPaymentMethodsPage() {
                     type="number"
                     value={addForm.max_deposit}
                     onChange={(e) => setAddForm((f) => ({ ...f, max_deposit: parseFloat(e.target.value) || 0 }))}
-                    className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                   />
                 </div>
               </div>
@@ -743,13 +722,13 @@ export default function AdminPaymentMethodsPage() {
                   onChange={(e) => setAddForm((f) => ({ ...f, instructions: e.target.value }))}
                   placeholder="Payment instructions for the user..."
                   rows={3}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 resize-none"
+                  className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 resize-none"
                 />
               </div>
             </div>
 
             {/* Modal footer */}
-            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-700">
+            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-white/8">
               <button
                 onClick={() => setShowAddModal(false)}
                 className="px-4 py-2 rounded-lg text-sm font-semibold bg-slate-700/50 text-slate-300 border border-slate-600 hover:bg-slate-700 transition-all"

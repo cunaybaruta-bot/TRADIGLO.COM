@@ -139,7 +139,7 @@ export default function ReportsPage() {
       </div>
 
       {/* Date Filter */}
-      <div className="bg-[#1e293b] rounded-xl border border-slate-700 p-5">
+      <div className="bg-[#0a0f1e] rounded-xl border border-white/8 p-5">
         <div className="flex items-center gap-2 mb-3">
           <CalendarIcon className="w-4 h-4 text-slate-400" />
           <span className="text-white text-sm font-medium">Filter by Date Range</span>
@@ -165,7 +165,7 @@ export default function ReportsPage() {
       ) : (
         <>
           {/* Platform Profit */}
-          <div className="bg-[#1e293b] rounded-xl p-5 border border-emerald-400/20">
+          <div className="bg-[#0a0f1e] rounded-xl p-5 border border-emerald-400/20">
             <div className="flex items-center gap-2 mb-2">
               <DocumentChartBarIcon className="w-5 h-5 text-emerald-400" />
               <span className="text-slate-400 text-sm">Platform Profit (from winning trades)</span>
@@ -176,8 +176,8 @@ export default function ReportsPage() {
 
           {/* Deposit & Withdrawal Stats */}
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-            <div className="bg-[#1e293b] rounded-xl border border-slate-700 overflow-hidden">
-              <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-700">
+            <div className="bg-[#0a0f1e] rounded-xl border border-white/8 overflow-hidden">
+              <div className="flex items-center gap-2 px-5 py-4 border-b border-white/8">
                 <ArrowDownTrayIcon className="w-4 h-4 text-green-400" />
                 <h3 className="text-white font-semibold text-sm">Deposit Report</h3>
               </div>
@@ -199,8 +199,8 @@ export default function ReportsPage() {
               </div>
             </div>
 
-            <div className="bg-[#1e293b] rounded-xl border border-slate-700 overflow-hidden">
-              <div className="flex items-center gap-2 px-5 py-4 border-b border-slate-700">
+            <div className="bg-[#0a0f1e] rounded-xl border border-white/8 overflow-hidden">
+              <div className="flex items-center gap-2 px-5 py-4 border-b border-white/8">
                 <ArrowUpTrayIcon className="w-4 h-4 text-orange-400" />
                 <h3 className="text-white font-semibold text-sm">Withdrawal Report</h3>
               </div>
@@ -224,7 +224,7 @@ export default function ReportsPage() {
           </div>
 
           {/* Monthly Chart */}
-          <div className="bg-[#1e293b] rounded-xl p-5 border border-slate-700">
+          <div className="bg-[#0a0f1e] rounded-xl p-5 border border-white/8">
             <h3 className="text-white font-semibold mb-4 text-sm">Monthly Overview (Last 6 Months)</h3>
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={monthlyData} margin={{ top: 5, right: 10, left: 0, bottom: 5 }}>

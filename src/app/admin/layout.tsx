@@ -318,7 +318,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return (
       <div className="min-h-screen bg-[#060a14] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
           <div className="text-slate-400 text-sm">Loading admin panel...</div>
         </div>
       </div>
@@ -343,12 +343,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         >
           {/* Logo */}
           <div className="flex items-center gap-3 px-4 py-4 border-b border-white/8 flex-shrink-0">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center flex-shrink-0 shadow-lg shadow-blue-500/25 transition-transform duration-200 hover:scale-105">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center flex-shrink-0 shadow-lg shadow-emerald-500/25 transition-transform duration-200 hover:scale-105">
               <span className="text-white font-black text-xs">TG</span>
             </div>
             <div className="min-w-0 flex-1">
               <div className="text-white font-bold text-sm leading-tight">Tradiglo</div>
-              <div className="text-blue-400 text-[10px] font-medium tracking-wide uppercase">Admin Panel</div>
+              <div className="text-emerald-400 text-[10px] font-medium tracking-wide uppercase">Admin Panel</div>
             </div>
             <button className="lg:hidden text-slate-500 hover:text-white transition-colors duration-150" onClick={() => setSidebarOpen(false)}>
               <XMarkIcon className="w-4 h-4" />
@@ -375,11 +375,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             onClick={() => toggleMenu(item.href)}
                             className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ease-out
                               ${isActive
-                                ? 'bg-blue-500/15 text-blue-400 shadow-sm shadow-blue-500/10'
+                                ? 'bg-emerald-500/15 text-emerald-400 shadow-sm shadow-emerald-500/10'
                                 : 'text-slate-400 hover:text-white hover:bg-white/5 hover:translate-x-0.5'
                               }`}
                           >
-                            <item.icon className={`w-4 h-4 flex-shrink-0 transition-colors duration-200 ${isActive ? 'text-blue-400' : ''}`} />
+                            <item.icon className={`w-4 h-4 flex-shrink-0 transition-colors duration-200 ${isActive ? 'text-emerald-400' : ''}`} />
                             <span className="flex-1 text-left truncate">{item.label}</span>
                             <ChevronDownIcon className={`w-3 h-3 flex-shrink-0 transition-transform duration-250 ease-[cubic-bezier(0.16,1,0.3,1)] ${isExpanded ? 'rotate-0' : '-rotate-90'}`} />
                           </button>
@@ -389,11 +389,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                             onClick={() => setSidebarOpen(false)}
                             className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 ease-out
                               ${isActive
-                                ? 'bg-blue-500/15 text-blue-400 shadow-sm shadow-blue-500/10'
+                                ? 'bg-emerald-500/15 text-emerald-400 shadow-sm shadow-emerald-500/10'
                                 : 'text-slate-400 hover:text-white hover:bg-white/5 hover:translate-x-0.5'
                               }`}
                           >
-                            <item.icon className={`w-4 h-4 flex-shrink-0 transition-colors duration-200 ${isActive ? 'text-blue-400' : ''}`} />
+                            <item.icon className={`w-4 h-4 flex-shrink-0 transition-colors duration-200 ${isActive ? 'text-emerald-400' : ''}`} />
                             <span className="truncate">{item.label}</span>
                           </Link>
                         )}
@@ -414,10 +414,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                     onClick={() => setSidebarOpen(false)}
                                     className={`flex items-center gap-2 px-2 py-1.5 rounded-md text-[11px] font-medium transition-all duration-200 ease-out
                                       ${subActive
-                                        ? 'text-blue-400 bg-blue-500/10' :'text-slate-500 hover:text-slate-300 hover:bg-white/5 hover:translate-x-0.5'
+                                        ? 'text-emerald-400 bg-emerald-500/10' :'text-slate-500 hover:text-slate-300 hover:bg-white/5 hover:translate-x-0.5'
                                       }`}
                                   >
-                                    <span className={`w-1 h-1 rounded-full flex-shrink-0 transition-all duration-200 ${subActive ? 'bg-blue-400 scale-125' : 'bg-slate-700'}`} />
+                                    <span className={`w-1 h-1 rounded-full flex-shrink-0 transition-all duration-200 ${subActive ? 'bg-emerald-400 scale-125' : 'bg-slate-700'}`} />
                                     {sub.label}
                                   </Link>
                                 );
@@ -436,8 +436,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {/* User + Logout */}
           <div className="px-3 py-3 border-t border-white/8 flex-shrink-0 space-y-1">
             <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg bg-white/5 transition-colors duration-200">
-              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500/30 to-purple-600/20 border border-blue-500/30 flex items-center justify-center flex-shrink-0">
-                <span className="text-blue-400 text-[10px] font-bold">{adminEmail.charAt(0).toUpperCase()}</span>
+              <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-500/30 to-emerald-700/20 border border-emerald-500/30 flex items-center justify-center flex-shrink-0">
+                <span className="text-emerald-400 text-[10px] font-bold">{adminEmail.charAt(0).toUpperCase()}</span>
               </div>
               <div className="min-w-0 flex-1">
                 <div className="text-white text-[11px] font-medium truncate">{adminEmail}</div>
@@ -484,8 +484,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="flex items-center gap-2">
               <NotificationBell />
               <div className="hidden sm:flex items-center gap-2 pl-2 border-l border-white/8">
-                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500/30 to-purple-600/20 border border-blue-500/30 flex items-center justify-center transition-transform duration-200 hover:scale-105">
-                  <span className="text-blue-400 text-[10px] font-bold">{adminEmail.charAt(0).toUpperCase()}</span>
+                <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-500/30 to-emerald-700/20 border border-emerald-500/30 flex items-center justify-center transition-transform duration-200 hover:scale-105">
+                  <span className="text-emerald-400 text-[10px] font-bold">{adminEmail.charAt(0).toUpperCase()}</span>
                 </div>
                 <span className="text-slate-300 text-xs max-w-[120px] truncate">{adminEmail}</span>
               </div>

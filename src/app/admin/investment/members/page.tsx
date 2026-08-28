@@ -153,7 +153,7 @@ export default function AdminInvestmentMembersPage() {
           { label: 'Completed', value: investments.filter(i => i.status === 'completed').length.toLocaleString(), color: '#a78bfa' },
           { label: 'Total Packages', value: investments.length.toLocaleString(), color: '#f59e0b' },
         ].map(s => (
-          <div key={s.label} className="bg-[#1e293b] border border-slate-700 rounded-xl p-4">
+          <div key={s.label} className="bg-[#0a0f1e] border border-white/8 rounded-xl p-4">
             <div className="text-slate-400 text-xs mb-1">{s.label}</div>
             <div className="text-xl font-bold" style={{ color: s.color }}>{s.value}</div>
           </div>
@@ -161,7 +161,7 @@ export default function AdminInvestmentMembersPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-[#1e293b] border border-slate-700 rounded-xl p-4 flex flex-wrap gap-3 items-center">
+      <div className="bg-[#0a0f1e] border border-white/8 rounded-xl p-4 flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-[200px]">
           <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
@@ -169,13 +169,13 @@ export default function AdminInvestmentMembersPage() {
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search by email or user ID..."
-            className="w-full bg-slate-800 border border-slate-600 rounded-lg pl-9 pr-3 py-2 text-white text-sm focus:outline-none focus:border-[#22c55e]"
+            className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg pl-9 pr-3 py-2 text-white text-sm focus:outline-none focus:border-[#22c55e]"
           />
         </div>
         <select
           value={statusFilter}
           onChange={e => { setStatusFilter(e.target.value as InvestmentStatus | 'all'); setPage(1); }}
-          className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#22c55e]"
+          className="bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#22c55e]"
         >
           <option value="all">All Status</option>
           <option value="active">Active</option>
@@ -185,7 +185,7 @@ export default function AdminInvestmentMembersPage() {
         <select
           value={tierFilter}
           onChange={e => { setTierFilter(e.target.value as Tier | 'all'); setPage(1); }}
-          className="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#22c55e]"
+          className="bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-[#22c55e]"
         >
           <option value="all">All Tiers</option>
           <option value="basic">Basic</option>
@@ -196,11 +196,11 @@ export default function AdminInvestmentMembersPage() {
       </div>
 
       {/* Table */}
-      <div className="bg-[#1e293b] border border-slate-700 rounded-xl overflow-hidden">
+      <div className="bg-[#0a0f1e] border border-white/8 rounded-xl overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-700">
+              <tr className="border-b border-white/8">
                 <th className="text-left px-4 py-3 text-slate-400 font-medium">Member</th>
                 <th className="text-left px-4 py-3 text-slate-400 font-medium">Tier</th>
                 <th className="text-right px-4 py-3 text-slate-400 font-medium">Capital</th>
@@ -215,7 +215,7 @@ export default function AdminInvestmentMembersPage() {
             <tbody>
               {loading ? (
                 [...Array(8)].map((_, i) => (
-                  <tr key={i} className="border-b border-slate-700/50">
+                  <tr key={i} className="border-b border-white/8/50">
                     {[...Array(9)].map((_, j) => (
                       <td key={j} className="px-4 py-3">
                         <div className="h-4 bg-slate-700 rounded animate-pulse" />
@@ -229,7 +229,7 @@ export default function AdminInvestmentMembersPage() {
                 </tr>
               ) : (
                 paginated.map(inv => (
-                  <tr key={inv.id} className="border-b border-slate-700/50 hover:bg-slate-700/20">
+                  <tr key={inv.id} className="border-b border-white/8/50 hover:bg-slate-700/20">
                     <td className="px-4 py-3">
                       <div className="text-white text-xs font-medium truncate max-w-[160px]">{inv.user_email}</div>
                     </td>
@@ -260,7 +260,7 @@ export default function AdminInvestmentMembersPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="px-5 py-4 border-t border-slate-700 flex items-center justify-between">
+          <div className="px-5 py-4 border-t border-white/8 flex items-center justify-between">
             <span className="text-slate-400 text-sm">
               Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filtered.length)} of {filtered.length}
             </span>

@@ -205,7 +205,7 @@ export default function AdminInvestmentSettlementsPage() {
           { label: 'Total Net Paid', value: fmt(totalNetPaid), icon: BanknotesIcon, color: '#22c55e', sub: 'To members' },
           { label: 'Platform Fees', value: fmt(totalPlatformFees), icon: BanknotesIcon, color: '#a78bfa', sub: '20% of gross profit' },
         ].map(s => (
-          <div key={s.label} className="bg-[#1e293b] border border-slate-700 rounded-xl p-4">
+          <div key={s.label} className="bg-[#0a0f1e] border border-white/8 rounded-xl p-4">
             <div className="flex items-center justify-between mb-2">
               <span className="text-slate-400 text-xs">{s.label}</span>
               <s.icon className="w-4 h-4" style={{ color: s.color }} />
@@ -237,8 +237,8 @@ export default function AdminInvestmentSettlementsPage() {
       )}
 
       {/* Tabs */}
-      <div className="bg-[#1e293b] border border-slate-700 rounded-xl overflow-hidden">
-        <div className="flex border-b border-slate-700">
+      <div className="bg-[#0a0f1e] border border-white/8 rounded-xl overflow-hidden">
+        <div className="flex border-b border-white/8">
           {[
             { key: 'pending', label: `Active & Pending (${pendingSettlement.length + activeNotExpired.length})` },
             { key: 'completed', label: `Completed (${completed.length})` },
@@ -256,7 +256,7 @@ export default function AdminInvestmentSettlementsPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-700">
+              <tr className="border-b border-white/8">
                 <th className="text-left px-4 py-3 text-slate-400 font-medium">Member</th>
                 <th className="text-left px-4 py-3 text-slate-400 font-medium">Tier</th>
                 <th className="text-right px-4 py-3 text-slate-400 font-medium">Capital</th>
@@ -271,7 +271,7 @@ export default function AdminInvestmentSettlementsPage() {
             <tbody>
               {loading ? (
                 [...Array(6)].map((_, i) => (
-                  <tr key={i} className="border-b border-slate-700/50">
+                  <tr key={i} className="border-b border-white/8/50">
                     {[...Array(tab === 'pending' ? 9 : 8)].map((_, j) => (
                       <td key={j} className="px-4 py-3">
                         <div className="h-4 bg-slate-700 rounded animate-pulse" />
@@ -289,7 +289,7 @@ export default function AdminInvestmentSettlementsPage() {
                 displayRecords.map(rec => {
                   const isExpired = rec.status === 'active' && new Date(rec.expires_at) <= now;
                   return (
-                    <tr key={rec.id} className={`border-b border-slate-700/50 hover:bg-slate-700/20 ${isExpired ? 'bg-yellow-500/5' : ''}`}>
+                    <tr key={rec.id} className={`border-b border-white/8/50 hover:bg-slate-700/20 ${isExpired ? 'bg-yellow-500/5' : ''}`}>
                       <td className="px-4 py-3">
                         <div className="text-white text-xs font-medium truncate max-w-[150px]">{rec.user_email}</div>
                       </td>

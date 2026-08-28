@@ -90,7 +90,7 @@ function EditRow({ pkg, onSave, onCancel }: EditRowProps) {
   };
 
   return (
-    <tr style={{ background: `${c.bg}` }} className="border-b border-slate-700/60">
+    <tr style={{ background: `${c.bg}` }} className="border-b border-white/8/60">
       <td className="px-5 py-3.5">
         <div className="flex items-center gap-2.5">
           <span className="text-base">{TIER_ICONS[pkg.tier]}</span>
@@ -104,7 +104,7 @@ function EditRow({ pkg, onSave, onCancel }: EditRowProps) {
           type="number"
           value={capital}
           onChange={e => setCapital(e.target.value)}
-          className="w-32 bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30"
+          className="w-32 bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30"
         />
       </td>
       <td className="px-5 py-3.5">
@@ -112,7 +112,7 @@ function EditRow({ pkg, onSave, onCancel }: EditRowProps) {
           type="number"
           value={baseProfit}
           onChange={e => setBaseProfit(e.target.value)}
-          className="w-40 bg-slate-800 border border-slate-600 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30"
+          className="w-40 bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/30"
         />
       </td>
       <td className="px-5 py-3.5 text-slate-500 text-sm">—</td>
@@ -155,9 +155,9 @@ function AddPackageModal({ onAdd, onClose }: AddModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-[#0f172a] border border-slate-700/80 rounded-2xl w-full max-w-md shadow-2xl">
+      <div className="bg-[#0f172a] border border-white/8/80 rounded-2xl w-full max-w-md shadow-2xl">
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-700/60">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-white/8/60">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center">
               <CubeIcon className="w-5 h-5 text-emerald-400" />
@@ -167,7 +167,7 @@ function AddPackageModal({ onAdd, onClose }: AddModalProps) {
               <p className="text-slate-500 text-xs mt-0.5">Configure a new investment tier package</p>
             </div>
           </div>
-          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">
+          <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#0a0f1e] text-slate-400 hover:text-white hover:bg-slate-700 transition-colors">
             <XMarkIcon className="w-4 h-4" />
           </button>
         </div>
@@ -208,7 +208,7 @@ function AddPackageModal({ onAdd, onClose }: AddModalProps) {
                 value={capital}
                 onChange={e => setCapital(e.target.value)}
                 placeholder="e.g. 500"
-                className="w-full bg-slate-800/80 border border-slate-700 rounded-xl pl-7 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 placeholder-slate-600"
+                className="w-full bg-[#0a0f1e]/80 border border-white/8 rounded-xl pl-7 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 placeholder-slate-600"
               />
             </div>
           </div>
@@ -222,7 +222,7 @@ function AddPackageModal({ onAdd, onClose }: AddModalProps) {
                 value={baseProfit}
                 onChange={e => setBaseProfit(e.target.value)}
                 placeholder="e.g. 10000"
-                className="w-full bg-slate-800/80 border border-slate-700 rounded-xl pl-7 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 placeholder-slate-600"
+                className="w-full bg-[#0a0f1e]/80 border border-white/8 rounded-xl pl-7 pr-4 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20 placeholder-slate-600"
               />
             </div>
           </div>
@@ -236,7 +236,7 @@ function AddPackageModal({ onAdd, onClose }: AddModalProps) {
         </div>
 
         <div className="flex gap-3 px-6 pb-6">
-          <button onClick={onClose} className="flex-1 px-4 py-2.5 bg-slate-800 text-slate-300 rounded-xl text-sm font-medium hover:bg-slate-700 transition-colors border border-slate-700">
+          <button onClick={onClose} className="flex-1 px-4 py-2.5 bg-[#0a0f1e] text-slate-300 rounded-xl text-sm font-medium hover:bg-slate-700 transition-colors border border-white/8">
             Cancel
           </button>
           <button
@@ -455,7 +455,7 @@ export default function AdminInvestmentPackagesPage() {
             disabled={saving}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all border ${
               saved
-                ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' :'bg-slate-800 text-slate-200 border-slate-700 hover:bg-slate-700 hover:border-slate-600'
+                ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' :'bg-[#0a0f1e] text-slate-200 border-white/8 hover:bg-slate-700 hover:border-slate-600'
             } disabled:opacity-50`}
           >
             {saving ? (
@@ -509,9 +509,9 @@ export default function AdminInvestmentPackagesPage() {
       </div>
 
       {/* ── Duration Settings ── */}
-      <div className="bg-[#0f172a] border border-slate-700/60 rounded-2xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-700/60 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center">
+      <div className="bg-[#0f172a] border border-white/8/60 rounded-2xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-white/8/60 flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-[#0a0f1e] border border-white/8 flex items-center justify-center">
             <ClockIcon className="w-4 h-4 text-slate-400" />
           </div>
           <div>
@@ -525,7 +525,7 @@ export default function AdminInvestmentPackagesPage() {
               key={dur.id}
               className={`rounded-xl border p-4 transition-all ${
                 dur.enabled
-                  ? 'bg-slate-800/60 border-slate-600/60' :'bg-slate-800/20 border-slate-700/40 opacity-50'
+                  ? 'bg-[#0a0f1e]/60 border-slate-600/60' :'bg-[#0a0f1e]/20 border-white/8/40 opacity-50'
               }`}
             >
               <div className="flex items-center justify-between mb-4">
@@ -542,11 +542,11 @@ export default function AdminInvestmentPackagesPage() {
                   step="0.1"
                   value={dur.factor}
                   onChange={e => updateDurationFactor(dur.id, parseFloat(e.target.value) || dur.factor)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20"
+                  className="w-full bg-slate-900 border border-white/8 rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20"
                 />
               </div>
               {dur.enabled && (
-                <div className="mt-3 pt-3 border-t border-slate-700/50">
+                <div className="mt-3 pt-3 border-t border-white/8/50">
                   <div className="flex items-center justify-between">
                     <span className="text-slate-500 text-xs">Multiplier</span>
                     <span className="text-emerald-400 text-xs font-semibold">×{dur.factor}</span>
@@ -559,9 +559,9 @@ export default function AdminInvestmentPackagesPage() {
       </div>
 
       {/* ── Package Table ── */}
-      <div className="bg-[#0f172a] border border-slate-700/60 rounded-2xl overflow-hidden">
+      <div className="bg-[#0f172a] border border-white/8/60 rounded-2xl overflow-hidden">
         {/* Table Header */}
-        <div className="px-6 py-4 border-b border-slate-700/60 flex items-center justify-between flex-wrap gap-3">
+        <div className="px-6 py-4 border-b border-white/8/60 flex items-center justify-between flex-wrap gap-3">
           <div>
             <h2 className="text-white font-semibold text-sm">Investment Packages</h2>
             <p className="text-slate-500 text-xs mt-0.5">
@@ -572,7 +572,7 @@ export default function AdminInvestmentPackagesPage() {
             <button
               onClick={() => setFilterTier('all')}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                filterTier === 'all' ?'bg-emerald-500 text-slate-900 shadow-md shadow-emerald-500/20' :'bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-300 border border-slate-700'
+                filterTier === 'all' ?'bg-emerald-500 text-slate-900 shadow-md shadow-emerald-500/20' :'bg-[#0a0f1e] text-slate-400 hover:bg-slate-700 hover:text-slate-300 border border-white/8'
               }`}
             >
               All Tiers
@@ -602,7 +602,7 @@ export default function AdminInvestmentPackagesPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-700/60">
+              <tr className="border-b border-white/8/60">
                 <th className="text-left px-5 py-3.5 text-slate-500 font-medium text-xs uppercase tracking-wider">Tier</th>
                 <th className="text-left px-5 py-3.5 text-slate-500 font-medium text-xs uppercase tracking-wider">Capital (USD)</th>
                 <th className="text-left px-5 py-3.5 text-slate-500 font-medium text-xs uppercase tracking-wider">Base Profit (3h)</th>
@@ -617,7 +617,7 @@ export default function AdminInvestmentPackagesPage() {
                 ) : (
                   <tr
                     key={pkg.id}
-                    className={`group hover:bg-slate-800/40 transition-colors ${!pkg.enabled ? 'opacity-40' : ''}`}
+                    className={`group hover:bg-[#0a0f1e]/40 transition-colors ${!pkg.enabled ? 'opacity-40' : ''}`}
                   >
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2.5">
@@ -655,7 +655,7 @@ export default function AdminInvestmentPackagesPage() {
                     <td className="px-5 py-3.5">
                       <button
                         onClick={() => setEditingId(pkg.id)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 text-slate-400 rounded-lg text-xs font-medium hover:bg-slate-700 hover:text-white transition-colors border border-slate-700 group-hover:border-slate-600 opacity-0 group-hover:opacity-100"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0a0f1e] text-slate-400 rounded-lg text-xs font-medium hover:bg-slate-700 hover:text-white transition-colors border border-white/8 group-hover:border-slate-600 opacity-0 group-hover:opacity-100"
                       >
                         <PencilIcon className="w-3.5 h-3.5" />
                         Edit
