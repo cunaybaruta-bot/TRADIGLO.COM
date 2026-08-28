@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { KNOWN_COUNTRIES as SHARED_COUNTRIES, COUNTRY_CURRENCY } from '@/lib/deposit-countries';
 
 interface PaymentMethod {
   id: string;
@@ -45,12 +46,10 @@ const TYPE_LABELS: Record<string, string> = {
   card: 'Card',
 };
 
-const KNOWN_COUNTRIES = [
-  'Malaysia', 'Singapore', 'Thailand', 'Vietnam', 'Japan', 'South Korea',
-  'Philippines', 'China', 'India', 'Hong Kong', 'Taiwan', 'Pakistan',
-  'Bangladesh', 'Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Oman', 'Sri Lanka',
-  'Myanmar', 'United States', 'Global', 'Portugal', 'Jordan',
-];
+// 'Indonesia' and 'South Africa' aren't part of the shared deposit-country list
+// (Indonesia is deliberately excluded from the live deposit flow; South Africa
+// has no payment-method entries yet) but are kept selectable here for records.
+const KNOWN_COUNTRIES = [...SHARED_COUNTRIES.slice(0, -1), 'Indonesia', 'South Africa', 'Global'];
 
 const CURRENCIES = [
   // Americas
@@ -58,6 +57,16 @@ const CURRENCIES = [
   { code: 'CAD', label: 'CAD – Canadian Dollar' },
   { code: 'BRL', label: 'BRL – Brazilian Real' },
   { code: 'MXN', label: 'MXN – Mexican Peso' },
+  { code: 'ARS', label: 'ARS – Argentine Peso' },
+  { code: 'COP', label: 'COP – Colombian Peso' },
+  { code: 'CLP', label: 'CLP – Chilean Peso' },
+  { code: 'PEN', label: 'PEN – Peruvian Sol' },
+  { code: 'UYU', label: 'UYU – Uruguayan Peso' },
+  { code: 'PYG', label: 'PYG – Paraguayan Guaraní' },
+  { code: 'BOB', label: 'BOB – Bolivian Boliviano' },
+  { code: 'VES', label: 'VES – Venezuelan Bolívar' },
+  { code: 'GYD', label: 'GYD – Guyanese Dollar' },
+  { code: 'SRD', label: 'SRD – Surinamese Dollar' },
   // Europe
   { code: 'EUR', label: 'EUR – Euro' },
   { code: 'GBP', label: 'GBP – British Pound' },
@@ -65,10 +74,20 @@ const CURRENCIES = [
   { code: 'SEK', label: 'SEK – Swedish Krona' },
   { code: 'NOK', label: 'NOK – Norwegian Krone' },
   { code: 'DKK', label: 'DKK – Danish Krone' },
+  { code: 'ISK', label: 'ISK – Icelandic Króna' },
   { code: 'PLN', label: 'PLN – Polish Zloty' },
   { code: 'CZK', label: 'CZK – Czech Koruna' },
   { code: 'HUF', label: 'HUF – Hungarian Forint' },
   { code: 'RON', label: 'RON – Romanian Leu' },
+  { code: 'BGN', label: 'BGN – Bulgarian Lev' },
+  { code: 'ALL', label: 'ALL – Albanian Lek' },
+  { code: 'BAM', label: 'BAM – Bosnia-Herz. Mark' },
+  { code: 'MKD', label: 'MKD – Macedonian Denar' },
+  { code: 'RSD', label: 'RSD – Serbian Dinar' },
+  { code: 'UAH', label: 'UAH – Ukrainian Hryvnia' },
+  { code: 'MDL', label: 'MDL – Moldovan Leu' },
+  { code: 'BYN', label: 'BYN – Belarusian Ruble' },
+  { code: 'RUB', label: 'RUB – Russian Ruble' },
   // Southeast Asia
   { code: 'IDR', label: 'IDR – Indonesian Rupiah' },
   { code: 'MYR', label: 'MYR – Malaysian Ringgit' },
@@ -76,16 +95,23 @@ const CURRENCIES = [
   { code: 'THB', label: 'THB – Thai Baht' },
   { code: 'PHP', label: 'PHP – Philippine Peso' },
   { code: 'VND', label: 'VND – Vietnamese Dong' },
+  { code: 'KHR', label: 'KHR – Cambodian Riel' },
+  { code: 'LAK', label: 'LAK – Lao Kip' },
   // East & South Asia
   { code: 'JPY', label: 'JPY – Japanese Yen' },
   { code: 'CNY', label: 'CNY – Chinese Yuan' },
   { code: 'HKD', label: 'HKD – Hong Kong Dollar' },
+  { code: 'TWD', label: 'TWD – Taiwan Dollar' },
   { code: 'KRW', label: 'KRW – South Korean Won' },
   { code: 'INR', label: 'INR – Indian Rupee' },
   { code: 'BDT', label: 'BDT – Bangladeshi Taka' },
   { code: 'PKR', label: 'PKR – Pakistani Rupee' },
   { code: 'LKR', label: 'LKR – Sri Lankan Rupee' },
   { code: 'MMK', label: 'MMK – Myanmar Kyat' },
+  { code: 'NPR', label: 'NPR – Nepalese Rupee' },
+  // Oceania
+  { code: 'AUD', label: 'AUD – Australian Dollar' },
+  { code: 'NZD', label: 'NZD – New Zealand Dollar' },
   // Middle East & Africa
   { code: 'AED', label: 'AED – UAE Dirham' },
   { code: 'SAR', label: 'SAR – Saudi Riyal' },
@@ -101,61 +127,14 @@ const CURRENCIES = [
   { code: 'USDC', label: 'USDC – USD Coin' },
 ];
 
+// Shared with DepositModal + Countries admin page, plus a few extras (Africa,
+// Indonesia) that aren't offered in the live deposit flow but are still valid
+// here for record-keeping.
 const COUNTRY_DEFAULT_CURRENCY: Record<string, string> = {
-  'Malaysia': 'MYR',
-  'Singapore': 'SGD',
-  'Thailand': 'THB',
-  'Vietnam': 'VND',
-  'Japan': 'JPY',
-  'South Korea': 'KRW',
-  'Philippines': 'PHP',
-  'China': 'CNY',
-  'India': 'INR',
-  'Hong Kong': 'HKD',
-  'Taiwan': 'TWD',
-  'Pakistan': 'PKR',
-  'Bangladesh': 'BDT',
-  'Saudi Arabia': 'SAR',
-  'UAE': 'AED',
-  'Qatar': 'QAR',
-  'Kuwait': 'KWD',
-  'Oman': 'OMR',
-  'Sri Lanka': 'LKR',
-  'Myanmar': 'MMK',
-  'United States': 'USD',
-  'Global': 'USD',
-  'Jordan': 'JOD',
-  // European countries
-  'Portugal': 'EUR',
-  'Spain': 'EUR',
-  'France': 'EUR',
-  'Germany': 'EUR',
-  'Italy': 'EUR',
-  'Netherlands': 'EUR',
-  'Belgium': 'EUR',
-  'Austria': 'EUR',
-  'Greece': 'EUR',
-  'Finland': 'EUR',
-  'Ireland': 'EUR',
-  'Luxembourg': 'EUR',
-  'United Kingdom': 'GBP',
-  'Switzerland': 'CHF',
-  'Sweden': 'SEK',
-  'Norway': 'NOK',
-  'Denmark': 'DKK',
-  'Poland': 'PLN',
-  'Czech Republic': 'CZK',
-  'Hungary': 'HUF',
-  'Romania': 'RON',
-  // Americas
-  'Canada': 'CAD',
-  'Brazil': 'BRL',
-  'Mexico': 'MXN',
-  // Africa
+  ...COUNTRY_CURRENCY,
+  Indonesia: 'IDR',
   'South Africa': 'ZAR',
-  'Egypt': 'EGP',
-  // Bahrain
-  'Bahrain': 'BHD',
+  Egypt: 'EGP',
 };
 
 const EMPTY_FORM: NewMethodForm = {

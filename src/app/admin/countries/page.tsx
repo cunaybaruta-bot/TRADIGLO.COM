@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { KNOWN_COUNTRIES as SHARED_COUNTRIES, FlagIcon } from '@/lib/deposit-countries';
 
 interface PaymentMethod {
   id: string;
@@ -42,115 +43,10 @@ const TYPE_LABELS: Record<string, string> = {
   card: 'Card',
 };
 
-const KNOWN_COUNTRIES = [
-  // Asia & Pacific
-  'Malaysia', 'Singapore', 'Thailand', 'Vietnam', 'Japan', 'South Korea',
-  'Philippines', 'China', 'India', 'Hong Kong', 'Taiwan', 'Pakistan',
-  'Bangladesh', 'Sri Lanka', 'Myanmar', 'Indonesia', 'Cambodia', 'Laos', 'Nepal',
-  'Australia', 'New Zealand',
-
-  // Middle East
-  'Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Oman', 'Jordan', 'Bahrain',
-
-  // Europe
-  'Germany', 'United Kingdom', 'France', 'Italy', 'Spain', 'Netherlands',
-  'Switzerland', 'Belgium', 'Austria', 'Portugal', 'Ireland', 'Finland',
-  'Sweden', 'Norway', 'Denmark', 'Poland', 'Greece',
-
-  // South America
-  'Brazil', 'Argentina', 'Colombia', 'Chile', 'Peru', 'Uruguay', 'Paraguay', 'Bolivia', 'Ecuador', 'Venezuela',
-
-  // North America & Global
-  'United States', 'Canada', 'Mexico', 'Global',
-];
-
-const FLAG_EMOJI: Record<string, string> = {
-  // Asia & Pacific
-  Malaysia: '🇲🇾',
-  Singapore: '🇸🇬',
-  Thailand: '🇹🇭',
-  Vietnam: '🇻🇳',
-  Japan: '🇯🇵',
-  'South Korea': '🇰🇷',
-  Indonesia: '🇮🇩',
-  Philippines: '🇵🇭',
-  China: '🇨🇳',
-  India: '🇮🇳',
-  'Hong Kong': '🇭🇰',
-  Taiwan: '🇹🇼',
-  Pakistan: '🇵🇰',
-  Bangladesh: '🇧🇩',
-  'Sri Lanka': '🇱🇰',
-  Myanmar: '🇲🇲',
-  Cambodia: '🇰🇭',
-  Laos: '🇱🇦',
-  Nepal: '🇳🇵',
-  Australia: '🇦🇺',
-  'New Zealand': '🇳🇿',
-
-  // Middle East
-  'Saudi Arabia': '🇸🇦',
-  UAE: '🇦🇪',
-  'United Arab Emirates': '🇦🇪',
-  Qatar: '🇶🇦',
-  Kuwait: '🇰🇼',
-  Oman: '🇴🇲',
-  Bahrain: '🇧🇭',
-  Jordan: '🇯🇴',
-  Lebanon: '🇱🇧',
-  Iraq: '🇮🇶',
-  Turkey: '🇹🇷',
-
-  // Europe
-  Germany: '🇩🇪',
-  'United Kingdom': '🇬🇧',
-  UK: '🇬🇧',
-  France: '🇫🇷',
-  Italy: '🇮🇹',
-  Spain: '🇪🇸',
-  Netherlands: '🇳🇱',
-  Switzerland: '🇨🇭',
-  Belgium: '🇧🇪',
-  Austria: '🇦🇹',
-  Portugal: '🇵🇹',
-  Ireland: '🇮🇪',
-  Finland: '🇫🇮',
-  Sweden: '🇸🇪',
-  Norway: '🇳🇴',
-  Denmark: '🇩🇰',
-  Poland: '🇵🇱',
-  Greece: '🇬🇷',
-
-  // South America
-  Brazil: '🇧🇷',
-  Argentina: '🇦🇷',
-  Colombia: '🇨🇴',
-  Chile: '🇨🇱',
-  Peru: '🇵🇪',
-  Uruguay: '🇺🇾',
-  Paraguay: '🇵🇾',
-  Bolivia: '🇧🇴',
-  Ecuador: '🇪🇨',
-  Venezuela: '🇻🇪',
-
-  // North America, Africa & Global
-  'United States': '🇺🇸',
-  USA: '🇺🇸',
-  Canada: '🇨🇦',
-  Mexico: '🇲🇽',
-  Nigeria: '🇳🇬',
-  'South Africa': '🇿🇦',
-  Kenya: '🇰🇪',
-  Egypt: '🇪🇬',
-  Global: '🌍',
-};
-
-function getCountryFlag(country: string): string {
-  if (FLAG_EMOJI[country]) return FLAG_EMOJI[country];
-  const lower = country.toLowerCase();
-  const match = Object.keys(FLAG_EMOJI).find((k) => k.toLowerCase() === lower);
-  return match ? FLAG_EMOJI[match] : '🌍';
-}
+// 'Indonesia' is kept selectable here for record-keeping, but the live deposit
+// flow (DepositModal) always excludes/reroutes Indonesia-origin payment methods
+// to 'Global' by design — methods added here for it will never surface to users.
+const KNOWN_COUNTRIES = [...SHARED_COUNTRIES.slice(0, -1), 'Indonesia', 'Global'];
 
 const EMPTY_METHOD_FORM: NewMethodForm = {
   type: 'bank',
@@ -437,7 +333,7 @@ export default function AdminCountriesPage() {
                       }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="text-lg flex-shrink-0">{getCountryFlag(country)}</span>
+                        <FlagIcon country={country} className="w-6 h-4 flex-shrink-0" />
                         <div className="min-w-0">
                           <div className={`text-sm font-medium truncate ${isSelected ? 'text-emerald-400' : 'text-white'}`}>
                             {country}
@@ -508,7 +404,7 @@ export default function AdminCountriesPage() {
                 {/* Country header */}
                 <div className="bg-[#1e293b] rounded-xl border border-slate-700 px-5 py-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{getCountryFlag(selectedCountry)}</span>
+                    <FlagIcon country={selectedCountry} className="w-8 h-6" />
                     <div>
                       <h3 className="text-white font-bold text-base">{selectedCountry}</h3>
                       <p className="text-slate-400 text-xs mt-0.5">

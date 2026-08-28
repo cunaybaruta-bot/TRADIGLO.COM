@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Wallet } from 'lucide-react';
+import { COUNTRY_CURRENCY, REGION_ORDER, getRegion, FlagIcon } from '@/lib/deposit-countries';
 
 interface PaymentMethod {
   id: string;
@@ -38,79 +39,6 @@ interface DepositModalProps {
 }
 
 type Step = 'country' | 'method' | 'amount' | 'success';
-
-export const COUNTRY_CURRENCY: Record<string, string> = {
-  // Asia & Pacific
-  Malaysia: 'MYR',
-  Singapore: 'SGD',
-  Thailand: 'THB',
-  Vietnam: 'VND',
-  Japan: 'JPY',
-  'South Korea': 'KRW',
-  Philippines: 'PHP',
-  China: 'CNY',
-  India: 'INR',
-  'Hong Kong': 'HKD',
-  Taiwan: 'TWD',
-  Pakistan: 'PKR',
-  Bangladesh: 'BDT',
-  'Sri Lanka': 'LKR',
-  Myanmar: 'MMK',
-  Cambodia: 'KHR',
-  Laos: 'LAK',
-  Nepal: 'NPR',
-  Australia: 'AUD',
-  'New Zealand': 'NZD',
-
-  // Middle East
-  'Saudi Arabia': 'SAR',
-  UAE: 'AED',
-  'United Arab Emirates': 'AED',
-  Qatar: 'QAR',
-  Kuwait: 'KWD',
-  Bahrain: 'BHD',
-  Oman: 'OMR',
-  Jordan: 'JOD',
-
-  // Europe
-  Germany: 'EUR',
-  'United Kingdom': 'GBP',
-  UK: 'GBP',
-  France: 'EUR',
-  Italy: 'EUR',
-  Spain: 'EUR',
-  Netherlands: 'EUR',
-  Switzerland: 'CHF',
-  Belgium: 'EUR',
-  Austria: 'EUR',
-  Portugal: 'EUR',
-  Ireland: 'EUR',
-  Finland: 'EUR',
-  Sweden: 'SEK',
-  Norway: 'NOK',
-  Denmark: 'DKK',
-  Poland: 'PLN',
-  Greece: 'EUR',
-
-  // South America
-  Brazil: 'BRL',
-  Argentina: 'ARS',
-  Colombia: 'COP',
-  Chile: 'CLP',
-  Peru: 'PEN',
-  Uruguay: 'UYU',
-  Paraguay: 'PYG',
-  Bolivia: 'BOB',
-  Ecuador: 'USD',
-  Venezuela: 'VES',
-
-  // North America & Global
-  'United States': 'USD',
-  USA: 'USD',
-  Canada: 'CAD',
-  Mexico: 'MXN',
-  Global: 'USD',
-};
 
 const TYPE_ICONS: Record<string, React.ReactNode> = {
   bank: (
@@ -150,142 +78,6 @@ const TYPE_LABELS: Record<string, string> = {
   crypto: 'Cryptocurrency',
   card: 'Credit / Debit Card',
 };
-
-const FLAG_EMOJI: Record<string, string> = {
-  // Asia Pacific
-  Malaysia: '🇲🇾',
-  Singapore: '🇸🇬',
-  Thailand: '🇹🇭',
-  Vietnam: '🇻🇳',
-  Japan: '🇯🇵',
-  'South Korea': '🇰🇷',
-  Philippines: '🇵🇭',
-  China: '🇨🇳',
-  India: '🇮🇳',
-  'Hong Kong': '🇭🇰',
-  Taiwan: '🇹🇼',
-  Pakistan: '🇵🇰',
-  Bangladesh: '🇧🇩',
-  'Sri Lanka': '🇱🇰',
-  Myanmar: '🇲🇲',
-  Cambodia: '🇰🇭',
-  Laos: '🇱🇦',
-  Nepal: '🇳🇵',
-  'Brunei Darussalam': '🇧🇳',
-  Brunei: '🇧🇳',
-  Mongolia: '🇲🇳',
-  Maldives: '🇲🇻',
-  Bhutan: '🇧🇹',
-  Afghanistan: '🇦🇫',
-  // Middle East
-  'Saudi Arabia': '🇸🇦',
-  UAE: '🇦🇪',
-  'United Arab Emirates': '🇦🇪',
-  Qatar: '🇶🇦',
-  Kuwait: '🇰🇼',
-  Oman: '🇴🇲',
-  Bahrain: '🇧🇭',
-  Jordan: '🇯🇴',
-  Lebanon: '🇱🇧',
-  Iraq: '🇮🇶',
-  Iran: '🇮🇷',
-  Israel: '🇮🇱',
-  Palestine: '🇵🇸',
-  Syria: '🇸🇾',
-  Yemen: '🇾🇪',
-  Turkey: '🇹🇷',
-  // Europe
-  Portugal: '🇵🇹',
-  'United Kingdom': '🇬🇧',
-  UK: '🇬🇧',
-  Germany: '🇩🇪',
-  France: '🇫🇷',
-  Spain: '🇪🇸',
-  Italy: '🇮🇹',
-  Netherlands: '🇳🇱',
-  Belgium: '🇧🇪',
-  Switzerland: '🇨🇭',
-  Austria: '🇦🇹',
-  Sweden: '🇸🇪',
-  Norway: '🇳🇴',
-  Denmark: '🇩🇰',
-  Finland: '🇫🇮',
-  Poland: '🇵🇱',
-  Russia: '🇷🇺',
-  Ukraine: '🇺🇦',
-  Greece: '🇬🇷',
-  Romania: '🇷🇴',
-  Hungary: '🇭🇺',
-  'Czech Republic': '🇨🇿',
-  Slovakia: '🇸🇰',
-  Croatia: '🇭🇷',
-  Serbia: '🇷🇸',
-  Bulgaria: '🇧🇬',
-  // Americas
-  'United States': '🇺🇸',
-  USA: '🇺🇸',
-  Canada: '🇨🇦',
-  Mexico: '🇲🇽',
-  Brazil: '🇧🇷',
-  Argentina: '🇦🇷',
-  Colombia: '🇨🇴',
-  Chile: '🇨🇱',
-  Peru: '🇵🇪',
-  Venezuela: '🇻🇪',
-  // Africa
-  Nigeria: '🇳🇬',
-  'South Africa': '🇿🇦',
-  Kenya: '🇰🇪',
-  Ghana: '🇬🇭',
-  Egypt: '🇪🇬',
-  Ethiopia: '🇪🇹',
-  Tanzania: '🇹🇿',
-  Uganda: '🇺🇬',
-  Morocco: '🇲🇦',
-  Tunisia: '🇹🇳',
-  Australia: '🇦🇺',
-  'New Zealand': '🇳🇿',
-  // Global fallback
-  Global: '🌍',
-};
-
-function getCountryFlag(countryName: string): string {
-  if (FLAG_EMOJI[countryName]) return FLAG_EMOJI[countryName];
-  // Try case-insensitive match
-  const lower = countryName.toLowerCase();
-  const match = Object.keys(FLAG_EMOJI).find((k) => k.toLowerCase() === lower);
-  if (match) return FLAG_EMOJI[match];
-  return '🌍';
-}
-
-const REGION_ORDER = ['Asia & Pacific', 'Middle East', 'Europe', 'South America', 'Americas', 'Other'] as const;
-
-const REGION_MAP: Record<string, (typeof REGION_ORDER)[number]> = {
-  // Asia & Pacific
-  Malaysia: 'Asia & Pacific', Singapore: 'Asia & Pacific', Thailand: 'Asia & Pacific', Vietnam: 'Asia & Pacific',
-  Japan: 'Asia & Pacific', 'South Korea': 'Asia & Pacific', Philippines: 'Asia & Pacific', China: 'Asia & Pacific',
-  India: 'Asia & Pacific', 'Hong Kong': 'Asia & Pacific', Taiwan: 'Asia & Pacific', Pakistan: 'Asia & Pacific',
-  Bangladesh: 'Asia & Pacific', 'Sri Lanka': 'Asia & Pacific', Myanmar: 'Asia & Pacific', Cambodia: 'Asia & Pacific',
-  Laos: 'Asia & Pacific', Nepal: 'Asia & Pacific', Australia: 'Asia & Pacific', 'New Zealand': 'Asia & Pacific',
-  // Middle East
-  'Saudi Arabia': 'Middle East', UAE: 'Middle East', 'United Arab Emirates': 'Middle East', Qatar: 'Middle East',
-  Kuwait: 'Middle East', Bahrain: 'Middle East', Oman: 'Middle East', Jordan: 'Middle East',
-  // Europe
-  Germany: 'Europe', 'United Kingdom': 'Europe', UK: 'Europe', France: 'Europe', Italy: 'Europe', Spain: 'Europe',
-  Netherlands: 'Europe', Switzerland: 'Europe', Belgium: 'Europe', Austria: 'Europe', Portugal: 'Europe',
-  Ireland: 'Europe', Finland: 'Europe', Sweden: 'Europe', Norway: 'Europe', Denmark: 'Europe', Poland: 'Europe',
-  Greece: 'Europe',
-  // South America
-  Brazil: 'South America', Argentina: 'South America', Colombia: 'South America', Chile: 'South America',
-  Peru: 'South America', Uruguay: 'South America', Paraguay: 'South America', Bolivia: 'South America',
-  Ecuador: 'South America', Venezuela: 'South America',
-  // Americas (North)
-  'United States': 'Americas', USA: 'Americas', Canada: 'Americas', Mexico: 'Americas',
-};
-
-function getRegion(countryName: string): (typeof REGION_ORDER)[number] {
-  return REGION_MAP[countryName] || 'Other';
-}
 
 const DEFAULT_RATES: Record<string, number> = {
   USD: 1.0,
@@ -334,6 +126,21 @@ const DEFAULT_RATES: Record<string, number> = {
   NOK: 0.092,
   DKK: 0.145,
   PLN: 0.25,
+  ISK: 0.0072,
+  BAM: 0.552,
+  MKD: 0.0176,
+  RSD: 0.0093,
+  CZK: 0.044,
+  HUF: 0.0028,
+  RON: 0.216,
+  BGN: 0.552,
+  UAH: 0.024,
+  MDL: 0.056,
+  BYN: 0.305,
+  RUB: 0.0107,
+  ALL: 0.0108,
+  GYD: 0.0048,
+  SRD: 0.028,
 };
 
 const DEFAULT_PAYMENT_METHODS: PaymentMethod[] = [
@@ -399,6 +206,96 @@ const DEFAULT_PAYMENT_METHODS: PaymentMethod[] = [
 
   // Cambodia 🇰🇭
   { id: 'def-kh-1', country: 'Cambodia', type: 'bank', name: 'ABA Bank Cambodia / KHQR', account_number: '001 234 567', account_name: 'Tradiglo Asia Ltd', network: null, instructions: 'ABA Mobile / KHQR bank transfer.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Bolivia 🇧🇴
+  { id: 'def-bo-1', country: 'Bolivia', type: 'bank', name: 'Banco Nacional de Bolivia (BNB)', account_number: 'Cuenta: 4012345678', account_name: 'Tradiglo Bolivia SRL', network: null, instructions: 'Transferencia bancaria BNB o Banco Unión.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Ecuador 🇪🇨
+  { id: 'def-ec-1', country: 'Ecuador', type: 'bank', name: 'Banco Pichincha', account_number: 'Cuenta: 2201234567', account_name: 'Tradiglo Ecuador SA', network: null, instructions: 'Transferencia bancaria Banco Pichincha (USD).', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Paraguay 🇵🇾
+  { id: 'def-py-1', country: 'Paraguay', type: 'bank', name: 'Banco Itaú Paraguay', account_number: 'Cuenta: 1102345678', account_name: 'Tradiglo Paraguay SRL', network: null, instructions: 'Transferencia bancaria Itaú o Banco Continental.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Uruguay 🇺🇾
+  { id: 'def-uy-1', country: 'Uruguay', type: 'bank', name: 'Banco República (BROU)', account_number: 'Cuenta: 001-0012345-0', account_name: 'Tradiglo Uruguay SA', network: null, instructions: 'Transferencia bancaria BROU o Santander Uruguay.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Guyana 🇬🇾
+  { id: 'def-gy-1', country: 'Guyana', type: 'bank', name: 'Republic Bank Guyana', account_number: 'Acct: 070-123-45678', account_name: 'Tradiglo Guyana Inc', network: null, instructions: 'Local bank transfer via Republic Bank.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Suriname 🇸🇷
+  { id: 'def-sr-1', country: 'Suriname', type: 'bank', name: 'De Surinaamsche Bank (DSB)', account_number: 'Acct: 12-345678-01', account_name: 'Tradiglo Suriname NV', network: null, instructions: 'Local bank transfer via DSB.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Luxembourg 🇱🇺
+  { id: 'def-lu-1', country: 'Luxembourg', type: 'bank', name: 'Banque et Caisse d’Épargne (BCEE)', account_number: 'LU28 0019 4006 4475 0000', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'SEPA bank transfer via BCEE.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Liechtenstein 🇱🇮
+  { id: 'def-li-1', country: 'Liechtenstein', type: 'bank', name: 'LGT Bank', account_number: 'LI21 0881 0000 2324 013A A', account_name: 'Tradiglo AG', network: null, instructions: 'Bank transfer via LGT Bank Liechtenstein.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Monaco 🇲🇨
+  { id: 'def-mc-1', country: 'Monaco', type: 'bank', name: 'CMB Monaco', account_number: 'MC58 1122 2000 0101 2345 6789 030', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'Virement bancaire via CMB Monaco.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Malta 🇲🇹
+  { id: 'def-mt-1', country: 'Malta', type: 'bank', name: 'Bank of Valletta (BOV)', account_number: 'MT84 MALT 0110 0001 2345 MTLC AST0 01', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'SEPA transfer via Bank of Valletta.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Cyprus 🇨🇾
+  { id: 'def-cy-1', country: 'Cyprus', type: 'bank', name: 'Bank of Cyprus', account_number: 'CY17 0020 0128 0000 0012 0052 7600', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'SEPA transfer via Bank of Cyprus.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Croatia 🇭🇷
+  { id: 'def-hr-1', country: 'Croatia', type: 'bank', name: 'Zagrebačka banka', account_number: 'HR12 1001 0051 8630 0016 0', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'SEPA transfer via Zagrebačka banka.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Slovenia 🇸🇮
+  { id: 'def-si-1', country: 'Slovenia', type: 'bank', name: 'Nova Ljubljanska Banka (NLB)', account_number: 'SI56 0201 0001 2345 678', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'SEPA transfer via NLB.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Albania 🇦🇱
+  { id: 'def-al-1', country: 'Albania', type: 'bank', name: 'Raiffeisen Bank Albania', account_number: 'AL47 2121 1009 0000 0002 3569 8741', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via Raiffeisen Bank Albania.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Andorra 🇦🇩
+  { id: 'def-ad-1', country: 'Andorra', type: 'bank', name: 'Crèdit Andorrà', account_number: 'AD12 0001 0012 0123 4567 8901', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'Bank transfer via Crèdit Andorrà.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // San Marino 🇸🇲
+  { id: 'def-sm-1', country: 'San Marino', type: 'bank', name: 'Banca di San Marino', account_number: 'SM86 U032 2509 8000 0000 0270 100', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'Bank transfer via Banca di San Marino.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Bosnia and Herzegovina 🇧🇦
+  { id: 'def-ba-1', country: 'Bosnia and Herzegovina', type: 'bank', name: 'UniCredit Bank d.d.', account_number: 'BA39 1290 0794 0102 8494', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via UniCredit Bank BiH.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Montenegro 🇲🇪
+  { id: 'def-me-1', country: 'Montenegro', type: 'bank', name: 'Crnogorska Komercijalna Banka (CKB)', account_number: 'ME25 5050 0001 2345 6789 51', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via CKB Montenegro.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // North Macedonia 🇲🇰
+  { id: 'def-mk-1', country: 'North Macedonia', type: 'bank', name: 'Stopanska Banka', account_number: 'MK07 2501 2000 0058 984', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via Stopanska Banka.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Serbia 🇷🇸
+  { id: 'def-rs-1', country: 'Serbia', type: 'bank', name: 'Banca Intesa Beograd', account_number: 'RS35 2600 0560 1001 6113 79', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via Banca Intesa Beograd.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Kosovo 🇽🇰
+  { id: 'def-xk-1', country: 'Kosovo', type: 'bank', name: 'ProCredit Bank Kosovo', account_number: 'XK05 1212 0123 4567 8906', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via ProCredit Bank Kosovo.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Czech Republic 🇨🇿
+  { id: 'def-cz-1', country: 'Czech Republic', type: 'bank', name: 'Česká spořitelna', account_number: 'CZ65 0800 0000 1920 0014 5399', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via Česká spořitelna.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Slovakia 🇸🇰
+  { id: 'def-sk-1', country: 'Slovakia', type: 'bank', name: 'Slovenská sporiteľňa', account_number: 'SK31 1200 0000 1987 4263 7541', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'SEPA transfer via Slovenská sporiteľňa.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Hungary 🇭🇺
+  { id: 'def-hu-1', country: 'Hungary', type: 'bank', name: 'OTP Bank', account_number: 'HU42 1177 3016 1111 1018 0000 0000', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via OTP Bank.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Romania 🇷🇴
+  { id: 'def-ro-1', country: 'Romania', type: 'bank', name: 'Banca Transilvania', account_number: 'RO49 AAAA 1B31 0075 9384 0000', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via Banca Transilvania.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Bulgaria 🇧🇬
+  { id: 'def-bg-1', country: 'Bulgaria', type: 'bank', name: 'UniCredit Bulbank', account_number: 'BG80 BNBG 9661 1020 3456 78', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via UniCredit Bulbank.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Ukraine 🇺🇦
+  { id: 'def-ua-1', country: 'Ukraine', type: 'bank', name: 'PrivatBank', account_number: 'UA21 3223 1300 0002 6007 2335 6600 1', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via PrivatBank.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Moldova 🇲🇩
+  { id: 'def-md-1', country: 'Moldova', type: 'bank', name: 'Moldova Agroindbank (MAIB)', account_number: 'MD24 AG00 0000 0022 1234 5678', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via MAIB.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Belarus 🇧🇾
+  { id: 'def-by-1', country: 'Belarus', type: 'bank', name: 'Belarusbank', account_number: 'BY13 NBRB 3600 9000 0000 2Z00 AB00', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via Belarusbank.', min_deposit: 10, max_deposit: 50000, is_active: true },
+
+  // Russia 🇷🇺
+  { id: 'def-ru-1', country: 'Russia', type: 'bank', name: 'Sberbank', account_number: 'Acct: 4081 7810 0000 1234 567', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via Sberbank.', min_deposit: 10, max_deposit: 50000, is_active: true },
 ];
 
 export default function DepositModal({ isOpen, onClose, userId, isDemo }: DepositModalProps) {
@@ -671,7 +568,7 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="relative w-full max-w-lg mx-4 rounded-2xl overflow-hidden"
+        className={`relative w-full mx-4 rounded-2xl overflow-hidden transition-[max-width] duration-200 ${step === 'country' ? 'max-w-xl' : 'max-w-lg'}`}
         style={{
           background: 'linear-gradient(135deg, #0d0d0d 0%, #111827 100%)',
           border: '1px solid rgba(255,255,255,0.1)',
@@ -682,7 +579,7 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
         }}
       >
         {/* Top accent */}
-        <div style={{ height: 2, background: 'linear-gradient(90deg, #10b981, #3b82f6, #8b5cf6)', flexShrink: 0 }} />
+        <div style={{ height: 2, background: '#10b981', flexShrink: 0 }} />
 
         {/* Welcome Bonus Banner — shown on country step if first deposit */}
         {isFirstDeposit && bonusSetting && step !== 'success' && (
@@ -713,9 +610,14 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
               </button>
             )}
             <div>
-              <h2 className="text-white font-bold text-base">
+              <h2 className="text-white font-bold text-base flex items-center gap-2">
                 {step === 'country' && 'Deposit Funds'}
-                {step === 'method' && `${getCountryFlag(selectedCountry)} ${selectedCountry}`}
+                {step === 'method' && (
+                  <>
+                    <FlagIcon country={selectedCountry} className="w-5 h-3.5" />
+                    {selectedCountry}
+                  </>
+                )}
                 {step === 'amount' && selectedMethod?.name}
                 {step === 'success' && 'Deposit Submitted'}
               </h2>
@@ -805,20 +707,41 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
                           <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2 px-0.5">
                             {region}
                           </div>
-                          <div className="grid grid-cols-2 gap-2">
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                             {list.map((country) => {
                               const countryMethods = methods.filter((m) => (m.country || 'Global') === country);
+                              const countryTypes = types.filter((t) => countryMethods.some((m) => m.type === t));
                               const curr = COUNTRY_CURRENCY[country] || 'USD';
                               return (
                                 <button
                                   key={country}
                                   onClick={() => handleSelectCountry(country)}
-                                  className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/4 border border-white/8 hover:bg-white/8 hover:border-emerald-500/30 hover:-translate-y-0.5 transition-all text-left group"
+                                  className="flex items-center gap-3 px-4 py-3 rounded-xl border text-left group transition-all"
+                                  style={{
+                                    background: '#141820',
+                                    borderColor: 'rgba(255,255,255,0.09)',
+                                  }}
+                                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'rgba(16,185,129,0.4)'; e.currentTarget.style.background = '#181d27'; }}
+                                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.09)'; e.currentTarget.style.background = '#141820'; }}
                                 >
-                                  <span className="text-2xl flex-shrink-0">{getCountryFlag(country)}</span>
-                                  <div className="min-w-0">
+                                  <FlagIcon country={country} className="w-7 h-5 flex-shrink-0" />
+                                  <div className="min-w-0 flex-1">
                                     <div className="text-white text-xs font-semibold truncate">{country}</div>
-                                    <div className="text-slate-500 text-[10px]">{curr} · {countryMethods.length} methods</div>
+                                    <div className="flex items-center gap-1.5 mt-1">
+                                      <span className="text-slate-500 text-[10px] tracking-wide">{curr}</span>
+                                      <span className="text-slate-700 text-[10px]">·</span>
+                                      <div className="flex items-center gap-1 text-slate-500">
+                                        {countryTypes.map((t) => (
+                                          <span
+                                            key={t}
+                                            title={TYPE_LABELS[t]}
+                                            style={{ transform: 'scale(0.65)', display: 'inline-flex' }}
+                                          >
+                                            {TYPE_ICONS[t]}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
                                   </div>
                                 </button>
                               );
@@ -1092,7 +1015,10 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
               <div className="bg-white/4 border border-white/8 rounded-xl p-4 mb-6 text-left space-y-2.5">
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-500">Country</span>
-                  <span className="text-white font-semibold">{getCountryFlag(selectedCountry)} {selectedCountry}</span>
+                  <span className="text-white font-semibold flex items-center gap-1.5">
+                    <FlagIcon country={selectedCountry} className="w-4 h-3" />
+                    {selectedCountry}
+                  </span>
                 </div>
                 <div className="flex justify-between text-xs">
                   <span className="text-slate-500">Method</span>
