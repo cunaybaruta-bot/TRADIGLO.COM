@@ -106,8 +106,8 @@ const WS_TIMEOUT_MS = 10_000;
 // breakpoint so it dominates the layout instead of competing for space with
 // the Open Trades panel below it (which is capped separately).
 const MOBILE_CHART_HEIGHT = 300;
-const TABLET_CHART_HEIGHT = 400;
-const CHART_HEIGHT = 480;
+const TABLET_CHART_HEIGHT = 380;
+const CHART_HEIGHT = 400;
 const INITIAL_HISTORY_LIMIT = 500;
 const HISTORY_PAGE_SIZE = 500;
 const HISTORY_LOAD_THRESHOLD = 25;

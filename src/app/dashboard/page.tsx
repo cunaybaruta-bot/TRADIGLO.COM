@@ -1842,8 +1842,11 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* CHART + SCROLLABLE CONTENT */}
-          <div className="flex-1 flex flex-col overflow-hidden">
+          {/* CHART + SCROLLABLE CONTENT. overflow-y-auto (not hidden) is a
+              safety net: on a short viewport where chart + leaderboard +
+              open trades genuinely don't all fit, this scrolls instead of
+              silently crushing the Open Trades panel to near-zero height. */}
+          <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden">
 
             {/* CHART AREA — fixed, does not scroll */}
             <div className="bg-[#0d0d0d] border-b border-white/10 flex-shrink-0">
@@ -2050,9 +2053,14 @@ export default function DashboardPage() {
               </div>
             )}
 
-            {/* FIXED: Open Trades header + SCROLLABLE trade list */}
+            {/* FIXED: Open Trades header + SCROLLABLE trade list.
+                min-h-[160px] is a floor: this panel is never squeezed
+                smaller than that even if chart + chrome leave little room —
+                the page scrolls instead (see the overflow-y-auto parent
+                above) rather than the panel silently collapsing to
+                near-invisible. */}
             {activeNav === 'trade' && (
-              <div className="flex-1 flex flex-col overflow-hidden px-2 sm:px-3 pt-3 pb-2 min-h-0">
+              <div className="flex-1 flex flex-col overflow-hidden px-2 sm:px-3 pt-3 pb-2 min-h-[160px]">
 
                 {/* Mobile: toggle bar + capped-height card (mirrors desktop
                     below) — the chart gets the bigger share of vertical
