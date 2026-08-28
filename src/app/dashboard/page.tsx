@@ -2107,11 +2107,11 @@ export default function DashboardPage() {
                         ) : (
                           <div className="flex flex-col divide-y divide-white/5">
                             {openTrades.map((trade) => (
-                              <div key={trade.id} className={`px-3 py-2.5 flex flex-col gap-1.5 transition-all duration-300 ${fadingTradeIds.has(trade.id) ? 'opacity-0' : 'opacity-100'}`}>
+                              <div key={trade.id} className={`px-2.5 py-1.5 flex flex-col gap-1 transition-all duration-300 ${fadingTradeIds.has(trade.id) ? 'opacity-0' : 'opacity-100'}`}>
                                 <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-bold text-white">{trade.asset_symbol}</span>
-                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${trade.order_type === 'buy' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-xs font-bold text-white">{trade.asset_symbol}</span>
+                                    <span className={`px-1 py-0.5 rounded text-[9px] font-bold ${trade.order_type === 'buy' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
                                       {trade.order_type.toUpperCase()}
                                     </span>
                                   </div>
@@ -2119,26 +2119,26 @@ export default function DashboardPage() {
                                     onClick={() => handleCloseTrade(trade)}
                                     disabled={closingTradeIds.has(trade.id) || closeAllLoading}
                                     title="Close trade"
-                                    className="w-7 h-7 flex items-center justify-center rounded bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                    className="w-6 h-6 flex items-center justify-center rounded bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                                   >
                                     {closingTradeIds.has(trade.id) ? (
-                                      <span className="w-3.5 h-3.5 border border-red-400 border-t-transparent rounded-full animate-spin" />
+                                      <span className="w-3 h-3 border border-red-400 border-t-transparent rounded-full animate-spin" />
                                     ) : (
-                                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7 7 7" /></svg>
+                                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7 7 7" /></svg>
                                     )}
                                   </button>
                                 </div>
-                                <div className="grid grid-cols-3 gap-1.5 text-xs">
+                                <div className="grid grid-cols-3 gap-1 text-xs">
                                   <div>
-                                    <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{t('dash_col_amount')}</div>
-                                    <div className="text-slate-300 font-medium text-[11px]" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.amount)}</div>
+                                    <div className="text-[8px] text-slate-500 uppercase tracking-wider mb-0.5">{t('dash_col_amount')}</div>
+                                    <div className="text-slate-300 font-medium text-[10px]" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.amount)}</div>
                                   </div>
                                   <div>
-                                    <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{t('dash_col_entry')}</div>
-                                    <div className="text-slate-300 font-medium text-[11px]" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.entry_price)}</div>
+                                    <div className="text-[8px] text-slate-500 uppercase tracking-wider mb-0.5">{t('dash_col_entry')}</div>
+                                    <div className="text-slate-300 font-medium text-[10px]" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.entry_price)}</div>
                                   </div>
                                   <div>
-                                    <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{t('dash_col_duration')}</div>
+                                    <div className="text-[8px] text-slate-500 uppercase tracking-wider mb-0.5">{t('dash_col_duration')}</div>
                                     <CountdownCell tradeId={trade.id} openedAt={trade.opened_at} durationSeconds={trade.duration_seconds} onExpired={handleTradeRowExpired} />
                                   </div>
                                 </div>
