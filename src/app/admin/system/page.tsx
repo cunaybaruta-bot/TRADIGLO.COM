@@ -85,7 +85,7 @@ export default function SystemMonitoringPage() {
       {/* Service Status */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
         {metrics.map((m) => (
-          <div key={m.label} className={`bg-[#1e293b] rounded-xl p-5 border ${statusBg[m.status]}`}>
+          <div key={m.label} className={`bg-[#0a0f1e] rounded-xl p-5 border ${statusBg[m.status]}`}>
             <div className="flex items-center justify-between mb-2">
               <span className="text-slate-400 text-xs">{m.label}</span>
               <CheckCircleIcon className={`w-4 h-4 ${statusColors[m.status]}`} />
@@ -97,14 +97,14 @@ export default function SystemMonitoringPage() {
       </div>
 
       {/* Database Stats */}
-      <div className="bg-[#1e293b] rounded-xl border border-slate-700 p-5">
+      <div className="bg-[#0a0f1e] rounded-xl border border-white/8 p-5">
         <div className="flex items-center gap-2 mb-4">
           <CircleStackIcon className="w-5 h-5 text-[#22c55e]" />
           <h3 className="text-white font-semibold">Database Statistics</h3>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
           {Object.entries(dbStats).map(([table, count]) => (
-            <div key={table} className="bg-[#0f172a] rounded-lg p-3 border border-slate-700 text-center">
+            <div key={table} className="bg-[#0f172a] rounded-lg p-3 border border-white/8 text-center">
               <div className="text-white text-xl font-bold">{count.toLocaleString()}</div>
               <div className="text-slate-400 text-xs mt-1 capitalize">{table}</div>
             </div>
@@ -114,7 +114,7 @@ export default function SystemMonitoringPage() {
 
       {/* System Info */}
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-        <div className="bg-[#1e293b] rounded-xl border border-slate-700 p-5">
+        <div className="bg-[#0a0f1e] rounded-xl border border-white/8 p-5">
           <div className="flex items-center gap-2 mb-4">
             <ServerIcon className="w-5 h-5 text-[#22c55e]" />
             <h3 className="text-white font-semibold">Server Information</h3>
@@ -127,7 +127,7 @@ export default function SystemMonitoringPage() {
               { label: 'Framework', value: 'Next.js 15.1.11' },
               { label: 'Runtime', value: 'Node.js (Edge)' },
             ].map(({ label, value }) => (
-              <div key={label} className="flex items-center justify-between py-2 border-b border-slate-700/50 last:border-0">
+              <div key={label} className="flex items-center justify-between py-2 border-b border-white/8/50 last:border-0">
                 <span className="text-slate-400 text-sm">{label}</span>
                 <span className="text-white text-sm">{value}</span>
               </div>
@@ -135,7 +135,7 @@ export default function SystemMonitoringPage() {
           </div>
         </div>
 
-        <div className="bg-[#1e293b] rounded-xl border border-slate-700 p-5">
+        <div className="bg-[#0a0f1e] rounded-xl border border-white/8 p-5">
           <div className="flex items-center gap-2 mb-4">
             <BoltIcon className="w-5 h-5 text-[#22c55e]" />
             <h3 className="text-white font-semibold">API Performance</h3>
@@ -148,7 +148,7 @@ export default function SystemMonitoringPage() {
               { endpoint: 'Supabase Auth', status: 'healthy', latency: '~80ms' },
               { endpoint: 'Supabase DB', status: 'healthy', latency: '~120ms' },
             ].map(({ endpoint, status, latency }) => (
-              <div key={endpoint} className="flex items-center justify-between py-2 border-b border-slate-700/50 last:border-0">
+              <div key={endpoint} className="flex items-center justify-between py-2 border-b border-white/8/50 last:border-0">
                 <span className="text-slate-300 text-sm font-mono">{endpoint}</span>
                 <div className="flex items-center gap-2">
                   <span className="text-slate-400 text-xs">{latency}</span>

@@ -129,7 +129,7 @@ export default function AdminChatbotPage() {
         {/* Settings Panel */}
         <div className="space-y-4">
           {/* Enable/Disable */}
-          <div className="bg-[#1e293b] border border-slate-700 rounded-xl p-5">
+          <div className="bg-[#0a0f1e] border border-white/8 rounded-xl p-5">
             <h3 className="text-white font-semibold text-sm mb-4 flex items-center gap-2">
               <CpuChipIcon className="w-4 h-4 text-cyan-400" />
               General Settings
@@ -153,7 +153,7 @@ export default function AdminChatbotPage() {
                 <select
                   value={settings['model'] || 'gpt-4o-mini'}
                   onChange={(e) => updateSetting('model', e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#22c55e]/50"
+                  className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#22c55e]/50"
                 >
                   <option value="gpt-4o-mini">GPT-4o Mini (Fast & Economical)</option>
                   <option value="gpt-4o">GPT-4o (Most Capable)</option>
@@ -164,7 +164,7 @@ export default function AdminChatbotPage() {
           </div>
 
           {/* System Prompt */}
-          <div className="bg-[#1e293b] border border-slate-700 rounded-xl p-5">
+          <div className="bg-[#0a0f1e] border border-white/8 rounded-xl p-5">
             <h3 className="text-white font-semibold text-sm mb-1 flex items-center gap-2">
               System Prompt
               <span className="text-slate-500 text-xs font-normal">(Instructions for the AI)</span>
@@ -177,24 +177,24 @@ export default function AdminChatbotPage() {
               value={settings['system_prompt'] || ''}
               onChange={(e) => updateSetting('system_prompt', e.target.value)}
               rows={6}
-              className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#22c55e]/50 resize-none font-mono"
+              className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#22c55e]/50 resize-none font-mono"
             />
           </div>
 
           {/* Fallback Message */}
-          <div className="bg-[#1e293b] border border-slate-700 rounded-xl p-5">
+          <div className="bg-[#0a0f1e] border border-white/8 rounded-xl p-5">
             <h3 className="text-white font-semibold text-sm mb-3">Fallback Message</h3>
             <p className="text-slate-400 text-xs mb-3">Shown when the AI cannot answer a question</p>
             <textarea
               value={settings['fallback_message'] || ''}
               onChange={(e) => updateSetting('fallback_message', e.target.value)}
               rows={3}
-              className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#22c55e]/50 resize-none"
+              className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#22c55e]/50 resize-none"
             />
           </div>
 
           {/* Advanced Settings */}
-          <div className="bg-[#1e293b] border border-slate-700 rounded-xl p-5">
+          <div className="bg-[#0a0f1e] border border-white/8 rounded-xl p-5">
             <h3 className="text-white font-semibold text-sm mb-4">Advanced Parameters</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -205,7 +205,7 @@ export default function AdminChatbotPage() {
                   onChange={(e) => updateSetting('max_tokens', e.target.value)}
                   min={100}
                   max={2000}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#22c55e]/50"
+                  className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#22c55e]/50"
                 />
                 <p className="text-slate-500 text-xs mt-1">Max response length (100–2000)</p>
               </div>
@@ -218,7 +218,7 @@ export default function AdminChatbotPage() {
                   min={0}
                   max={1}
                   step={0.1}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#22c55e]/50"
+                  className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-[#22c55e]/50"
                 />
                 <p className="text-slate-500 text-xs mt-1">Creativity: 0 (precise) – 1 (creative)</p>
               </div>
@@ -227,8 +227,8 @@ export default function AdminChatbotPage() {
         </div>
 
         {/* Test Panel */}
-        <div className="bg-[#1e293b] border border-slate-700 rounded-xl overflow-hidden flex flex-col h-[600px]">
-          <div className="p-4 border-b border-slate-700 flex items-center gap-2">
+        <div className="bg-[#0a0f1e] border border-white/8 rounded-xl overflow-hidden flex flex-col h-[600px]">
+          <div className="p-4 border-b border-white/8 flex items-center gap-2">
             <BeakerIcon className="w-4 h-4 text-cyan-400" />
             <h3 className="text-white font-semibold text-sm">Test Chatbot</h3>
             <span className="text-slate-500 text-xs ml-auto">Uses current settings (save first)</span>
@@ -266,7 +266,7 @@ export default function AdminChatbotPage() {
             )}
           </div>
 
-          <div className="p-4 border-t border-slate-700">
+          <div className="p-4 border-t border-white/8">
             <div className="flex gap-2">
               <input
                 type="text"
@@ -274,7 +274,7 @@ export default function AdminChatbotPage() {
                 onChange={(e) => setTestInput(e.target.value)}
                 onKeyDown={(e) => { if (e.key === 'Enter') handleTestSend(); }}
                 placeholder="Test a question..."
-                className="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#22c55e]/50"
+                className="flex-1 bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#22c55e]/50"
               />
               <button
                 onClick={handleTestSend}

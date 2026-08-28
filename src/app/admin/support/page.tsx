@@ -165,7 +165,7 @@ export default function AdminSupportPage() {
 
       {/* Quick Nav */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="bg-[#1e293b] border border-slate-700 rounded-xl p-4 flex items-center gap-3">
+        <div className="bg-[#0a0f1e] border border-white/8 rounded-xl p-4 flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-yellow-500/10 flex items-center justify-center flex-shrink-0">
             <TicketIcon className="w-5 h-5 text-yellow-400" />
           </div>
@@ -174,7 +174,7 @@ export default function AdminSupportPage() {
             <div className="text-slate-400 text-xs">Open Tickets</div>
           </div>
         </div>
-        <Link href="/admin/support/live-chat" className="bg-[#1e293b] border border-slate-700 rounded-xl p-4 flex items-center gap-3 hover:border-[#22c55e]/40 transition-colors">
+        <Link href="/admin/support/live-chat" className="bg-[#0a0f1e] border border-white/8 rounded-xl p-4 flex items-center gap-3 hover:border-[#22c55e]/40 transition-colors">
           <div className="w-9 h-9 rounded-lg bg-green-500/10 flex items-center justify-center flex-shrink-0">
             <ChatBubbleLeftRightIcon className="w-5 h-5 text-green-400" />
           </div>
@@ -183,7 +183,7 @@ export default function AdminSupportPage() {
             <div className="text-slate-400 text-xs">Manage sessions</div>
           </div>
         </Link>
-        <Link href="/admin/support/faq" className="bg-[#1e293b] border border-slate-700 rounded-xl p-4 flex items-center gap-3 hover:border-[#22c55e]/40 transition-colors">
+        <Link href="/admin/support/faq" className="bg-[#0a0f1e] border border-white/8 rounded-xl p-4 flex items-center gap-3 hover:border-[#22c55e]/40 transition-colors">
           <div className="w-9 h-9 rounded-lg bg-purple-500/10 flex items-center justify-center flex-shrink-0">
             <QuestionMarkCircleIcon className="w-5 h-5 text-purple-400" />
           </div>
@@ -192,7 +192,7 @@ export default function AdminSupportPage() {
             <div className="text-slate-400 text-xs">Add / Edit / Delete</div>
           </div>
         </Link>
-        <Link href="/admin/support/chatbot" className="bg-[#1e293b] border border-slate-700 rounded-xl p-4 flex items-center gap-3 hover:border-[#22c55e]/40 transition-colors">
+        <Link href="/admin/support/chatbot" className="bg-[#0a0f1e] border border-white/8 rounded-xl p-4 flex items-center gap-3 hover:border-[#22c55e]/40 transition-colors">
           <div className="w-9 h-9 rounded-lg bg-cyan-500/10 flex items-center justify-center flex-shrink-0">
             <CpuChipIcon className="w-5 h-5 text-cyan-400" />
           </div>
@@ -206,7 +206,7 @@ export default function AdminSupportPage() {
       {/* Stat Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {statCards.map((s) => (
-          <div key={s.label} className={`bg-[#1e293b] border ${s.border} rounded-xl p-4`}>
+          <div key={s.label} className={`bg-[#0a0f1e] border ${s.border} rounded-xl p-4`}>
             <div className={`text-2xl font-bold ${s.color}`}>{s.value}</div>
             <div className="text-slate-400 text-xs mt-1">{s.label}</div>
           </div>
@@ -214,8 +214,8 @@ export default function AdminSupportPage() {
       </div>
 
       {/* Ticket Management */}
-      <div className="bg-[#1e293b] border border-slate-700 rounded-xl overflow-hidden">
-        <div className="p-4 border-b border-slate-700 flex flex-col sm:flex-row gap-3">
+      <div className="bg-[#0a0f1e] border border-white/8 rounded-xl overflow-hidden">
+        <div className="p-4 border-b border-white/8 flex flex-col sm:flex-row gap-3">
           <h3 className="text-white font-semibold text-sm flex items-center gap-2">
             <TicketIcon className="w-4 h-4 text-yellow-400" />
             Support Tickets
@@ -228,7 +228,7 @@ export default function AdminSupportPage() {
                 placeholder="Search tickets..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="bg-slate-800 border border-slate-600 rounded-lg pl-8 pr-3 py-1.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#22c55e]/50 w-48"
+                className="bg-[#0a0f1e] border border-slate-600 rounded-lg pl-8 pr-3 py-1.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#22c55e]/50 w-48"
               />
             </div>
             <div className="flex items-center gap-1">
@@ -236,7 +236,7 @@ export default function AdminSupportPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-slate-800 border border-slate-600 rounded-lg px-2 py-1.5 text-sm text-white focus:outline-none focus:border-[#22c55e]/50"
+                className="bg-[#0a0f1e] border border-slate-600 rounded-lg px-2 py-1.5 text-sm text-white focus:outline-none focus:border-[#22c55e]/50"
               >
                 <option value="all">All Status</option>
                 <option value="open">Open</option>
@@ -249,7 +249,7 @@ export default function AdminSupportPage() {
 
         <div className="flex h-[500px]">
           {/* Ticket List */}
-          <div className={`${selectedTicket ? 'hidden sm:flex' : 'flex'} flex-col w-full sm:w-80 border-r border-slate-700 overflow-y-auto`}>
+          <div className={`${selectedTicket ? 'hidden sm:flex' : 'flex'} flex-col w-full sm:w-80 border-r border-white/8 overflow-y-auto`}>
             {loading ? (
               <div className="flex items-center justify-center h-32 text-slate-400 text-sm">Loading tickets...</div>
             ) : filtered.length === 0 ? (
@@ -261,7 +261,7 @@ export default function AdminSupportPage() {
                   <button
                     key={ticket.id}
                     onClick={() => setSelectedTicket(ticket)}
-                    className={`text-left p-4 border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors ${selectedTicket?.id === ticket.id ? 'bg-slate-700/50 border-l-2 border-l-[#22c55e]' : ''}`}
+                    className={`text-left p-4 border-b border-white/8/50 hover:bg-slate-700/30 transition-colors ${selectedTicket?.id === ticket.id ? 'bg-slate-700/50 border-l-2 border-l-[#22c55e]' : ''}`}
                   >
                     <div className="flex items-start justify-between gap-2 mb-1">
                       <span className="text-white text-sm font-medium truncate flex-1">{ticket.subject}</span>
@@ -282,7 +282,7 @@ export default function AdminSupportPage() {
           {selectedTicket ? (
             <div className="flex-1 flex flex-col min-w-0">
               {/* Ticket Header */}
-              <div className="p-4 border-b border-slate-700 flex items-start gap-3">
+              <div className="p-4 border-b border-white/8 flex items-start gap-3">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h4 className="text-white font-semibold text-sm truncate">{selectedTicket.subject}</h4>
@@ -297,7 +297,7 @@ export default function AdminSupportPage() {
                     value={selectedTicket.status}
                     onChange={(e) => handleUpdateStatus(e.target.value as any)}
                     disabled={updatingStatus}
-                    className="bg-slate-800 border border-slate-600 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-[#22c55e]/50 disabled:opacity-50"
+                    className="bg-[#0a0f1e] border border-slate-600 rounded-lg px-2 py-1 text-xs text-white focus:outline-none focus:border-[#22c55e]/50 disabled:opacity-50"
                   >
                     <option value="open">Open</option>
                     <option value="in_progress">In Progress</option>
@@ -329,7 +329,7 @@ export default function AdminSupportPage() {
               </div>
 
               {/* Reply Input */}
-              <div className="p-4 border-t border-slate-700">
+              <div className="p-4 border-t border-white/8">
                 <div className="flex gap-2">
                   <textarea
                     value={replyText}
@@ -337,7 +337,7 @@ export default function AdminSupportPage() {
                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendReply(); } }}
                     placeholder="Type your reply... (Enter to send, Shift+Enter for new line)"
                     rows={2}
-                    className="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#22c55e]/50 resize-none"
+                    className="flex-1 bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#22c55e]/50 resize-none"
                   />
                   <button
                     onClick={handleSendReply}

@@ -151,13 +151,13 @@ export default function CurrencyRatesPage() {
       </div>
 
       {message && (
-        <div className="bg-slate-800 border border-slate-700 text-slate-200 text-sm px-4 py-3 rounded-xl">
+        <div className="bg-[#0a0f1e] border border-white/8 text-slate-200 text-sm px-4 py-3 rounded-xl">
           {message}
         </div>
       )}
 
-      <div className="bg-[#1e293b] rounded-xl border border-slate-700 overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-700 flex items-center justify-between">
+      <div className="bg-[#0a0f1e] rounded-xl border border-white/8 overflow-hidden">
+        <div className="px-5 py-4 border-b border-white/8 flex items-center justify-between">
           <div className="text-white font-semibold text-sm">Exchange Rates</div>
           <div className="text-slate-500 text-xs">All rates relative to 1 USD</div>
         </div>
@@ -169,7 +169,7 @@ export default function CurrencyRatesPage() {
         ) : (
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-700">
+              <tr className="border-b border-white/8">
                 <th className="text-left text-slate-400 text-xs font-medium px-5 py-3">Currency</th>
                 <th className="text-left text-slate-400 text-xs font-medium px-5 py-3">Name</th>
                 <th className="text-left text-slate-400 text-xs font-medium px-5 py-3">Rate to USD</th>

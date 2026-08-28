@@ -104,7 +104,7 @@ export default function AssetsPage() {
       )}
 
       {showAdd && (
-        <div className="bg-[#1e293b] rounded-xl border border-slate-700 p-5">
+        <div className="bg-[#0a0f1e] rounded-xl border border-white/8 p-5">
           <h3 className="text-white font-semibold mb-4">Add New Asset</h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
@@ -156,11 +156,11 @@ export default function AssetsPage() {
         </div>
       )}
 
-      <div className="bg-[#1e293b] rounded-xl border border-slate-700 overflow-hidden">
+      <div className="bg-[#0a0f1e] rounded-xl border border-white/8 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-700">
+              <tr className="border-b border-white/8">
                 <th className="text-left text-slate-400 text-xs font-medium px-5 py-3">Symbol</th>
                 <th className="text-left text-slate-400 text-xs font-medium px-5 py-3">Name</th>
                 <th className="text-left text-slate-400 text-xs font-medium px-5 py-3">Exchange</th>

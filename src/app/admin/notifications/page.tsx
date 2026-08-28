@@ -110,7 +110,7 @@ export default function NotificationsPage() {
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-700/50 border border-slate-700 transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm text-slate-400 hover:text-white hover:bg-slate-700/50 border border-white/8 transition-colors"
           >
             <ArrowPathIcon className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -141,7 +141,7 @@ export default function NotificationsPage() {
               className={`p-4 rounded-xl border text-left transition-all ${
                 filter === type
                   ? `${cfg.bg} ${cfg.border} ring-1 ring-inset ${cfg.border}`
-                  : 'bg-[#1e293b] border-slate-700 hover:border-slate-600'
+                  : 'bg-[#0a0f1e] border-white/8 hover:border-slate-600'
               }`}
             >
               <div className="flex items-center justify-between mb-2">
@@ -162,8 +162,8 @@ export default function NotificationsPage() {
       </div>
 
       {/* Filter Tabs */}
-      <div className="bg-[#1e293b] rounded-xl border border-slate-700 overflow-hidden">
-        <div className="flex items-center gap-1 p-2 border-b border-slate-700 overflow-x-auto">
+      <div className="bg-[#0a0f1e] rounded-xl border border-white/8 overflow-hidden">
+        <div className="flex items-center gap-1 p-2 border-b border-white/8 overflow-x-auto">
           <FunnelIcon className="w-4 h-4 text-slate-500 flex-shrink-0 ml-1 mr-1" />
           {FILTER_TYPES.map((type) => (
             <button
@@ -207,7 +207,7 @@ export default function NotificationsPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-700">
+                <tr className="border-b border-white/8">
                   <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-4 py-3">Type</th>
                   <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-4 py-3">Title</th>
                   <th className="text-left text-xs font-semibold text-slate-400 uppercase tracking-wider px-4 py-3 hidden md:table-cell">Message</th>
@@ -283,7 +283,7 @@ export default function NotificationsPage() {
 
         {/* Footer count */}
         {filtered.length > 0 && (
-          <div className="px-4 py-3 border-t border-slate-700 flex items-center justify-between">
+          <div className="px-4 py-3 border-t border-white/8 flex items-center justify-between">
             <span className="text-xs text-slate-500">
               Showing {filtered.length} notification{filtered.length !== 1 ? 's' : ''}
               {filter !== 'all' && ` · filtered by ${TYPE_CONFIG[filter]?.label}`}

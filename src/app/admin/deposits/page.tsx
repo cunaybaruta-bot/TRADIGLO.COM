@@ -97,7 +97,7 @@ function ApproveModal({
 
   return (
     <div className="fixed inset-0 z-[99998] flex items-center justify-center bg-black/80" onClick={onClose}>
-      <div className="bg-[#1e293b] border border-slate-700 rounded-2xl p-6 w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
+      <div className="bg-[#0a0f1e] border border-white/8 rounded-2xl p-6 w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-3 mb-1">
           <h3 className="text-white font-bold text-lg">Approve Deposit</h3>
           {isFirstDeposit && (
@@ -112,7 +112,7 @@ function ApproveModal({
             : 'Adjust the USD amount to credit to user wallet.'}
         </p>
 
-        <div className="bg-slate-800 rounded-xl p-4 mb-5 space-y-2 text-sm">
+        <div className="bg-[#0a0f1e] rounded-xl p-4 mb-5 space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-slate-400">User</span>
             <span className="text-white text-xs">{(deposit.users as any)?.email || deposit.user_id.slice(0, 12) + '...'}</span>
@@ -176,7 +176,7 @@ function ApproveModal({
                 {bonusAmt < rawBonus && (
                   <div className="text-slate-500 text-[10px]">* Capped at max ${maxBonus.toLocaleString()}</div>
                 )}
-                <div className="border-t border-slate-700 pt-1.5 flex justify-between">
+                <div className="border-t border-white/8 pt-1.5 flex justify-between">
                   <span className="text-slate-300 font-semibold">Total Credited</span>
                   <span className="text-emerald-400 font-bold text-sm">${finalAmt.toFixed(2)}</span>
                 </div>
@@ -425,7 +425,7 @@ function DepositsContent() {
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors capitalize ${filter === f ? 'bg-[#22c55e] text-black' : 'bg-[#1e293b] text-slate-400 border border-slate-700 hover:text-white'}`}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors capitalize ${filter === f ? 'bg-[#22c55e] text-black' : 'bg-[#0a0f1e] text-slate-400 border border-white/8 hover:text-white'}`}
               >
                 {f}
               </button>
@@ -434,16 +434,16 @@ function DepositsContent() {
         </div>
 
         {message && (
-          <div className="bg-slate-800 border border-slate-700 text-slate-200 text-sm px-4 py-3 rounded-xl">
+          <div className="bg-[#0a0f1e] border border-white/8 text-slate-200 text-sm px-4 py-3 rounded-xl">
             {message}
           </div>
         )}
 
-        <div className="bg-[#1e293b] rounded-xl border border-slate-700 overflow-hidden">
+        <div className="bg-[#0a0f1e] rounded-xl border border-white/8 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-slate-700">
+                <tr className="border-b border-white/8">
                   <th className="text-left text-slate-400 text-xs font-medium px-4 py-3">Reference</th>
                   <th className="text-left text-slate-400 text-xs font-medium px-4 py-3">User</th>
                   <th className="text-left text-slate-400 text-xs font-medium px-4 py-3">Method</th>
@@ -500,7 +500,7 @@ function DepositsContent() {
                         {d.proof_url ? (
                           <button
                             onClick={() => setProofSrc(d.proof_url!)}
-                            className="w-10 h-8 rounded-lg overflow-hidden border border-slate-600 hover:border-emerald-500/50 transition-colors flex items-center justify-center bg-slate-800"
+                            className="w-10 h-8 rounded-lg overflow-hidden border border-slate-600 hover:border-emerald-500/50 transition-colors flex items-center justify-center bg-[#0a0f1e]"
                             title="View proof"
                           >
                             {d.proof_url.startsWith('data:image') || d.proof_url.match(/\.(jpg|jpeg|png|gif|webp)/i) ? (

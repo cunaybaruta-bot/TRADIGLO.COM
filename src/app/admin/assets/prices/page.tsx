@@ -49,15 +49,15 @@ export default function AssetPricesPage() {
         <div className="relative">
           <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input type="text" placeholder="Search asset..." value={search} onChange={(e) => setSearch(e.target.value)}
-            className="bg-[#1e293b] border border-slate-700 text-white text-sm rounded-lg pl-9 pr-4 py-2 w-56 focus:outline-none focus:border-[#22c55e] placeholder-slate-500" />
+            className="bg-[#0a0f1e] border border-white/8 text-white text-sm rounded-lg pl-9 pr-4 py-2 w-56 focus:outline-none focus:border-[#22c55e] placeholder-slate-500" />
         </div>
       </div>
 
-      <div className="bg-[#1e293b] rounded-xl border border-slate-700 overflow-hidden">
+      <div className="bg-[#0a0f1e] rounded-xl border border-white/8 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-700">
+              <tr className="border-b border-white/8">
                 <th className="text-left text-slate-400 text-xs font-medium px-5 py-3">Symbol</th>
                 <th className="text-left text-slate-400 text-xs font-medium px-5 py-3">Name</th>
                 <th className="text-left text-slate-400 text-xs font-medium px-5 py-3">Current Price</th>

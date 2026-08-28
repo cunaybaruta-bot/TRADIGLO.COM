@@ -96,7 +96,7 @@ export default function RiskManagementPage() {
           { label: 'Medium Risk', value: stats.medium, color: 'text-yellow-400', bg: 'bg-yellow-400/10', icon: ShieldExclamationIcon },
           { label: 'Low Risk', value: stats.low, color: 'text-green-400', bg: 'bg-green-400/10', icon: ShieldExclamationIcon },
         ].map(({ label, value, color, bg, icon: Icon }) => (
-          <div key={label} className="bg-[#1e293b] rounded-xl p-5 border border-slate-700">
+          <div key={label} className="bg-[#0a0f1e] rounded-xl p-5 border border-white/8">
             <div className="flex items-center justify-between mb-3">
               <span className="text-slate-400 text-xs">{label}</span>
               <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center`}>
@@ -108,15 +108,15 @@ export default function RiskManagementPage() {
         ))}
       </div>
 
-      <div className="bg-[#1e293b] rounded-xl border border-slate-700 overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-700">
+      <div className="bg-[#0a0f1e] rounded-xl border border-white/8 overflow-hidden">
+        <div className="px-5 py-4 border-b border-white/8">
           <h3 className="text-white font-semibold">Trader Risk Scores</h3>
           <p className="text-slate-400 text-xs mt-1">Sorted by risk score (highest first)</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-700">
+              <tr className="border-b border-white/8">
                 <th className="text-left text-slate-400 text-xs font-medium px-5 py-3">Trader</th>
                 <th className="text-left text-slate-400 text-xs font-medium px-5 py-3">Risk Score</th>
                 <th className="text-left text-slate-400 text-xs font-medium px-5 py-3">Risk Level</th>

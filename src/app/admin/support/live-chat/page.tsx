@@ -297,16 +297,16 @@ export default function AdminLiveChatPage() {
         <p className="text-slate-400 text-sm mt-1">Realtime chat with members — {activeSessions.length} active session{activeSessions.length !== 1 ? 's' : ''}</p>
       </div>
 
-      <div className="bg-[#1e293b] border border-slate-700 rounded-xl overflow-hidden flex h-[600px]">
+      <div className="bg-[#0a0f1e] border border-white/8 rounded-xl overflow-hidden flex h-[600px]">
         {/* Session List */}
-        <div className={`${selectedSession ? 'hidden sm:flex' : 'flex'} flex-col w-full sm:w-72 border-r border-slate-700`}>
-          <div className="p-3 border-b border-slate-700">
+        <div className={`${selectedSession ? 'hidden sm:flex' : 'flex'} flex-col w-full sm:w-72 border-r border-white/8`}>
+          <div className="p-3 border-b border-white/8">
             <div className="flex gap-2">
-              <div className="flex-1 bg-slate-800 rounded-lg px-3 py-1.5 text-xs text-[#22c55e] font-medium flex items-center gap-1.5">
+              <div className="flex-1 bg-[#0a0f1e] rounded-lg px-3 py-1.5 text-xs text-[#22c55e] font-medium flex items-center gap-1.5">
                 <ClockIcon className="w-3.5 h-3.5" />
                 Active ({activeSessions.length})
               </div>
-              <div className="flex-1 bg-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-400 font-medium flex items-center gap-1.5">
+              <div className="flex-1 bg-[#0a0f1e] rounded-lg px-3 py-1.5 text-xs text-slate-400 font-medium flex items-center gap-1.5">
                 <CheckCircleIcon className="w-3.5 h-3.5" />
                 Closed ({closedSessions.length})
               </div>
@@ -348,7 +348,7 @@ export default function AdminLiveChatPage() {
         {selectedSession ? (
           <div className="flex-1 flex flex-col min-w-0">
             {/* Chat Header */}
-            <div className="p-4 border-b border-slate-700 flex items-center gap-3">
+            <div className="p-4 border-b border-white/8 flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-[#22c55e]/20 flex items-center justify-center flex-shrink-0">
                 <UserCircleIcon className="w-5 h-5 text-[#22c55e]" />
               </div>
@@ -364,7 +364,7 @@ export default function AdminLiveChatPage() {
               </div>
               <div className="flex items-center gap-2">
                 {/* Translate language selector */}
-                <div className="flex items-center gap-1.5 bg-slate-800 border border-slate-600 rounded-lg px-2 py-1">
+                <div className="flex items-center gap-1.5 bg-[#0a0f1e] border border-slate-600 rounded-lg px-2 py-1">
                   <LanguageIcon className="w-3.5 h-3.5 text-blue-400 flex-shrink-0" />
                   <select
                     value={translateLang}
@@ -372,10 +372,10 @@ export default function AdminLiveChatPage() {
                       setTranslateLang(e.target.value);
                       setTranslations({});
                     }}
-                    className="bg-slate-800 text-xs text-slate-200 focus:outline-none cursor-pointer border-none max-w-[120px]"
+                    className="bg-[#0a0f1e] text-xs text-slate-200 focus:outline-none cursor-pointer border-none max-w-[120px]"
                   >
                     {TRANSLATE_LANGUAGES.map((l) => (
-                      <option key={l.code} value={l.code} className="bg-slate-800 text-slate-200">
+                      <option key={l.code} value={l.code} className="bg-[#0a0f1e] text-slate-200">
                         {l.label}
                       </option>
                     ))}
@@ -447,7 +447,7 @@ export default function AdminLiveChatPage() {
 
             {/* Message Input */}
             {selectedSession.status === 'active' ? (
-              <div className="p-4 border-t border-slate-700">
+              <div className="p-4 border-t border-white/8">
                 <div className="flex gap-2">
                   <textarea
                     value={messageText}
@@ -455,7 +455,7 @@ export default function AdminLiveChatPage() {
                     onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
                     placeholder="Type a message... (Enter to send)"
                     rows={2}
-                    className="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#22c55e]/50 resize-none"
+                    className="flex-1 bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-[#22c55e]/50 resize-none"
                   />
                   <button
                     onClick={handleSendMessage}
@@ -473,10 +473,10 @@ export default function AdminLiveChatPage() {
                   <select
                     value={adminTranslateLang}
                     onChange={(e) => setAdminTranslateLang(e.target.value)}
-                    className="bg-slate-800 border border-slate-600 text-xs text-slate-200 rounded-lg px-2 py-1 focus:outline-none cursor-pointer"
+                    className="bg-[#0a0f1e] border border-slate-600 text-xs text-slate-200 rounded-lg px-2 py-1 focus:outline-none cursor-pointer"
                   >
                     {TRANSLATE_LANGUAGES.map((l) => (
-                      <option key={l.code} value={l.code} className="bg-slate-800 text-slate-200">
+                      <option key={l.code} value={l.code} className="bg-[#0a0f1e] text-slate-200">
                         {l.label}
                       </option>
                     ))}
@@ -492,7 +492,7 @@ export default function AdminLiveChatPage() {
                 </div>
               </div>
             ) : (
-              <div className="p-4 border-t border-slate-700 text-center text-slate-500 text-sm">
+              <div className="p-4 border-t border-white/8 text-center text-slate-500 text-sm">
                 This session is closed. No new messages can be sent.
               </div>
             )}
@@ -513,7 +513,7 @@ function SessionItem({ session, selected, onClick }: { session: ChatSession; sel
   return (
     <button
       onClick={onClick}
-      className={`w-full text-left px-3 py-3 border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors ${selected ? 'bg-slate-700/50 border-l-2 border-l-[#22c55e]' : ''}`}
+      className={`w-full text-left px-3 py-3 border-b border-white/8/50 hover:bg-slate-700/30 transition-colors ${selected ? 'bg-slate-700/50 border-l-2 border-l-[#22c55e]' : ''}`}
     >
       <div className="flex items-center gap-2">
         <div className={`w-2 h-2 rounded-full flex-shrink-0 ${session.status === 'active' ? 'bg-green-400' : 'bg-slate-500'}`} />
