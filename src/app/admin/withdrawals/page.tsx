@@ -454,7 +454,7 @@ export default function WithdrawalsPage() {
         </div>
         <button
           onClick={() => fetchWithdrawals()}
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-slate-400 bg-slate-800/60 border border-slate-700/60 hover:text-white hover:bg-slate-700/60 transition-all"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium text-slate-400 bg-[#0a0f1e]/60 border border-white/8/60 hover:text-white hover:bg-slate-700/60 transition-all"
         >
           <ArrowPathIcon className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           Refresh
@@ -573,7 +573,7 @@ export default function WithdrawalsPage() {
                 <tr>
                   <td colSpan={8} className="text-center py-16">
                     <div className="flex flex-col items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-slate-800/60 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full bg-[#0a0f1e]/60 flex items-center justify-center">
                         <ArrowUpTrayIcon className="w-5 h-5 text-slate-600" />
                       </div>
                       <div>
@@ -593,7 +593,7 @@ export default function WithdrawalsPage() {
                 return (
                   <tr
                     key={w.id}
-                    className={`group hover:bg-slate-800/30 transition-colors ${w.status === 'pending' ? 'bg-amber-500/3' : ''}`}
+                    className={`group hover:bg-[#0a0f1e]/30 transition-colors ${w.status === 'pending' ? 'bg-amber-500/3' : ''}`}
                   >
                     <td className="px-5 py-3.5">
                       <div className="flex items-center gap-2.5">
@@ -646,7 +646,7 @@ export default function WithdrawalsPage() {
                       <div className="flex items-center gap-1.5">
                         <button
                           onClick={() => setDetailModal(w)}
-                          className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg bg-slate-700/40 text-slate-400 border border-slate-700/40 hover:bg-slate-700/60 hover:text-white transition-all"
+                          className="flex items-center gap-1 text-xs px-2 py-1.5 rounded-lg bg-slate-700/40 text-slate-400 border border-white/8/40 hover:bg-slate-700/60 hover:text-white transition-all"
                           title="View details"
                         >
                           <EyeIcon className="w-3.5 h-3.5" />

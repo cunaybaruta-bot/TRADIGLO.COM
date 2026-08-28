@@ -170,7 +170,7 @@ export default function AdminInvestmentPage() {
           <Link
             key={link.href}
             href={link.href}
-            className="bg-[#1e293b] border border-slate-700 rounded-xl p-4 hover:border-[#22c55e]/40 hover:bg-[#22c55e]/5 transition-all group"
+            className="bg-[#0a0f1e] border border-white/8 rounded-xl p-4 hover:border-[#22c55e]/40 hover:bg-[#22c55e]/5 transition-all group"
           >
             <div className="flex items-center gap-3 mb-2">
               <span className="text-2xl">{link.icon}</span>
@@ -185,7 +185,7 @@ export default function AdminInvestmentPage() {
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => (
-            <div key={i} className="bg-[#1e293b] border border-slate-700 rounded-xl p-5 animate-pulse">
+            <div key={i} className="bg-[#0a0f1e] border border-white/8 rounded-xl p-5 animate-pulse">
               <div className="h-4 bg-slate-700 rounded w-2/3 mb-3" />
               <div className="h-8 bg-slate-700 rounded w-1/2 mb-2" />
               <div className="h-3 bg-slate-700 rounded w-3/4" />
@@ -195,7 +195,7 @@ export default function AdminInvestmentPage() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {statCards.map(card => (
-            <div key={card.label} className="bg-[#1e293b] border border-slate-700 rounded-xl p-5">
+            <div key={card.label} className="bg-[#0a0f1e] border border-white/8 rounded-xl p-5">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-slate-400 text-sm">{card.label}</span>
                 <div className="w-9 h-9 rounded-lg flex items-center justify-center" style={{ background: `${card.color}18` }}>
@@ -212,7 +212,7 @@ export default function AdminInvestmentPage() {
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Tier Capital Bar Chart */}
-        <div className="bg-[#1e293b] border border-slate-700 rounded-xl p-5">
+        <div className="bg-[#0a0f1e] border border-white/8 rounded-xl p-5">
           <h2 className="text-white font-semibold mb-4">Capital by Tier</h2>
           {tierBreakdown.length === 0 ? (
             <div className="h-48 flex items-center justify-center text-slate-500 text-sm">No data available</div>
@@ -236,7 +236,7 @@ export default function AdminInvestmentPage() {
         </div>
 
         {/* Tier Distribution Pie */}
-        <div className="bg-[#1e293b] border border-slate-700 rounded-xl p-5">
+        <div className="bg-[#0a0f1e] border border-white/8 rounded-xl p-5">
           <h2 className="text-white font-semibold mb-4">Investment Distribution by Tier</h2>
           {tierBreakdown.length === 0 ? (
             <div className="h-48 flex items-center justify-center text-slate-500 text-sm">No data available</div>
@@ -267,14 +267,14 @@ export default function AdminInvestmentPage() {
       </div>
 
       {/* Tier Summary Table */}
-      <div className="bg-[#1e293b] border border-slate-700 rounded-xl overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-700">
+      <div className="bg-[#0a0f1e] border border-white/8 rounded-xl overflow-hidden">
+        <div className="px-5 py-4 border-b border-white/8">
           <h2 className="text-white font-semibold">Tier Summary</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-700">
+              <tr className="border-b border-white/8">
                 <th className="text-left px-5 py-3 text-slate-400 font-medium">Tier</th>
                 <th className="text-right px-5 py-3 text-slate-400 font-medium">Total Packages</th>
                 <th className="text-right px-5 py-3 text-slate-400 font-medium">Total Capital</th>
@@ -288,7 +288,7 @@ export default function AdminInvestmentPage() {
                 </tr>
               ) : (
                 tierBreakdown.map(t => (
-                  <tr key={t.tier} className="border-b border-slate-700/50 hover:bg-slate-700/20">
+                  <tr key={t.tier} className="border-b border-white/8/50 hover:bg-slate-700/20">
                     <td className="px-5 py-3">
                       <span
                         className="px-2.5 py-1 rounded-full text-xs font-semibold capitalize"

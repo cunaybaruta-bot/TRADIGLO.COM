@@ -70,7 +70,7 @@ export default function ControlCenterPage() {
 
       {/* Alert Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className={`bg-[#1e293b] rounded-xl p-5 border ${pendingDeposits > 0 ? 'border-yellow-400/30' : 'border-slate-700'}`}>
+        <div className={`bg-[#0a0f1e] rounded-xl p-5 border ${pendingDeposits > 0 ? 'border-yellow-400/30' : 'border-white/8'}`}>
           <div className="flex items-center gap-2 mb-2">
             <BellAlertIcon className={`w-5 h-5 ${pendingDeposits > 0 ? 'text-yellow-400' : 'text-slate-400'}`} />
             <span className="text-slate-400 text-xs">Pending Deposits</span>
@@ -78,7 +78,7 @@ export default function ControlCenterPage() {
           <div className={`text-2xl font-bold ${pendingDeposits > 0 ? 'text-yellow-400' : 'text-white'}`}>{pendingDeposits}</div>
           {pendingDeposits > 0 && <a href="/admin/deposits" className="text-yellow-400 text-xs hover:underline mt-1 block">Review now →</a>}
         </div>
-        <div className={`bg-[#1e293b] rounded-xl p-5 border ${pendingWithdrawals > 0 ? 'border-orange-400/30' : 'border-slate-700'}`}>
+        <div className={`bg-[#0a0f1e] rounded-xl p-5 border ${pendingWithdrawals > 0 ? 'border-orange-400/30' : 'border-white/8'}`}>
           <div className="flex items-center gap-2 mb-2">
             <WalletIcon className={`w-5 h-5 ${pendingWithdrawals > 0 ? 'text-orange-400' : 'text-slate-400'}`} />
             <span className="text-slate-400 text-xs">Pending Withdrawals</span>
@@ -86,7 +86,7 @@ export default function ControlCenterPage() {
           <div className={`text-2xl font-bold ${pendingWithdrawals > 0 ? 'text-orange-400' : 'text-white'}`}>{pendingWithdrawals}</div>
           {pendingWithdrawals > 0 && <a href="/admin/withdrawals" className="text-orange-400 text-xs hover:underline mt-1 block">Review now →</a>}
         </div>
-        <div className="bg-[#1e293b] rounded-xl p-5 border border-slate-700">
+        <div className="bg-[#0a0f1e] rounded-xl p-5 border border-white/8">
           <div className="flex items-center gap-2 mb-2">
             <ShieldCheckIcon className="w-5 h-5 text-blue-400" />
             <span className="text-slate-400 text-xs">Open Trades</span>
@@ -97,8 +97,8 @@ export default function ControlCenterPage() {
       </div>
 
       {/* Activity Feed */}
-      <div className="bg-[#1e293b] rounded-xl border border-slate-700 overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-700 flex items-center gap-2">
+      <div className="bg-[#0a0f1e] rounded-xl border border-white/8 overflow-hidden">
+        <div className="px-5 py-4 border-b border-white/8 flex items-center gap-2">
           <CommandLineIcon className="w-4 h-4 text-[#22c55e]" />
           <h3 className="text-white font-semibold">Live Activity Feed</h3>
         </div>

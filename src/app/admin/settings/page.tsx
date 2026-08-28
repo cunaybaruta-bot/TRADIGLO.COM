@@ -21,7 +21,7 @@ export default function SettingsPage() {
         <p className="text-slate-400 text-sm mt-1">Tradiglo Platform Configuration</p>
       </div>
       {/* Payout Configuration */}
-      <div className="bg-[#1e293b] rounded-xl border border-slate-700 p-5">
+      <div className="bg-[#0a0f1e] rounded-xl border border-white/8 p-5">
         <div className="flex items-center gap-2 mb-4">
           <CurrencyDollarIcon className="w-5 h-5 text-[#22c55e]" />
           <h3 className="text-white font-semibold">Trading Settings</h3>
@@ -33,7 +33,7 @@ export default function SettingsPage() {
             { label: 'Minimum Trade Amount', value: '$1.00', sub: 'Per trade minimum' },
             { label: 'Maximum Trade Amount', value: '$10,000.00', sub: 'Per trade maximum' },
           ]?.map(({ label, value, sub }) => (
-            <div key={label} className="bg-[#0f172a] rounded-lg p-4 border border-slate-700">
+            <div key={label} className="bg-[#0f172a] rounded-lg p-4 border border-white/8">
               <div className="text-slate-400 text-xs mb-1">{label}</div>
               <div className="text-white text-2xl font-bold">{value}</div>
               <div className="text-slate-500 text-xs mt-1">{sub}</div>
@@ -45,14 +45,14 @@ export default function SettingsPage() {
         </div>
       </div>
       {/* Trade Durations */}
-      <div className="bg-[#1e293b] rounded-xl border border-slate-700 p-5">
+      <div className="bg-[#0a0f1e] rounded-xl border border-white/8 p-5">
         <div className="flex items-center gap-2 mb-4">
           <ClockIcon className="w-5 h-5 text-[#22c55e]" />
           <h3 className="text-white font-semibold">Available Trade Durations</h3>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           {TRADE_DURATIONS?.map(({ seconds, label }) => (
-            <div key={seconds} className="bg-[#0f172a] rounded-lg px-3 py-2 border border-slate-700 flex items-center justify-between">
+            <div key={seconds} className="bg-[#0f172a] rounded-lg px-3 py-2 border border-white/8 flex items-center justify-between">
               <span className="text-slate-300 text-sm">{label}</span>
               <span className="w-2 h-2 rounded-full bg-[#22c55e] flex-shrink-0" />
             </div>
@@ -63,7 +63,7 @@ export default function SettingsPage() {
         </div>
       </div>
       {/* Bonus Settings */}
-      <div className="bg-[#1e293b] rounded-xl border border-slate-700 p-5">
+      <div className="bg-[#0a0f1e] rounded-xl border border-white/8 p-5">
         <div className="flex items-center gap-2 mb-4">
           <GiftIcon className="w-5 h-5 text-[#22c55e]" />
           <h3 className="text-white font-semibold">Bonus Settings</h3>
@@ -75,7 +75,7 @@ export default function SettingsPage() {
             { label: 'Affiliate Bonus', value: 'Disabled', sub: 'Bonus for referring users' },
             { label: 'Demo Balance', value: '$10,000', sub: 'Default demo account balance' },
           ]?.map(({ label, value, sub }) => (
-            <div key={label} className="bg-[#0f172a] rounded-lg p-4 border border-slate-700">
+            <div key={label} className="bg-[#0f172a] rounded-lg p-4 border border-white/8">
               <div className="text-slate-400 text-xs mb-1">{label}</div>
               <div className="text-white text-lg font-bold">{value}</div>
               <div className="text-slate-500 text-xs mt-1">{sub}</div>
@@ -87,7 +87,7 @@ export default function SettingsPage() {
         </div>
       </div>
       {/* Security Settings */}
-      <div className="bg-[#1e293b] rounded-xl border border-slate-700 p-5">
+      <div className="bg-[#0a0f1e] rounded-xl border border-white/8 p-5">
         <div className="flex items-center gap-2 mb-4">
           <ShieldCheckIcon className="w-5 h-5 text-[#22c55e]" />
           <h3 className="text-white font-semibold">Security Settings</h3>
@@ -100,7 +100,7 @@ export default function SettingsPage() {
             { label: 'HTTPS Encryption', detail: 'All data transmitted over secure HTTPS', status: 'Active' },
             { label: 'Session Management', detail: 'Auto-logout on inactivity', status: 'Active' },
           ]?.map(({ label, detail, status }) => (
-            <div key={label} className="flex items-center justify-between p-3 bg-[#0f172a] rounded-lg border border-slate-700">
+            <div key={label} className="flex items-center justify-between p-3 bg-[#0f172a] rounded-lg border border-white/8">
               <div>
                 <div className="text-white text-sm font-medium">{label}</div>
                 <div className="text-slate-500 text-xs">{detail}</div>
@@ -111,7 +111,7 @@ export default function SettingsPage() {
         </div>
       </div>
       {/* Platform Info */}
-      <div className="bg-[#1e293b] rounded-xl border border-slate-700 p-5">
+      <div className="bg-[#0a0f1e] rounded-xl border border-white/8 p-5">
         <div className="flex items-center gap-2 mb-4">
           <Cog6ToothIcon className="w-5 h-5 text-[#22c55e]" />
           <h3 className="text-white font-semibold">Platform Information</h3>
@@ -124,7 +124,7 @@ export default function SettingsPage() {
             { label: 'Framework', value: 'Next.js 15' },
             { label: 'Supported Assets', value: 'Crypto, Forex, Stocks, Commodities' },
           ]?.map(({ label, value }) => (
-            <div key={label} className="flex items-center justify-between py-2 border-b border-slate-700/50 last:border-0">
+            <div key={label} className="flex items-center justify-between py-2 border-b border-white/8/50 last:border-0">
               <span className="text-slate-400 text-sm">{label}</span>
               <span className="text-white text-sm">{value}</span>
             </div>
