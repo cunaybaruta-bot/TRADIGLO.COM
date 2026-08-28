@@ -40,6 +40,14 @@ interface LightweightChartProps {
 
 type IndicatorKey = 'MA' | 'EMA' | 'BB' | 'RSI' | 'MACD' | 'Stoch' | 'Vol' | 'Ichimoku' | 'SAR' | 'ATR' | 'CCI' | 'VWAP' | 'Pivot';
 
+// Groups the indicator picker into "drawn on the price pane" vs "own
+// sub-panel below" instead of one flat grid — matches how the indicators
+// actually render, not just an arbitrary list order.
+const INDICATOR_GROUPS: { label: string; keys: IndicatorKey[] }[] = [
+  { label: 'Overlays', keys: ['MA', 'EMA', 'BB', 'Ichimoku', 'SAR', 'VWAP', 'Pivot', 'Vol'] },
+  { label: 'Oscillators', keys: ['RSI', 'MACD', 'Stoch', 'ATR', 'CCI'] },
+];
+
 interface LegendItem { label: string; color: string; value: string; }
 
 function fmtLegendVal(v: number): string {
@@ -2112,24 +2120,8 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           className="flex items-center border-b border-white/10"
           style={{ height: 34, minHeight: 34, background: 'rgba(255,255,255,0.02)', overflow: 'visible', position: 'relative', zIndex: 10 }}
         >
-          {/* ── Timeframe pills (scrollable) ── */}
-          <div
-            className="flex items-center gap-0.5 px-2 flex-shrink-1 overflow-x-auto"
-            style={{ scrollbarWidth: 'none', minWidth: 0, flex: '1 1 0' }}
-          >
-            {TIMEFRAMES.map((tf) => (
-              <button
-                key={tf.label}
-                onClick={() => setTimeframe(tf.label)}
-                className={`px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide transition-all whitespace-nowrap flex-shrink-0 ${
-                  timeframe === tf.label
-                    ? 'bg-indigo-600 text-white' :'text-slate-500 hover:text-slate-200 hover:bg-white/10'
-                }`}
-              >
-                {tf.label.toUpperCase()}
-              </button>
-            ))}
-          </div>
+          {/* ── Timeframe dropdown ── */}
+          <TimeframeDropdown timeframes={TIMEFRAMES} timeframe={timeframe} onChange={setTimeframe} />
 
           {/* ── Divider ── */}
           <div className="w-px self-stretch bg-white/10 mx-1 flex-shrink-0" />
@@ -2298,6 +2290,80 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
 );
 
 LightweightChart.displayName = 'LightweightChart';
+
+// ─── TimeframeDropdown sub-component ─────────────────────────────────────────
+
+interface TimeframeDropdownProps {
+  timeframes: TimeframeConfig[];
+  timeframe: string;
+  onChange: (label: string) => void;
+}
+
+function TimeframeDropdown({ timeframes, timeframe, onChange }: TimeframeDropdownProps) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [dropPos, setDropPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node) && btnRef.current && !btnRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const handleOpen = () => {
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setDropPos({ top: rect.bottom + 4, left: rect.left });
+    }
+    setOpen((v) => !v);
+  };
+
+  return (
+    <div className="relative flex-shrink-0">
+      <button
+        ref={btnRef}
+        onClick={handleOpen}
+        title="Timeframe"
+        className={`flex items-center gap-1 px-2 h-[34px] text-[11px] font-bold tracking-wide transition-all ${open ? 'text-indigo-400' : 'text-white hover:text-indigo-300'}`}
+      >
+        {timeframe.toUpperCase()}
+        <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className={`transition-transform ${open ? 'rotate-180' : ''}`}>
+          <path d="M1 2.5L4 5.5L7 2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          ref={ref}
+          className="z-[9999] rounded-lg border border-white/10 shadow-2xl p-1.5"
+          style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, background: '#0f1117', width: 176 }}
+        >
+          <div className="text-[9px] text-slate-600 uppercase tracking-widest font-semibold px-1 mb-1">Timeframe</div>
+          <div className="grid grid-cols-4 gap-1">
+            {timeframes.map((tf) => {
+              const isActive = timeframe === tf.label;
+              return (
+                <button
+                  key={tf.label}
+                  onClick={() => { onChange(tf.label); setOpen(false); }}
+                  className={`px-1.5 py-1.5 rounded text-[10px] font-bold tracking-wide transition-all text-center ${
+                    isActive ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  {tf.label.toUpperCase()}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── ChartTypeDropdown sub-component ─────────────────────────────────────────
 
@@ -2492,28 +2558,36 @@ function IndicatorDropdown({ buttons, activeIndicators, onToggle }: IndicatorDro
       {open && (
         <div
           ref={ref}
-          className="z-[9999] rounded-lg border border-white/10 shadow-2xl p-1.5"
-          style={{ position: 'fixed', top: dropPos.top, right: dropPos.right, background: '#0f1117', width: 176 }}
+          className="z-[9999] rounded-lg border border-white/10 shadow-2xl p-2"
+          style={{ position: 'fixed', top: dropPos.top, right: dropPos.right, background: '#0f1117', width: 192 }}
         >
-          <div className="text-[9px] text-slate-600 uppercase tracking-widest font-semibold px-1 mb-1">Indicators</div>
-          <div className="grid grid-cols-3 gap-1">
-            {buttons.map(({ key, label, color }) => {
-              const isActive = activeIndicators.has(key);
-              return (
-                <button
-                  key={key}
-                  onClick={() => onToggle(key)}
-                  className={`px-2 py-1 rounded text-[10px] font-semibold transition-all border text-center ${
-                    isActive
-                      ? 'text-black border-transparent' :'bg-transparent text-slate-400 border-white/10 hover:border-white/20 hover:text-white'
-                  }`}
-                  style={isActive ? { backgroundColor: color, borderColor: color } : {}}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
+          {INDICATOR_GROUPS.map((group) => {
+            const groupButtons = buttons.filter((b) => group.keys.includes(b.key));
+            if (groupButtons.length === 0) return null;
+            return (
+              <div key={group.label} className="mb-2 last:mb-0">
+                <div className="text-[9px] text-slate-600 uppercase tracking-widest font-semibold px-1 mb-1">{group.label}</div>
+                <div className="grid grid-cols-3 gap-1">
+                  {groupButtons.map(({ key, label, color }) => {
+                    const isActive = activeIndicators.has(key);
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => onToggle(key)}
+                        className={`px-2 py-1 rounded text-[10px] font-semibold transition-all border text-center ${
+                          isActive
+                            ? 'text-black border-transparent' : 'bg-transparent text-slate-400 border-white/10 hover:border-white/20 hover:text-white'
+                        }`}
+                        style={isActive ? { backgroundColor: color, borderColor: color } : {}}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
