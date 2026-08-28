@@ -1780,9 +1780,6 @@ export default function DashboardPage() {
 
   // ── Stats ───────────────────────────────────────────────────────────────────
 
-  const totalTrades = totalTradesCount;
-  const wins = tradeHistory.filter((t) => t.result === 'win').length;
-  const winRate = totalTrades > 0 ? ((wins / totalTrades) * 100).toFixed(1) : '0.0';
   const totalProfit = tradeHistory.reduce((sum, t) => sum + ((t.profit_loss ?? 0) >= 0 ? (t.profit_loss ?? 0) : 0), 0);
   const openPositions = openTrades.length;
 
@@ -1827,9 +1824,8 @@ export default function DashboardPage() {
           {/* STATS BAR */}
           <div className="border-b border-white/10 bg-[#0a0a0a] flex-shrink-0">
             <div className="px-3 py-2">
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {[
-                  { label: t('dash_win_rate'), value: `${winRate}%` },
                   { label: t('dash_profit'), value: `${totalProfit >= 0 ? '+' : ''}$${formatCurrency(totalProfit)}`, color: totalProfit >= 0 ? 'text-emerald-400' : 'text-red-400' },
                   { label: t('dash_open'), value: openPositions.toString(), color: 'text-blue-400' },
                 ].map((stat) => (
