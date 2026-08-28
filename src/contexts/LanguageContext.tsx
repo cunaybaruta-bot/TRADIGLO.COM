@@ -86,7 +86,8 @@ const translations: Record<LangCode, Record<string, string>> = {
     // TickerTape — no translatable static labels (all dynamic data)
     // Dashboard
     dash_win_rate: 'Win Rate',
-    dash_profit: 'Profit',
+    dash_balance: 'Balance',
+    dash_profit: 'Net P&L',
     dash_open: 'Open',
     dash_open_trades: 'Open Trades',
     dash_close_all: 'Close All',
@@ -385,7 +386,8 @@ const translations: Record<LangCode, Record<string, string>> = {
     crypto_label: 'كريبتو',
     // Dashboard
     dash_win_rate: 'معدل الفوز',
-    dash_profit: 'الربح',
+    dash_balance: 'الرصيد',
+    dash_profit: 'صافي الربح',
     dash_open: 'مفتوح',
     dash_open_trades: 'الصفقات المفتوحة',
     dash_close_all: 'إغلاق الكل',
@@ -682,7 +684,8 @@ const translations: Record<LangCode, Record<string, string>> = {
     crypto_label: '加密货币',
     // Dashboard
     dash_win_rate: '胜率',
-    dash_profit: '利润',
+    dash_balance: '余额',
+    dash_profit: '净盈亏',
     dash_open: '开仓',
     dash_open_trades: '开仓交易',
     dash_close_all: '全部平仓',
@@ -979,7 +982,8 @@ const translations: Record<LangCode, Record<string, string>> = {
     crypto_label: 'CRYPTO',
     // Dashboard
     dash_win_rate: 'Tỷ lệ thắng',
-    dash_profit: 'Lợi nhuận',
+    dash_balance: 'Số dư',
+    dash_profit: 'Lãi/Lỗ ròng',
     dash_open: 'Đang mở',
     dash_open_trades: 'Giao dịch đang mở',
     dash_close_all: 'Đóng tất cả',
@@ -1276,7 +1280,8 @@ const translations: Record<LangCode, Record<string, string>> = {
     crypto_label: 'คริปโต',
     // Dashboard
     dash_win_rate: 'อัตราชนะ',
-    dash_profit: 'กำไร',
+    dash_balance: 'ยอดคงเหลือ',
+    dash_profit: 'กำไร/ขาดทุนสุทธิ',
     dash_open: 'เปิด',
     dash_open_trades: 'การเทรดที่เปิดอยู่',
     dash_close_all: 'ปิดทั้งหมด',
@@ -1572,7 +1577,8 @@ const translations: Record<LangCode, Record<string, string>> = {
     crypto_label: 'คริปโต',
     // Dashboard
     dash_win_rate: 'อัตราชนะ',
-    dash_profit: 'กำไร',
+    dash_balance: 'ยอดคงเหลือ',
+    dash_profit: 'กำไร/ขาดทุนสุทธิ',
     dash_open: 'เปิด',
     dash_open_trades: 'การเทรดที่เปิดอยู่',
     dash_close_all: 'ปิดทั้งหมด',
@@ -1869,7 +1875,8 @@ const translations: Record<LangCode, Record<string, string>> = {
     crypto_label: 'CRYPTO',
     // Dashboard
     dash_win_rate: 'Tỷ lệ thắng',
-    dash_profit: 'Lợi nhuận',
+    dash_balance: 'Số dư',
+    dash_profit: 'Lãi/Lỗ ròng',
     dash_open: 'Đang mở',
     dash_open_trades: 'Giao dịch đang mở',
     dash_close_all: 'Đóng tất cả',
