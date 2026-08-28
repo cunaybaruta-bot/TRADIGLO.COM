@@ -6,7 +6,8 @@ import { User, Shield, Wallet, BarChart2, Trophy, Clock, Settings, Headphones, C
 import { createClient } from '@/lib/supabase/client';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { useRealtimeDashboard } from '@/lib/hooks/useRealtimeDashboard';
-import DepositModal, { COUNTRY_CURRENCY } from '@/components/dashboard/DepositModal';
+import DepositModal from '@/components/dashboard/DepositModal';
+import { COUNTRY_CURRENCY } from '@/lib/deposit-countries';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

@@ -331,24 +331,24 @@ export default function WalletsPage() {
             placeholder="Search by email..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="bg-[#1e293b] border border-slate-700 text-white text-sm rounded-lg pl-9 pr-4 py-2 w-64 focus:outline-none focus:border-[#22c55e] placeholder-slate-500"
+            className="bg-[#0a0f1e] border border-white/8 text-white text-sm rounded-lg pl-9 pr-4 py-2 w-64 focus:outline-none focus:border-[#22c55e] placeholder-slate-500"
           />
         </div>
       </div>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-[#1e293b] rounded-xl p-5 border border-slate-700">
+        <div className="bg-[#0a0f1e] rounded-xl p-5 border border-white/8">
           <div className="text-slate-400 text-xs mb-1">Total Users</div>
           <div className="text-white text-2xl font-bold">{rows.length}</div>
         </div>
-        <div className="bg-[#1e293b] rounded-xl p-5 border border-green-400/20">
+        <div className="bg-[#0a0f1e] rounded-xl p-5 border border-green-400/20">
           <div className="text-slate-400 text-xs mb-1">Total Real Balance</div>
           <div className="text-green-400 text-2xl font-bold">
             ${totalReal.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </div>
         </div>
-        <div className="bg-[#1e293b] rounded-xl p-5 border border-blue-400/20">
+        <div className="bg-[#0a0f1e] rounded-xl p-5 border border-blue-400/20">
           <div className="text-slate-400 text-xs mb-1">Total Demo Balance</div>
           <div className="text-blue-400 text-2xl font-bold">
             ${totalDemo.toLocaleString('en', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
@@ -368,11 +368,11 @@ export default function WalletsPage() {
       )}
 
       {/* Table */}
-      <div className="bg-[#1e293b] rounded-xl border border-slate-700 overflow-hidden">
+      <div className="bg-[#0a0f1e] rounded-xl border border-white/8 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-700">
+              <tr className="border-b border-white/8">
                 <th className="text-left text-slate-400 text-xs font-medium px-5 py-3">Email User</th>
                 <th className="text-left text-slate-400 text-xs font-medium px-5 py-3">Demo Balance</th>
                 <th className="text-left text-slate-400 text-xs font-medium px-5 py-3">Real Balance</th>

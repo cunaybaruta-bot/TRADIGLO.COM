@@ -82,7 +82,7 @@ export default function AIIntelligencePage() {
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-[#1e293b] rounded-xl p-5 border border-purple-400/20">
+        <div className="bg-[#0a0f1e] rounded-xl p-5 border border-purple-400/20">
           <div className="flex items-center gap-2 mb-2">
             <CpuChipIcon className="w-5 h-5 text-purple-400" />
             <span className="text-slate-400 text-xs">AI Engine Status</span>
@@ -90,7 +90,7 @@ export default function AIIntelligencePage() {
           <div className="text-green-400 text-lg font-bold">ACTIVE</div>
           <div className="text-slate-500 text-xs mt-1">Real-time analysis running</div>
         </div>
-        <div className="bg-[#1e293b] rounded-xl p-5 border border-blue-400/20">
+        <div className="bg-[#0a0f1e] rounded-xl p-5 border border-blue-400/20">
           <div className="flex items-center gap-2 mb-2">
             <ChartBarIcon className="w-5 h-5 text-blue-400" />
             <span className="text-slate-400 text-xs">Overall Win Rate</span>
@@ -98,7 +98,7 @@ export default function AIIntelligencePage() {
           <div className={`text-2xl font-bold ${overallWinRate >= 50 ? 'text-green-400' : 'text-red-400'}`}>{overallWinRate}%</div>
           <div className="text-slate-500 text-xs mt-1">Based on {totalAnalyzed} trades</div>
         </div>
-        <div className="bg-[#1e293b] rounded-xl p-5 border border-yellow-400/20">
+        <div className="bg-[#0a0f1e] rounded-xl p-5 border border-yellow-400/20">
           <div className="flex items-center gap-2 mb-2">
             <ArrowTrendingUpIcon className="w-5 h-5 text-yellow-400" />
             <span className="text-slate-400 text-xs">Assets Analyzed</span>
@@ -108,15 +108,15 @@ export default function AIIntelligencePage() {
         </div>
       </div>
 
-      <div className="bg-[#1e293b] rounded-xl border border-slate-700 overflow-hidden">
-        <div className="px-5 py-4 border-b border-slate-700">
+      <div className="bg-[#0a0f1e] rounded-xl border border-white/8 overflow-hidden">
+        <div className="px-5 py-4 border-b border-white/8">
           <h3 className="text-white font-semibold">AI Trading Signals</h3>
           <p className="text-slate-400 text-xs mt-1">Generated from historical trade patterns</p>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-slate-700">
+              <tr className="border-b border-white/8">
                 <th className="text-left text-slate-400 text-xs font-medium px-5 py-3">Asset</th>
                 <th className="text-left text-slate-400 text-xs font-medium px-5 py-3">Current Price</th>
                 <th className="text-left text-slate-400 text-xs font-medium px-5 py-3">Signal</th>

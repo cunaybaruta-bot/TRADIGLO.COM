@@ -4,12 +4,17 @@ import React, { useEffect, useRef, useImperativeHandle, forwardRef, useState, us
 import {
   createChart,
   CandlestickSeries,
+  BarSeries,
   LineSeries,
+  AreaSeries,
+  BaselineSeries,
   HistogramSeries,
   LineStyle,
   type IChartApi,
   type ISeriesApi,
+  type SeriesType,
   type CandlestickData,
+  type LineData,
   type IPriceLine,
   type Time,
 } from 'lightweight-charts';
@@ -35,6 +40,14 @@ interface LightweightChartProps {
 
 type IndicatorKey = 'MA' | 'EMA' | 'BB' | 'RSI' | 'MACD' | 'Stoch' | 'Vol' | 'Ichimoku' | 'SAR' | 'ATR' | 'CCI' | 'VWAP' | 'Pivot';
 
+// Groups the indicator picker into "drawn on the price pane" vs "own
+// sub-panel below" instead of one flat grid — matches how the indicators
+// actually render, not just an arbitrary list order.
+const INDICATOR_GROUPS: { label: string; keys: IndicatorKey[] }[] = [
+  { label: 'Overlays', keys: ['MA', 'EMA', 'BB', 'Ichimoku', 'SAR', 'VWAP', 'Pivot', 'Vol'] },
+  { label: 'Oscillators', keys: ['RSI', 'MACD', 'Stoch', 'ATR', 'CCI'] },
+];
+
 interface LegendItem { label: string; color: string; value: string; }
 
 function fmtLegendVal(v: number): string {
@@ -45,7 +58,86 @@ function fmtLegendVal(v: number): string {
 
 // ─── Drawing types ────────────────────────────────────────────────────────────
 
-type DrawingTool = 'trendline' | 'horizontal' | 'freehand' | 'delete' | null;
+type DrawingTool = 'trendline' | 'horizontal' | 'freehand' | 'fibonacci' | 'delete' | null;
+
+// ─── Chart type (visual style of the main series) ────────────────────────────
+
+type ChartType = 'candles' | 'bars' | 'line' | 'area' | 'baseline';
+
+// TradingView's own charting UI font stack — applied only within the chart
+// component (toolbar, dropdowns, axis/crosshair labels), not the rest of the
+// app, which keeps its own Inter/Geist Mono typography.
+const TRADINGVIEW_FONT = '-apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif';
+
+// TradingView's own signature candle palette (teal/coral) — not the generic
+// saturated Tailwind green/red used before. Single source of truth: every
+// series type, drawing color default, and legend text reads from these two.
+const UP_COLOR = '#26a69a';
+const DOWN_COLOR = '#ef5350';
+
+/** Creates and returns the main series for the given chart type, styled to
+ * match the app's green/red up/down convention. */
+function createMainSeriesForType(chart: IChartApi, type: ChartType): ISeriesApi<SeriesType> {
+  switch (type) {
+    case 'bars':
+      return chart.addSeries(BarSeries, {
+        upColor: UP_COLOR,
+        downColor: DOWN_COLOR,
+        thinBars: false,
+      });
+    case 'line':
+      return chart.addSeries(LineSeries, {
+        color: UP_COLOR,
+        lineWidth: 2,
+        priceLineVisible: true,
+        lastValueVisible: true,
+      });
+    case 'area':
+      return chart.addSeries(AreaSeries, {
+        lineColor: UP_COLOR,
+        topColor: 'rgba(34,197,94,0.32)',
+        bottomColor: 'rgba(34,197,94,0.02)',
+        lineWidth: 2,
+        priceLineVisible: true,
+        lastValueVisible: true,
+      });
+    case 'baseline':
+      return chart.addSeries(BaselineSeries, {
+        topLineColor: UP_COLOR,
+        bottomLineColor: DOWN_COLOR,
+        topFillColor1: 'rgba(34,197,94,0.28)',
+        topFillColor2: 'rgba(34,197,94,0.02)',
+        bottomFillColor1: 'rgba(239,68,68,0.02)',
+        bottomFillColor2: 'rgba(239,68,68,0.28)',
+        lineWidth: 2,
+        priceLineVisible: true,
+        lastValueVisible: true,
+      });
+    case 'candles':
+    default:
+      return chart.addSeries(CandlestickSeries, {
+        upColor: UP_COLOR,
+        downColor: DOWN_COLOR,
+        borderVisible: false,
+        wickUpColor: UP_COLOR,
+        wickDownColor: DOWN_COLOR,
+      });
+  }
+}
+
+/** Converts OHLC bars to whatever data shape the given chart type's series
+ * expects — candles/bars keep full OHLC, everything else collapses to a
+ * single value (close) per point. */
+function barsToSeriesData(bars: CandlestickData[], type: ChartType): CandlestickData[] | LineData[] {
+  if (type === 'candles' || type === 'bars') return bars;
+  return bars.map((b) => ({ time: b.time, value: b.close }));
+}
+
+/** Converts one live OHLC tick to the point shape the current series expects. */
+function barToSeriesPoint(bar: CandlestickData, type: ChartType): CandlestickData | LineData {
+  if (type === 'candles' || type === 'bars') return bar;
+  return { time: bar.time, value: bar.close };
+}
 
 interface Point { x: number; y: number }
 
@@ -71,7 +163,27 @@ interface FreehandDrawing {
   color: string;
 }
 
-type Drawing = TrendLineDrawing | HorizontalDrawing | FreehandDrawing;
+interface FibonacciDrawing {
+  id: string;
+  type: 'fibonacci';
+  p1: Point;
+  p2: Point;
+  color: string;
+}
+
+type Drawing = TrendLineDrawing | HorizontalDrawing | FreehandDrawing | FibonacciDrawing;
+
+// Standard retracement ratios, each with its own conventional color so
+// levels are distinguishable at a glance (matches common charting tools).
+const FIB_LEVELS: { ratio: number; color: string }[] = [
+  { ratio: 0,     color: '#94a3b8' },
+  { ratio: 0.236, color: '#f59e0b' },
+  { ratio: 0.382, color: '#eab308' },
+  { ratio: 0.5,   color: '#22c55e' },
+  { ratio: 0.618, color: '#38bdf8' },
+  { ratio: 0.786, color: '#a78bfa' },
+  { ratio: 1,     color: '#94a3b8' },
+];
 
 // ─── Timeframe config ─────────────────────────────────────────────────────────
 
@@ -102,7 +214,13 @@ const TIMEFRAMES: TimeframeConfig[] = [
 ];
 
 const WS_TIMEOUT_MS = 10_000;
-const CHART_HEIGHT = 380;
+const LIVE_EDGE_BUFFER_BARS = 2;
+// Chart is the primary content of the trade screen — sized generously per
+// breakpoint so it dominates the layout instead of competing for space with
+// the Open Trades panel below it (which is capped separately).
+const MOBILE_CHART_HEIGHT = 300;
+const TABLET_CHART_HEIGHT = 380;
+const CHART_HEIGHT = 400;
 const INITIAL_HISTORY_LIMIT = 500;
 const HISTORY_PAGE_SIZE = 500;
 const HISTORY_LOAD_THRESHOLD = 25;
@@ -553,7 +671,8 @@ function drawAllOnCanvas(
   pendingTrendP1: Point | null,
   pendingMousePos: Point | null,
   activeTool: DrawingTool,
-  drawColor: string
+  drawColor: string,
+  getPriceAt?: (y: number) => number | null
 ) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
@@ -577,6 +696,44 @@ function drawAllOnCanvas(
       ctx.lineTo(p2.x, p2.y);
     }
     ctx.stroke();
+    ctx.restore();
+  };
+
+  const drawFibonacci = (p1: Point, p2: Point, alpha = 1) => {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    // Swing line between the two anchor points, same convention as trendline.
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.stroke();
+
+    const left = Math.min(p1.x, p2.x);
+    const right = Math.max(p1.x, p2.x);
+    for (const { ratio, color } of FIB_LEVELS) {
+      const y = p1.y + (p2.y - p1.y) * ratio;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(left, y);
+      ctx.lineTo(right, y);
+      ctx.stroke();
+
+      const price = getPriceAt?.(y);
+      const label = price != null ? `${(ratio * 100).toFixed(1)}%  ${fmtLegendVal(price)}` : `${(ratio * 100).toFixed(1)}%`;
+      ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillStyle = color;
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(label, left + 4, y - 2);
+    }
+
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.beginPath(); ctx.arc(p1.x, p1.y, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(p2.x, p2.y, 3, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   };
 
@@ -613,6 +770,8 @@ function drawAllOnCanvas(
       }
       ctx.stroke();
       ctx.restore();
+    } else if (d.type === 'fibonacci') {
+      drawFibonacci(d.p1, d.p2);
     }
   }
 
@@ -622,6 +781,8 @@ function drawAllOnCanvas(
     ctx.fillStyle = drawColor;
     ctx.beginPath(); ctx.arc(pendingTrendP1.x, pendingTrendP1.y, 4, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
+  } else if (activeTool === 'fibonacci' && pendingTrendP1 && pendingMousePos) {
+    drawFibonacci(pendingTrendP1, pendingMousePos, 0.6);
   }
 }
 
@@ -633,6 +794,15 @@ function pointNearDrawing(pt: Point, drawing: Drawing, threshold = 8): boolean {
   } else if (drawing.type === 'freehand') {
     for (let i = 1; i < drawing.points.length; i++) {
       if (pointNearSegment(pt, drawing.points[i - 1], drawing.points[i], threshold)) return true;
+    }
+    return false;
+  } else if (drawing.type === 'fibonacci') {
+    const left = Math.min(drawing.p1.x, drawing.p2.x);
+    const right = Math.max(drawing.p1.x, drawing.p2.x);
+    if (pt.x < left - threshold || pt.x > right + threshold) return false;
+    for (const { ratio } of FIB_LEVELS) {
+      const y = drawing.p1.y + (drawing.p2.y - drawing.p1.y) * ratio;
+      if (Math.abs(pt.y - y) <= threshold) return true;
     }
     return false;
   }
@@ -679,7 +849,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     const macdChartRef = useRef<IChartApi | null>(null);
     const stochChartRef = useRef<IChartApi | null>(null);
 
-    const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+    const seriesRef = useRef<ISeriesApi<SeriesType> | null>(null);
     const wsRef = useRef<WebSocket | null>(null);
     const bookTickerWsRef = useRef<WebSocket | null>(null);
     const lastBarRef = useRef<CandlestickData | null>(null);
@@ -731,6 +901,23 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     const [dataUnavailable, setDataUnavailable] = useState(false);
     const [activeIndicators, setActiveIndicators] = useState<Set<IndicatorKey>>(new Set());
     const [chartHeight, setChartHeight] = useState<number>(CHART_HEIGHT);
+    const [chartType, setChartType] = useState<ChartType>('candles');
+    const chartTypeRef = useRef<ChartType>('candles');
+    useEffect(() => { chartTypeRef.current = chartType; }, [chartType]);
+
+    // ── "Return to live" — shown once the user has scrolled/zoomed away
+    // from the right (real-time) edge of the chart. ──────────────────────────
+    const [isAwayFromLive, setIsAwayFromLive] = useState(false);
+
+    // ── OHLC legend (hovered bar, or the latest live bar when not hovering) ──
+    const [ohlcBar, setOhlcBar] = useState<CandlestickData | null>(null);
+    const isHoveringChartRef = useRef(false);
+    // Records a new live bar and, unless the user is currently hovering the
+    // chart (inspecting a past candle), refreshes the OHLC legend with it.
+    const updateLastBar = useCallback((bar: CandlestickData) => {
+      updateLastBar(bar);
+      if (!isHoveringChartRef.current) setOhlcBar(bar);
+    }, []);
 
     // ── Indicator legends ─────────────────────────────────────────────────
     // Overlay/oscillator values live here (a compact top-left legend per
@@ -813,7 +1000,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
 
         const visibleRange = chartRef.current.timeScale().getVisibleLogicalRange();
         const merged = [...additions, ...current].sort((a, b) => Number(a.time) - Number(b.time));
-        seriesRef.current.setData(merged);
+        seriesRef.current.setData(barsToSeriesData(merged, chartTypeRef.current) as any);
         candleDataRef.current = merged;
 
         if (visibleRange) {
@@ -837,9 +1024,9 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     useEffect(() => {
       const updateHeight = () => {
         if (window.innerWidth < 640) {
-          setChartHeight(240);
+          setChartHeight(MOBILE_CHART_HEIGHT);
         } else if (window.innerWidth < 1024) {
-          setChartHeight(320);
+          setChartHeight(TABLET_CHART_HEIGHT);
         } else {
           setChartHeight(CHART_HEIGHT);
         }
@@ -859,7 +1046,8 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         pendingTrendP1Ref.current,
         pendingMousePosRef.current,
         activeToolRef.current,
-        drawColorRef.current
+        drawColorRef.current,
+        (y) => seriesRef.current?.coordinateToPrice(y) ?? null
       );
     }, []);
 
@@ -875,7 +1063,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         if (existing) { try { seriesRef.current.removePriceLine(existing); } catch {} }
         const priceLine = seriesRef.current.createPriceLine({
           price,
-          color: orderType === 'buy' ? '#22c55e' : '#ef4444',
+          color: orderType === 'buy' ? UP_COLOR : DOWN_COLOR,
           lineWidth: 1,
           lineStyle: LineStyle.Dashed,
           axisLabelVisible: true,
@@ -911,7 +1099,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           try {
             const priceLine = seriesRef.current!.createPriceLine({
               price: t.entry_price,
-              color: t.order_type === 'buy' ? '#22c55e' : '#ef4444',
+              color: t.order_type === 'buy' ? UP_COLOR : DOWN_COLOR,
               lineWidth: 1,
               lineStyle: LineStyle.Dashed,
               axisLabelVisible: true,
@@ -924,6 +1112,49 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     }, [openTrades]);
 
     useEffect(() => { syncEntryLines(); }, [syncEntryLines]);
+
+    // ── Chart type switching (candles / bars / line / area / baseline) ──────────
+    // Series type can't be changed in place — the old series is removed and a
+    // new one of the requested type is created, re-fed from candleDataRef
+    // (converted to whatever shape that type needs). Price lines (trade entry
+    // markers) live on the series instance too, so they're lost with it and
+    // must be recreated on the new one.
+    const handleChartTypeChange = useCallback((newType: ChartType) => {
+      if (newType === chartTypeRef.current) return;
+      if (!chartRef.current) { setChartType(newType); return; }
+
+      if (seriesRef.current) {
+        try { chartRef.current.removeSeries(seriesRef.current); } catch {}
+      }
+
+      const newSeries = createMainSeriesForType(chartRef.current, newType);
+
+      // Use the freshest data available: candleDataRef plus the in-progress
+      // last bar (which may be more current than the last full history sync).
+      let bars = candleDataRef.current;
+      const last = lastBarRef.current;
+      if (last) {
+        if (bars.length > 0 && Number(bars[bars.length - 1].time) === Number(last.time)) {
+          bars = [...bars.slice(0, -1), last];
+        } else if (bars.length === 0 || Number(last.time) > Number(bars[bars.length - 1].time)) {
+          bars = [...bars, last];
+        }
+      }
+      if (bars.length > 0) {
+        try { newSeries.setData(barsToSeriesData(bars, newType) as any); } catch {}
+      }
+
+      seriesRef.current = newSeries;
+      chartTypeRef.current = newType;
+      setChartType(newType);
+
+      // Trade entry-price lines belonged to the removed series — recreate
+      // them on the new one.
+      entryLinesRef.current.clear();
+      syncEntryLines();
+
+      requestAnimationFrame(redrawCanvas);
+    }, [syncEntryLines, redrawCanvas]);
 
     // ── Stop WS/poll helpers ──────────────────────────────────────────────────
 
@@ -948,7 +1179,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     const subPanelOptions = (height: number) => ({
       width: containerRef.current?.clientWidth || 800,
       height,
-      layout: { background: { color: '#000000' }, textColor: '#94a3b8' },
+      layout: { background: { color: '#000000' }, textColor: '#94a3b8', fontFamily: TRADINGVIEW_FONT },
       grid: { vertLines: { color: 'rgba(255,255,255,0.04)' }, horzLines: { color: 'rgba(255,255,255,0.04)' } },
       crosshair: {
         vertLine: { color: 'rgba(255,255,255,0.2)', labelBackgroundColor: '#1e293b' },
@@ -1345,12 +1576,12 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         const w = containerRef.current.clientWidth || 800;
         const isMobile = window.innerWidth < 640;
         const isTablet = window.innerWidth < 1024;
-        const chartH = isMobile ? 240 : isTablet ? 320 : CHART_HEIGHT;
+        const chartH = isMobile ? MOBILE_CHART_HEIGHT : isTablet ? TABLET_CHART_HEIGHT : CHART_HEIGHT;
 
         const chart = createChart(containerRef.current, {
           width: w,
           height: chartH,
-          layout: { background: { color: '#000000' }, textColor: '#94a3b8' },
+          layout: { background: { color: '#000000' }, textColor: '#94a3b8', fontFamily: TRADINGVIEW_FONT },
           grid: { vertLines: { color: 'rgba(255,255,255,0.04)' }, horzLines: { color: 'rgba(255,255,255,0.04)' } },
           crosshair: {
             vertLine: { color: 'rgba(255,255,255,0.2)', labelBackgroundColor: '#1e293b' },
@@ -1368,13 +1599,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
 
         chartRef.current = chart;
 
-        const series = chart.addSeries(CandlestickSeries, {
-          upColor: '#22c55e',
-          downColor: '#ef4444',
-          borderVisible: false,
-          wickUpColor: '#22c55e',
-          wickDownColor: '#ef4444',
-        });
+        const series = createMainSeriesForType(chart, chartTypeRef.current);
         seriesRef.current = series;
 
         chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
@@ -1385,13 +1610,37 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
               pendingTrendP1Ref.current,
               pendingMousePosRef.current,
               activeToolRef.current,
-              drawColorRef.current
+              drawColorRef.current,
+              (y) => seriesRef.current?.coordinateToPrice(y) ?? null
             );
           });
 
           if (range && range.from < HISTORY_LOAD_THRESHOLD) {
             loadOlderHistoryRef.current();
           }
+
+          // "Return to live": true once the visible right edge has drifted
+          // more than a couple bars away from the latest candle.
+          if (range) {
+            const totalBars = candleDataRef.current.length;
+            setIsAwayFromLive(totalBars > 0 && range.to < totalBars - 1 - LIVE_EDGE_BUFFER_BARS);
+          }
+        });
+
+        // OHLC legend: show the hovered candle's O/H/L/C while the crosshair
+        // is over the chart, and fall back to the latest live candle once
+        // the mouse leaves. Looked up from candleDataRef (always full OHLC)
+        // rather than the series' own data, so it stays correct in Line/
+        // Area/Baseline chart types too, which only carry a close value.
+        chart.subscribeCrosshairMove((param) => {
+          if (!param.time) {
+            isHoveringChartRef.current = false;
+            setOhlcBar(lastBarRef.current);
+            return;
+          }
+          isHoveringChartRef.current = true;
+          const bar = candleDataRef.current.find((b) => b.time === param.time);
+          if (bar) setOhlcBar(bar);
         });
 
         const resizeObserver = new ResizeObserver((entries) => {
@@ -1400,7 +1649,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
             if (cw > 0 && chartRef.current) {
               const isMob = window.innerWidth < 640;
               const isTab = window.innerWidth < 1024;
-              const newH = isMob ? 240 : isTab ? 320 : CHART_HEIGHT;
+              const newH = isMob ? MOBILE_CHART_HEIGHT : isTab ? TABLET_CHART_HEIGHT : CHART_HEIGHT;
               try { chartRef.current.applyOptions({ width: cw, height: newH }); } catch {}
               [rsiChartRef, macdChartRef, stochChartRef, atrChartRef, cciChartRef].forEach(r => {
                 if (r.current) { try { r.current.applyOptions({ width: cw }); } catch {} }
@@ -1415,7 +1664,8 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
                     pendingTrendP1Ref.current,
                     pendingMousePosRef.current,
                     activeToolRef.current,
-                    drawColorRef.current
+                    drawColorRef.current,
+                    (y) => seriesRef.current?.coordinateToPrice(y) ?? null
                   );
                 });
               }
@@ -1475,18 +1725,14 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
       if (!tool) return;
       const pt = getCanvasPoint(e);
 
-      if (tool === 'trendline') {
+      if (tool === 'trendline' || tool === 'fibonacci') {
         if (!pendingTrendP1Ref.current) {
           setPendingTrendP1(pt);
         } else {
           const p1 = pendingTrendP1Ref.current;
-          const newDrawing: TrendLineDrawing = {
-            id: `tl-${Date.now()}`,
-            type: 'trendline',
-            p1,
-            p2: pt,
-            color: drawColorRef.current,
-          };
+          const newDrawing: TrendLineDrawing | FibonacciDrawing = tool === 'fibonacci'
+            ? { id: `fib-${Date.now()}`, type: 'fibonacci', p1, p2: pt, color: drawColorRef.current }
+            : { id: `tl-${Date.now()}`, type: 'trendline', p1, p2: pt, color: drawColorRef.current };
           setDrawings(prev => [...prev, newDrawing]);
           setPendingTrendP1(null);
           setPendingMousePos(null);
@@ -1515,7 +1761,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
       if (!tool) return;
       const pt = getCanvasPoint(e);
 
-      if (tool === 'trendline' && pendingTrendP1Ref.current) {
+      if ((tool === 'trendline' || tool === 'fibonacci') && pendingTrendP1Ref.current) {
         setPendingMousePos(pt);
       } else if (tool === 'freehand' && isFreehandDrawingRef.current) {
         freehandPointsRef.current.push(pt);
@@ -1556,7 +1802,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     }, []);
 
     const handleCanvasMouseLeave = useCallback(() => {
-      if (activeToolRef.current === 'trendline') {
+      if (activeToolRef.current === 'trendline' || activeToolRef.current === 'fibonacci') {
         setPendingMousePos(null);
       }
       if (activeToolRef.current === 'freehand' && isFreehandDrawingRef.current) {
@@ -1589,6 +1835,8 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
       stopRealtimeFeeds();
       entryLinesRef.current.clear();
       lastBarRef.current = null;
+      setOhlcBar(null);
+      setIsAwayFromLive(false);
       firstCloseRef.current = null;
       candleDataRef.current = [];
       try { seriesRef.current?.setData([]); } catch {}
@@ -1663,10 +1911,12 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           });
 
           try {
-            seriesRef.current.setData(unique);
+            seriesRef.current.setData(barsToSeriesData(unique, chartTypeRef.current) as any);
             lastBarRef.current = unique[unique.length - 1];
+            setOhlcBar(unique[unique.length - 1] ?? null);
             firstCloseRef.current = unique[0]?.close ?? null;
             chartRef.current?.timeScale().fitContent();
+            setIsAwayFromLive(false);
 
             const last = unique[unique.length - 1];
             const first = unique[0];
@@ -1688,7 +1938,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
               try {
                 const priceLine = seriesRef.current!.createPriceLine({
                   price: t.entry_price,
-                  color: t.order_type === 'buy' ? '#22c55e' : '#ef4444',
+                  color: t.order_type === 'buy' ? UP_COLOR : DOWN_COLOR,
                   lineWidth: 1,
                   lineStyle: LineStyle.Dashed,
                   axisLabelVisible: true,
@@ -1755,8 +2005,8 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
                 close: parseFloat(k.c),
               };
               if (seriesRef.current) {
-                try { seriesRef.current.update(bar); } catch {}
-                lastBarRef.current = bar;
+                try { seriesRef.current.update(barToSeriesPoint(bar, chartTypeRef.current) as any); } catch {}
+                updateLastBar(bar);
                 if (firstCloseRef.current !== null) {
                   const change = bar.close - firstCloseRef.current;
                   const changePct = (change / firstCloseRef.current) * 100;
@@ -1793,8 +2043,8 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
               low: parseFloat(k[3]),
               close: parseFloat(k[4]),
             };
-            try { seriesRef.current.update(bar); } catch {}
-            lastBarRef.current = bar;
+            try { seriesRef.current.update(barToSeriesPoint(bar, chartTypeRef.current) as any); } catch {}
+            updateLastBar(bar);
             if (firstCloseRef.current !== null) {
               const change = bar.close - firstCloseRef.current;
               const changePct = (change / firstCloseRef.current) * 100;
@@ -1853,8 +2103,8 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
                 high: Math.max(lastBarRef.current.high as number, mid),
                 low: Math.min(lastBarRef.current.low as number, mid),
               };
-              try { seriesRef.current.update(bar); } catch {}
-              lastBarRef.current = bar;
+              try { seriesRef.current.update(barToSeriesPoint(bar, chartTypeRef.current) as any); } catch {}
+              updateLastBar(bar);
               if (firstCloseRef.current !== null) {
                 const change = mid - firstCloseRef.current;
                 const changePct = (change / firstCloseRef.current) * 100;
@@ -1930,8 +2180,8 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
                 close: price,
               };
 
-          try { seriesRef.current.update(bar); } catch {}
-          lastBarRef.current = bar;
+          try { seriesRef.current.update(barToSeriesPoint(bar, chartTypeRef.current) as any); } catch {}
+          updateLastBar(bar);
           onPriceUpdateRef.current?.(
             price,
             Number.isFinite(change) ? change : price - previousClose,
@@ -1976,6 +2226,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
       { key: 'trendline', label: 'Trend Line', icon: '↗', title: 'Trend Line: click two points' },
       { key: 'horizontal', label: 'H. Level', icon: '—', title: 'Horizontal Level: click to place' },
       { key: 'freehand', label: 'Freehand', icon: '✏', title: 'Freehand: click and drag' },
+      { key: 'fibonacci', label: 'Fibonacci', icon: 'φ', title: 'Fibonacci Retracement: click swing low then swing high (or reverse)' },
       { key: 'delete', label: 'Delete', icon: '✕', title: 'Delete: click a drawing to remove it' },
     ];
 
@@ -1985,30 +2236,20 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     const canvasPointerEvents = activeTool ? 'auto' : 'none';
 
     return (
-      <div className="w-full relative" style={{ background: '#000' }}>
+      <div className="w-full relative" style={{ background: '#000', fontFamily: TRADINGVIEW_FONT }}>
         {/* ── Single compact toolbar row ── */}
         <div
           className="flex items-center border-b border-white/10"
           style={{ height: 34, minHeight: 34, background: 'rgba(255,255,255,0.02)', overflow: 'visible', position: 'relative', zIndex: 10 }}
         >
-          {/* ── Timeframe pills (scrollable) ── */}
-          <div
-            className="flex items-center gap-0.5 px-2 flex-shrink-1 overflow-x-auto"
-            style={{ scrollbarWidth: 'none', minWidth: 0, flex: '1 1 0' }}
-          >
-            {TIMEFRAMES.map((tf) => (
-              <button
-                key={tf.label}
-                onClick={() => setTimeframe(tf.label)}
-                className={`px-1.5 py-0.5 rounded text-[10px] font-bold tracking-wide transition-all whitespace-nowrap flex-shrink-0 ${
-                  timeframe === tf.label
-                    ? 'bg-indigo-600 text-white' :'text-slate-500 hover:text-slate-200 hover:bg-white/10'
-                }`}
-              >
-                {tf.label.toUpperCase()}
-              </button>
-            ))}
-          </div>
+          {/* ── Timeframe dropdown ── */}
+          <TimeframeDropdown timeframes={TIMEFRAMES} timeframe={timeframe} onChange={setTimeframe} />
+
+          {/* ── Divider ── */}
+          <div className="w-px self-stretch bg-white/10 mx-1 flex-shrink-0" />
+
+          {/* ── Chart type dropdown toggle ── */}
+          <ChartTypeDropdown chartType={chartType} onChange={handleChartTypeChange} />
 
           {/* ── Divider ── */}
           <div className="w-px self-stretch bg-white/10 mx-1 flex-shrink-0" />
@@ -2050,21 +2291,70 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
               display: 'block',
             }}
           />
-          {/* Overlay indicator legend — top-left, so values live here instead
-              of stacking as price-axis labels on the right edge when many
-              overlays (MA/EMA/BB/Ichimoku/SAR/VWAP) are active at once. */}
-          {mainLegend.length > 0 && (
-            <div
-              className="absolute top-1.5 left-1.5 flex flex-wrap gap-x-2 gap-y-0.5 pointer-events-none"
-              style={{ maxWidth: 'calc(100% - 12px)', zIndex: 5 }}
+          {/* Overlay legends — top-left: OHLC bar first, then indicator
+              values below it, so nothing stacks as price-axis labels on the
+              right edge when many overlays are active at once. */}
+          <div
+            className="absolute top-1.5 left-1.5 flex flex-col gap-y-0.5 pointer-events-none"
+            style={{ maxWidth: 'calc(100% - 12px)', zIndex: 5 }}
+          >
+            {/* OHLC legend — the hovered candle, or the latest live one when
+                not hovering. Read from candleDataRef (always full OHLC) so
+                it stays correct even in Line/Area/Baseline chart types. */}
+            {ohlcBar && (() => {
+              const change = ohlcBar.close - ohlcBar.open;
+              const changePct = ohlcBar.open !== 0 ? (change / ohlcBar.open) * 100 : 0;
+              const isUp = change >= 0;
+              const changeColor = isUp ? UP_COLOR : DOWN_COLOR;
+              return (
+                <div className="flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-[10px] font-medium" style={{ textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>
+                  <span className="text-slate-400">O<span className="text-white ml-0.5">{fmtLegendVal(ohlcBar.open)}</span></span>
+                  <span className="text-slate-400">H<span style={{ color: UP_COLOR }} className="ml-0.5">{fmtLegendVal(ohlcBar.high)}</span></span>
+                  <span className="text-slate-400">L<span style={{ color: DOWN_COLOR }} className="ml-0.5">{fmtLegendVal(ohlcBar.low)}</span></span>
+                  <span className="text-slate-400">C<span style={{ color: changeColor }} className="ml-0.5">{fmtLegendVal(ohlcBar.close)}</span></span>
+                  <span style={{ color: changeColor }}>
+                    {isUp ? '+' : ''}{fmtLegendVal(change)} ({isUp ? '+' : ''}{changePct.toFixed(2)}%)
+                  </span>
+                </div>
+              );
+            })()}
+            {mainLegend.length > 0 && (
+              <div className="flex flex-wrap gap-x-2 gap-y-0.5">
+                {mainLegend.map((item, i) => (
+                  <span key={`${item.label}-${i}`} className="text-[10px] font-medium whitespace-nowrap" style={{ color: item.color, textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>
+                    {item.label} {item.value}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* "Return to live" — appears once the user has scrolled/zoomed
+              away from the real-time edge; jumps back without changing the
+              current zoom level. */}
+          {isAwayFromLive && (
+            <button
+              onClick={() => {
+                chartRef.current?.timeScale().scrollToRealTime();
+                setIsAwayFromLive(false);
+              }}
+              title="Return to live"
+              className="absolute flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold text-white transition-all hover:brightness-110"
+              style={{
+                bottom: 8,
+                right: 84,
+                zIndex: 15,
+                background: 'rgba(15,17,23,0.9)',
+                border: '1px solid rgba(255,255,255,0.15)',
+              }}
             >
-              {mainLegend.map((item, i) => (
-                <span key={`${item.label}-${i}`} className="text-[10px] font-medium whitespace-nowrap" style={{ color: item.color, textShadow: '0 1px 2px rgba(0,0,0,0.9)' }}>
-                  {item.label} {item.value}
-                </span>
-              ))}
-            </div>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6" />
+              </svg>
+              Live
+            </button>
           )}
+
           <canvas
             ref={canvasRef}
             style={{
@@ -2172,6 +2462,205 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
 
 LightweightChart.displayName = 'LightweightChart';
 
+// ─── TimeframeDropdown sub-component ─────────────────────────────────────────
+
+interface TimeframeDropdownProps {
+  timeframes: TimeframeConfig[];
+  timeframe: string;
+  onChange: (label: string) => void;
+}
+
+function TimeframeDropdown({ timeframes, timeframe, onChange }: TimeframeDropdownProps) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [dropPos, setDropPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node) && btnRef.current && !btnRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const handleOpen = () => {
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setDropPos({ top: rect.bottom + 4, left: rect.left });
+    }
+    setOpen((v) => !v);
+  };
+
+  return (
+    <div className="relative flex-shrink-0">
+      <button
+        ref={btnRef}
+        onClick={handleOpen}
+        title="Timeframe"
+        className={`flex items-center gap-1 px-2 h-[34px] text-[11px] font-bold tracking-wide transition-all ${open ? 'text-indigo-400' : 'text-white hover:text-indigo-300'}`}
+      >
+        {timeframe.toUpperCase()}
+        <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className={`transition-transform ${open ? 'rotate-180' : ''}`}>
+          <path d="M1 2.5L4 5.5L7 2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          ref={ref}
+          className="z-[9999] rounded-lg border border-white/10 shadow-2xl p-1.5"
+          style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, background: '#0f1117', width: 176 }}
+        >
+          <div className="text-[9px] text-slate-600 uppercase tracking-widest font-semibold px-1 mb-1">Timeframe</div>
+          <div className="grid grid-cols-4 gap-1">
+            {timeframes.map((tf) => {
+              const isActive = timeframe === tf.label;
+              return (
+                <button
+                  key={tf.label}
+                  onClick={() => { onChange(tf.label); setOpen(false); }}
+                  className={`px-1.5 py-1.5 rounded text-[10px] font-bold tracking-wide transition-all text-center ${
+                    isActive ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  {tf.label.toUpperCase()}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── ChartTypeDropdown sub-component ─────────────────────────────────────────
+
+const CHART_TYPE_ICONS: Record<ChartType, React.ReactNode> = {
+  candles: (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <line x1="3" y1="1" x2="3" y2="4" stroke="currentColor" strokeWidth="1" />
+      <rect x="1.5" y="4" width="3" height="5" rx="0.5" fill="currentColor" />
+      <line x1="3" y1="9" x2="3" y2="12" stroke="currentColor" strokeWidth="1" />
+      <line x1="9.5" y1="2" x2="9.5" y2="5" stroke="currentColor" strokeWidth="1" opacity="0.6" />
+      <rect x="8" y="5" width="3" height="4" rx="0.5" fill="currentColor" opacity="0.6" />
+      <line x1="9.5" y1="9" x2="9.5" y2="11" stroke="currentColor" strokeWidth="1" opacity="0.6" />
+    </svg>
+  ),
+  bars: (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
+      <line x1="3" y1="1" x2="3" y2="12" />
+      <line x1="1" y1="4" x2="3" y2="4" />
+      <line x1="3" y1="8" x2="5" y2="8" />
+      <line x1="9.5" y1="2" x2="9.5" y2="11" opacity="0.6" />
+      <line x1="7.5" y1="4.5" x2="9.5" y2="4.5" opacity="0.6" />
+      <line x1="9.5" y1="8" x2="11.5" y2="8" opacity="0.6" />
+    </svg>
+  ),
+  line: (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="1,10 4,6 6.5,8 9,3 12,5" />
+    </svg>
+  ),
+  area: (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <path d="M1 10L4 6L6.5 8L9 3L12 5V12H1V10Z" fill="currentColor" opacity="0.3" />
+      <polyline points="1,10 4,6 6.5,8 9,3 12,5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  baseline: (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <line x1="0" y1="6.5" x2="13" y2="6.5" stroke="currentColor" strokeWidth="1" strokeDasharray="1.5 1.2" opacity="0.5" />
+      <path d="M1 4L4 2L6.5 6.5L9 9.5L12 8V6.5H1V4Z" fill="currentColor" opacity="0.25" />
+      <polyline points="1,4 4,2 6.5,6.5 9,9.5 12,8" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+};
+
+const CHART_TYPE_LABELS: Record<ChartType, string> = {
+  candles: 'Candles',
+  bars: 'Bars',
+  line: 'Line',
+  area: 'Area',
+  baseline: 'Baseline',
+};
+
+const CHART_TYPE_ORDER: ChartType[] = ['candles', 'bars', 'line', 'area', 'baseline'];
+
+interface ChartTypeDropdownProps {
+  chartType: ChartType;
+  onChange: (type: ChartType) => void;
+}
+
+function ChartTypeDropdown({ chartType, onChange }: ChartTypeDropdownProps) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [dropPos, setDropPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node) && btnRef.current && !btnRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const handleOpen = () => {
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setDropPos({ top: rect.bottom + 4, left: rect.left });
+    }
+    setOpen((v) => !v);
+  };
+
+  return (
+    <div className="relative flex-shrink-0">
+      <button
+        ref={btnRef}
+        onClick={handleOpen}
+        title={`Chart type: ${CHART_TYPE_LABELS[chartType]}`}
+        className={`flex items-center gap-1 px-2 h-[34px] transition-all ${open ? 'text-indigo-400' : 'text-slate-400 hover:text-slate-200'}`}
+      >
+        {CHART_TYPE_ICONS[chartType]}
+        <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className={`transition-transform ${open ? 'rotate-180' : ''}`}>
+          <path d="M1 2.5L4 5.5L7 2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          ref={ref}
+          className="z-[9999] rounded-lg border border-white/10 shadow-2xl p-1.5"
+          style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, background: '#0f1117', width: 148 }}
+        >
+          <div className="text-[9px] text-slate-600 uppercase tracking-widest font-semibold px-1 mb-1">Chart Type</div>
+          <div className="flex flex-col">
+            {CHART_TYPE_ORDER.map((type) => {
+              const isActive = chartType === type;
+              return (
+                <button
+                  key={type}
+                  onClick={() => { onChange(type); setOpen(false); }}
+                  className={`flex items-center gap-2 px-2 py-1.5 rounded text-[11px] font-medium transition-all text-left ${
+                    isActive ? 'bg-indigo-500/15 text-indigo-300' : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <span className={isActive ? 'text-indigo-300' : 'text-slate-500'}>{CHART_TYPE_ICONS[type]}</span>
+                  {CHART_TYPE_LABELS[type]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── IndicatorDropdown sub-component ─────────────────────────────────────────
 
 interface IndicatorDropdownProps {
@@ -2240,28 +2729,36 @@ function IndicatorDropdown({ buttons, activeIndicators, onToggle }: IndicatorDro
       {open && (
         <div
           ref={ref}
-          className="z-[9999] rounded-lg border border-white/10 shadow-2xl p-1.5"
-          style={{ position: 'fixed', top: dropPos.top, right: dropPos.right, background: '#0f1117', width: 176 }}
+          className="z-[9999] rounded-lg border border-white/10 shadow-2xl p-2"
+          style={{ position: 'fixed', top: dropPos.top, right: dropPos.right, background: '#0f1117', width: 192 }}
         >
-          <div className="text-[9px] text-slate-600 uppercase tracking-widest font-semibold px-1 mb-1">Indicators</div>
-          <div className="grid grid-cols-3 gap-1">
-            {buttons.map(({ key, label, color }) => {
-              const isActive = activeIndicators.has(key);
-              return (
-                <button
-                  key={key}
-                  onClick={() => onToggle(key)}
-                  className={`px-2 py-1 rounded text-[10px] font-semibold transition-all border text-center ${
-                    isActive
-                      ? 'text-black border-transparent' :'bg-transparent text-slate-400 border-white/10 hover:border-white/20 hover:text-white'
-                  }`}
-                  style={isActive ? { backgroundColor: color, borderColor: color } : {}}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
+          {INDICATOR_GROUPS.map((group) => {
+            const groupButtons = buttons.filter((b) => group.keys.includes(b.key));
+            if (groupButtons.length === 0) return null;
+            return (
+              <div key={group.label} className="mb-2 last:mb-0">
+                <div className="text-[9px] text-slate-600 uppercase tracking-widest font-semibold px-1 mb-1">{group.label}</div>
+                <div className="grid grid-cols-3 gap-1">
+                  {groupButtons.map(({ key, label, color }) => {
+                    const isActive = activeIndicators.has(key);
+                    return (
+                      <button
+                        key={key}
+                        onClick={() => onToggle(key)}
+                        className={`px-2 py-1 rounded text-[10px] font-semibold transition-all border text-center ${
+                          isActive
+                            ? 'text-black border-transparent' : 'bg-transparent text-slate-400 border-white/10 hover:border-white/20 hover:text-white'
+                        }`}
+                        style={isActive ? { backgroundColor: color, borderColor: color } : {}}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -2389,10 +2886,12 @@ function DrawingDropdown({ tools, activeTool, drawColor, drawings, pendingTrendP
             </button>
           </div>
 
-          {activeTool === 'trendline' && (
+          {(activeTool === 'trendline' || activeTool === 'fibonacci') && (
             <div className="mt-1.5 px-1">
               <span className={`text-[9px] ${pendingTrendP1 ? 'text-blue-400 animate-pulse' : 'text-slate-500'}`}>
-                {pendingTrendP1 ? 'Click second point…' : 'Click first point…'}
+                {pendingTrendP1
+                  ? (activeTool === 'fibonacci' ? 'Click the swing high…' : 'Click second point…')
+                  : (activeTool === 'fibonacci' ? 'Click the swing low…' : 'Click first point…')}
               </span>
             </div>
           )}

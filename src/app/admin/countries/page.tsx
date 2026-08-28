@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { KNOWN_COUNTRIES as SHARED_COUNTRIES, FlagIcon } from '@/lib/deposit-countries';
 
 interface PaymentMethod {
   id: string;
@@ -42,115 +43,10 @@ const TYPE_LABELS: Record<string, string> = {
   card: 'Card',
 };
 
-const KNOWN_COUNTRIES = [
-  // Asia & Pacific
-  'Malaysia', 'Singapore', 'Thailand', 'Vietnam', 'Japan', 'South Korea',
-  'Philippines', 'China', 'India', 'Hong Kong', 'Taiwan', 'Pakistan',
-  'Bangladesh', 'Sri Lanka', 'Myanmar', 'Indonesia', 'Cambodia', 'Laos', 'Nepal',
-  'Australia', 'New Zealand',
-
-  // Middle East
-  'Saudi Arabia', 'UAE', 'Qatar', 'Kuwait', 'Oman', 'Jordan', 'Bahrain',
-
-  // Europe
-  'Germany', 'United Kingdom', 'France', 'Italy', 'Spain', 'Netherlands',
-  'Switzerland', 'Belgium', 'Austria', 'Portugal', 'Ireland', 'Finland',
-  'Sweden', 'Norway', 'Denmark', 'Poland', 'Greece',
-
-  // South America
-  'Brazil', 'Argentina', 'Colombia', 'Chile', 'Peru', 'Uruguay', 'Paraguay', 'Bolivia', 'Ecuador', 'Venezuela',
-
-  // North America & Global
-  'United States', 'Canada', 'Mexico', 'Global',
-];
-
-const FLAG_EMOJI: Record<string, string> = {
-  // Asia & Pacific
-  Malaysia: '🇲🇾',
-  Singapore: '🇸🇬',
-  Thailand: '🇹🇭',
-  Vietnam: '🇻🇳',
-  Japan: '🇯🇵',
-  'South Korea': '🇰🇷',
-  Indonesia: '🇮🇩',
-  Philippines: '🇵🇭',
-  China: '🇨🇳',
-  India: '🇮🇳',
-  'Hong Kong': '🇭🇰',
-  Taiwan: '🇹🇼',
-  Pakistan: '🇵🇰',
-  Bangladesh: '🇧🇩',
-  'Sri Lanka': '🇱🇰',
-  Myanmar: '🇲🇲',
-  Cambodia: '🇰🇭',
-  Laos: '🇱🇦',
-  Nepal: '🇳🇵',
-  Australia: '🇦🇺',
-  'New Zealand': '🇳🇿',
-
-  // Middle East
-  'Saudi Arabia': '🇸🇦',
-  UAE: '🇦🇪',
-  'United Arab Emirates': '🇦🇪',
-  Qatar: '🇶🇦',
-  Kuwait: '🇰🇼',
-  Oman: '🇴🇲',
-  Bahrain: '🇧🇭',
-  Jordan: '🇯🇴',
-  Lebanon: '🇱🇧',
-  Iraq: '🇮🇶',
-  Turkey: '🇹🇷',
-
-  // Europe
-  Germany: '🇩🇪',
-  'United Kingdom': '🇬🇧',
-  UK: '🇬🇧',
-  France: '🇫🇷',
-  Italy: '🇮🇹',
-  Spain: '🇪🇸',
-  Netherlands: '🇳🇱',
-  Switzerland: '🇨🇭',
-  Belgium: '🇧🇪',
-  Austria: '🇦🇹',
-  Portugal: '🇵🇹',
-  Ireland: '🇮🇪',
-  Finland: '🇫🇮',
-  Sweden: '🇸🇪',
-  Norway: '🇳🇴',
-  Denmark: '🇩🇰',
-  Poland: '🇵🇱',
-  Greece: '🇬🇷',
-
-  // South America
-  Brazil: '🇧🇷',
-  Argentina: '🇦🇷',
-  Colombia: '🇨🇴',
-  Chile: '🇨🇱',
-  Peru: '🇵🇪',
-  Uruguay: '🇺🇾',
-  Paraguay: '🇵🇾',
-  Bolivia: '🇧🇴',
-  Ecuador: '🇪🇨',
-  Venezuela: '🇻🇪',
-
-  // North America, Africa & Global
-  'United States': '🇺🇸',
-  USA: '🇺🇸',
-  Canada: '🇨🇦',
-  Mexico: '🇲🇽',
-  Nigeria: '🇳🇬',
-  'South Africa': '🇿🇦',
-  Kenya: '🇰🇪',
-  Egypt: '🇪🇬',
-  Global: '🌍',
-};
-
-function getCountryFlag(country: string): string {
-  if (FLAG_EMOJI[country]) return FLAG_EMOJI[country];
-  const lower = country.toLowerCase();
-  const match = Object.keys(FLAG_EMOJI).find((k) => k.toLowerCase() === lower);
-  return match ? FLAG_EMOJI[match] : '🌍';
-}
+// 'Indonesia' is kept selectable here for record-keeping, but the live deposit
+// flow (DepositModal) always excludes/reroutes Indonesia-origin payment methods
+// to 'Global' by design — methods added here for it will never surface to users.
+const KNOWN_COUNTRIES = [...SHARED_COUNTRIES.slice(0, -1), 'Indonesia', 'Global'];
 
 const EMPTY_METHOD_FORM: NewMethodForm = {
   type: 'bank',
@@ -412,8 +308,8 @@ export default function AdminCountriesPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           {/* Left: Country List */}
           <div className="lg:col-span-1">
-            <div className="bg-[#1e293b] rounded-xl border border-slate-700 overflow-hidden">
-              <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
+            <div className="bg-[#0a0f1e] rounded-xl border border-white/8 overflow-hidden">
+              <div className="px-4 py-3 border-b border-white/8 flex items-center justify-between">
                 <span className="text-white text-sm font-semibold">Countries</span>
                 <span className="text-slate-500 text-xs">{dbCountries.length} total</span>
               </div>
@@ -437,7 +333,7 @@ export default function AdminCountriesPage() {
                       }`}
                     >
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="text-lg flex-shrink-0">{getCountryFlag(country)}</span>
+                        <FlagIcon country={country} className="w-6 h-4 flex-shrink-0" />
                         <div className="min-w-0">
                           <div className={`text-sm font-medium truncate ${isSelected ? 'text-emerald-400' : 'text-white'}`}>
                             {country}
@@ -491,7 +387,7 @@ export default function AdminCountriesPage() {
           {/* Right: Payment Methods for selected country */}
           <div className="lg:col-span-2">
             {!selectedCountry ? (
-              <div className="bg-[#1e293b] rounded-xl border border-slate-700 flex items-center justify-center py-24">
+              <div className="bg-[#0a0f1e] rounded-xl border border-white/8 flex items-center justify-center py-24">
                 <div className="text-center">
                   <div className="w-12 h-12 rounded-full bg-slate-700/50 flex items-center justify-center mx-auto mb-3">
                     <svg className="w-6 h-6 text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -506,9 +402,9 @@ export default function AdminCountriesPage() {
             ) : (
               <div className="space-y-4">
                 {/* Country header */}
-                <div className="bg-[#1e293b] rounded-xl border border-slate-700 px-5 py-4 flex items-center justify-between">
+                <div className="bg-[#0a0f1e] rounded-xl border border-white/8 px-5 py-4 flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span className="text-2xl">{getCountryFlag(selectedCountry)}</span>
+                    <FlagIcon country={selectedCountry} className="w-8 h-6" />
                     <div>
                       <h3 className="text-white font-bold text-base">{selectedCountry}</h3>
                       <p className="text-slate-400 text-xs mt-0.5">
@@ -529,7 +425,7 @@ export default function AdminCountriesPage() {
 
                 {/* Methods grouped by type */}
                 {countryMethods.length === 0 ? (
-                  <div className="bg-[#1e293b] rounded-xl border border-slate-700 py-12 text-center">
+                  <div className="bg-[#0a0f1e] rounded-xl border border-white/8 py-12 text-center">
                     <p className="text-slate-500 text-sm">No payment methods for {selectedCountry}</p>
                     <button
                       onClick={() => { setMethodForm(EMPTY_METHOD_FORM); setShowAddMethod(true); }}
@@ -540,8 +436,8 @@ export default function AdminCountriesPage() {
                   </div>
                 ) : (
                   Object.entries(grouped).map(([type, typeMethods]) => (
-                    <div key={type} className="bg-[#1e293b] rounded-xl border border-slate-700 overflow-hidden">
-                      <div className="px-4 py-2.5 border-b border-slate-700 flex items-center gap-2">
+                    <div key={type} className="bg-[#0a0f1e] rounded-xl border border-white/8 overflow-hidden">
+                      <div className="px-4 py-2.5 border-b border-white/8 flex items-center gap-2">
                         <span
                           className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded"
                           style={{ color: TYPE_COLORS[type] || '#94a3b8', background: `${TYPE_COLORS[type] || '#94a3b8'}15` }}
@@ -553,7 +449,7 @@ export default function AdminCountriesPage() {
                       <div className="overflow-x-auto">
                         <table className="w-full">
                           <thead>
-                            <tr className="border-b border-slate-700/50">
+                            <tr className="border-b border-white/8/50">
                               <th className="text-left text-slate-400 text-xs font-medium px-4 py-2.5 whitespace-nowrap">Name</th>
                               <th className="text-left text-slate-400 text-xs font-medium px-4 py-2.5 whitespace-nowrap">Account No.</th>
                               <th className="text-left text-slate-400 text-xs font-medium px-4 py-2.5 whitespace-nowrap">Account Name</th>
@@ -576,7 +472,7 @@ export default function AdminCountriesPage() {
                                       type="text"
                                       value={getValue(method, 'name')}
                                       onChange={(e) => handleFieldChange(method.id, 'name', e.target.value)}
-                                      className="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white w-28 focus:outline-none focus:border-emerald-500/50"
+                                      className="bg-[#0a0f1e] border border-slate-600 rounded px-2 py-1 text-xs text-white w-28 focus:outline-none focus:border-emerald-500/50"
                                     />
                                   </td>
                                   <td className="px-4 py-2.5">
@@ -585,7 +481,7 @@ export default function AdminCountriesPage() {
                                       value={getValue(method, 'account_number')}
                                       onChange={(e) => handleFieldChange(method.id, 'account_number', e.target.value)}
                                       placeholder="e.g. 1234567890"
-                                      className="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white w-32 focus:outline-none focus:border-emerald-500/50"
+                                      className="bg-[#0a0f1e] border border-slate-600 rounded px-2 py-1 text-xs text-white w-32 focus:outline-none focus:border-emerald-500/50"
                                     />
                                   </td>
                                   <td className="px-4 py-2.5">
@@ -594,7 +490,7 @@ export default function AdminCountriesPage() {
                                       value={getValue(method, 'account_name')}
                                       onChange={(e) => handleFieldChange(method.id, 'account_name', e.target.value)}
                                       placeholder="Account holder"
-                                      className="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white w-28 focus:outline-none focus:border-emerald-500/50"
+                                      className="bg-[#0a0f1e] border border-slate-600 rounded px-2 py-1 text-xs text-white w-28 focus:outline-none focus:border-emerald-500/50"
                                     />
                                   </td>
                                   <td className="px-4 py-2.5">
@@ -603,7 +499,7 @@ export default function AdminCountriesPage() {
                                       value={getValue(method, 'network')}
                                       onChange={(e) => handleFieldChange(method.id, 'network', e.target.value)}
                                       placeholder="e.g. TRC20"
-                                      className="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white w-20 focus:outline-none focus:border-emerald-500/50"
+                                      className="bg-[#0a0f1e] border border-slate-600 rounded px-2 py-1 text-xs text-white w-20 focus:outline-none focus:border-emerald-500/50"
                                     />
                                   </td>
                                   <td className="px-4 py-2.5">
@@ -611,7 +507,7 @@ export default function AdminCountriesPage() {
                                       type="number"
                                       value={getValue(method, 'min_deposit')}
                                       onChange={(e) => handleFieldChange(method.id, 'min_deposit', parseFloat(e.target.value))}
-                                      className="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white w-16 focus:outline-none focus:border-emerald-500/50"
+                                      className="bg-[#0a0f1e] border border-slate-600 rounded px-2 py-1 text-xs text-white w-16 focus:outline-none focus:border-emerald-500/50"
                                     />
                                   </td>
                                   <td className="px-4 py-2.5">
@@ -619,7 +515,7 @@ export default function AdminCountriesPage() {
                                       type="number"
                                       value={getValue(method, 'max_deposit')}
                                       onChange={(e) => handleFieldChange(method.id, 'max_deposit', parseFloat(e.target.value))}
-                                      className="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white w-20 focus:outline-none focus:border-emerald-500/50"
+                                      className="bg-[#0a0f1e] border border-slate-600 rounded px-2 py-1 text-xs text-white w-20 focus:outline-none focus:border-emerald-500/50"
                                     />
                                   </td>
                                   <td className="px-4 py-2.5">
@@ -628,7 +524,7 @@ export default function AdminCountriesPage() {
                                       value={getValue(method, 'instructions')}
                                       onChange={(e) => handleFieldChange(method.id, 'instructions', e.target.value)}
                                       placeholder="Instructions..."
-                                      className="bg-slate-800 border border-slate-600 rounded px-2 py-1 text-xs text-white w-36 focus:outline-none focus:border-emerald-500/50"
+                                      className="bg-[#0a0f1e] border border-slate-600 rounded px-2 py-1 text-xs text-white w-36 focus:outline-none focus:border-emerald-500/50"
                                     />
                                   </td>
                                   <td className="px-4 py-2.5">
@@ -708,8 +604,8 @@ export default function AdminCountriesPage() {
           style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}
           onClick={(e) => { if (e.target === e.currentTarget) setShowAddCountry(false); }}
         >
-          <div className="bg-[#0f172a] border border-slate-700 rounded-2xl w-full max-w-sm mx-4 overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700">
+          <div className="bg-[#0f172a] border border-white/8 rounded-2xl w-full max-w-sm mx-4 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
               <h3 className="text-white font-bold text-base">Add Country</h3>
               <button
                 onClick={() => setShowAddCountry(false)}
@@ -726,7 +622,7 @@ export default function AdminCountriesPage() {
                 <select
                   value={newCountryName}
                   onChange={(e) => setNewCountryName(e.target.value)}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                 >
                   <option value="">Choose from list...</option>
                   {allKnownCountries.map((c) => <option key={c} value={c}>{c}</option>)}
@@ -741,13 +637,13 @@ export default function AdminCountriesPage() {
                     value={newCountryCustom}
                     onChange={(e) => setNewCountryCustom(e.target.value)}
                     placeholder="e.g. Nigeria, Brazil..."
-                    className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
                     autoFocus
                   />
                 </div>
               )}
             </div>
-            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-700">
+            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-white/8">
               <button
                 onClick={() => setShowAddCountry(false)}
                 className="px-4 py-2 rounded-lg text-sm font-semibold bg-slate-700/50 text-slate-300 border border-slate-600 hover:bg-slate-700 transition-all"
@@ -780,8 +676,8 @@ export default function AdminCountriesPage() {
           style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}
           onClick={(e) => { if (e.target === e.currentTarget) setShowAddMethod(false); }}
         >
-          <div className="bg-[#0f172a] border border-slate-700 rounded-2xl w-full max-w-md mx-4 overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-700">
+          <div className="bg-[#0f172a] border border-white/8 rounded-2xl w-full max-w-md mx-4 overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/8">
               <div>
                 <h3 className="text-white font-bold text-base">Add Payment Method</h3>
                 <p className="text-slate-400 text-xs mt-0.5">for {selectedCountry}</p>
@@ -801,7 +697,7 @@ export default function AdminCountriesPage() {
                 <select
                   value={methodForm.type}
                   onChange={(e) => setMethodForm((f) => ({ ...f, type: e.target.value }))}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                 >
                   <option value="bank">Bank Transfer</option>
                   <option value="ewallet">E-Wallet</option>
@@ -816,7 +712,7 @@ export default function AdminCountriesPage() {
                   value={methodForm.name}
                   onChange={(e) => setMethodForm((f) => ({ ...f, name: e.target.value }))}
                   placeholder="e.g. Maybank, GoPay, USDT TRC20"
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
                 />
               </div>
               <div>
@@ -826,7 +722,7 @@ export default function AdminCountriesPage() {
                   value={methodForm.account_number}
                   onChange={(e) => setMethodForm((f) => ({ ...f, account_number: e.target.value }))}
                   placeholder="e.g. 1234567890 or wallet address"
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
                 />
               </div>
               <div>
@@ -836,7 +732,7 @@ export default function AdminCountriesPage() {
                   value={methodForm.account_name}
                   onChange={(e) => setMethodForm((f) => ({ ...f, account_name: e.target.value }))}
                   placeholder="e.g. PT. Example Company"
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
                 />
               </div>
               <div>
@@ -846,7 +742,7 @@ export default function AdminCountriesPage() {
                   value={methodForm.network}
                   onChange={(e) => setMethodForm((f) => ({ ...f, network: e.target.value }))}
                   placeholder="e.g. TRC20, ERC20, BEP20"
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
+                  className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50"
                 />
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -856,7 +752,7 @@ export default function AdminCountriesPage() {
                     type="number"
                     value={methodForm.min_deposit}
                     onChange={(e) => setMethodForm((f) => ({ ...f, min_deposit: parseFloat(e.target.value) || 0 }))}
-                    className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                   />
                 </div>
                 <div>
@@ -865,7 +761,7 @@ export default function AdminCountriesPage() {
                     type="number"
                     value={methodForm.max_deposit}
                     onChange={(e) => setMethodForm((f) => ({ ...f, max_deposit: parseFloat(e.target.value) || 0 }))}
-                    className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
+                    className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500/50"
                   />
                 </div>
               </div>
@@ -876,11 +772,11 @@ export default function AdminCountriesPage() {
                   onChange={(e) => setMethodForm((f) => ({ ...f, instructions: e.target.value }))}
                   placeholder="Payment instructions for the user..."
                   rows={3}
-                  className="w-full bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 resize-none"
+                  className="w-full bg-[#0a0f1e] border border-slate-600 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/50 resize-none"
                 />
               </div>
             </div>
-            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-slate-700">
+            <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-white/8">
               <button
                 onClick={() => setShowAddMethod(false)}
                 className="px-4 py-2 rounded-lg text-sm font-semibold bg-slate-700/50 text-slate-300 border border-slate-600 hover:bg-slate-700 transition-all"

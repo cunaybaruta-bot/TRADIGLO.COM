@@ -318,7 +318,7 @@ export default function AdminReferralsPage() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {statCards.map(({ label, value, icon: StatIcon, color, bg, border }) => (
-          <div key={label} className={`bg-[#1e293b] rounded-xl p-5 border ${border}`}>
+          <div key={label} className={`bg-[#0a0f1e] rounded-xl p-5 border ${border}`}>
             <div className="flex items-center justify-between mb-3">
               <span className="text-slate-400 text-xs">{label}</span>
               <div className={`w-8 h-8 rounded-lg ${bg} flex items-center justify-center`}>
@@ -331,7 +331,7 @@ export default function AdminReferralsPage() {
       </div>
 
       {/* Filters */}
-      <div className="bg-[#1e293b] rounded-xl p-4 border border-slate-700">
+      <div className="bg-[#0a0f1e] rounded-xl p-4 border border-white/8">
         <div className="flex flex-col sm:flex-row gap-3 flex-wrap">
           <div className="relative flex-1 min-w-[180px]">
             <MagnifyingGlassIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
@@ -412,8 +412,8 @@ export default function AdminReferralsPage() {
       )}
 
       {/* Affiliates Table */}
-      <div className="bg-[#1e293b] rounded-xl border border-slate-700 overflow-hidden">
-        <div className="p-4 border-b border-slate-700 flex items-center justify-between flex-wrap gap-2">
+      <div className="bg-[#0a0f1e] rounded-xl border border-white/8 overflow-hidden">
+        <div className="p-4 border-b border-white/8 flex items-center justify-between flex-wrap gap-2">
           <h3 className="text-white font-semibold text-sm">
             Affiliate List{' '}
             <span className="text-slate-400 font-normal">({filtered.length} records)</span>
@@ -445,7 +445,7 @@ export default function AdminReferralsPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-slate-700 text-slate-400 text-xs uppercase tracking-wider">
+                <tr className="border-b border-white/8 text-slate-400 text-xs uppercase tracking-wider">
                   <th className="px-4 py-3 w-8">
                     <input
                       type="checkbox"
@@ -552,7 +552,7 @@ export default function AdminReferralsPage() {
 
         {/* Pagination */}
         {!loading && filtered.length > 0 && (
-          <div className="px-4 py-3 border-t border-slate-700 flex flex-wrap items-center justify-between gap-3">
+          <div className="px-4 py-3 border-t border-white/8 flex flex-wrap items-center justify-between gap-3">
             <span className="text-slate-400 text-xs">
               Showing {Math.min((currentPage - 1) * pageSize + 1, filtered.length)}–{Math.min(currentPage * pageSize, filtered.length)} of {filtered.length}
             </span>
@@ -617,8 +617,8 @@ export default function AdminReferralsPage() {
       {/* Drill-Down Modal */}
       {drillDown && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#1e293b] rounded-2xl border border-slate-700 w-full max-w-3xl max-h-[80vh] flex flex-col shadow-2xl">
-            <div className="flex items-center justify-between p-5 border-b border-slate-700">
+          <div className="bg-[#0a0f1e] rounded-2xl border border-white/8 w-full max-w-3xl max-h-[80vh] flex flex-col shadow-2xl">
+            <div className="flex items-center justify-between p-5 border-b border-white/8">
               <div>
                 <h3 className="text-white font-semibold">Affiliates by {drillDown.email}</h3>
                 <p className="text-slate-400 text-xs mt-0.5">{drillDown.rows.length} affiliate(s) total</p>
@@ -632,8 +632,8 @@ export default function AdminReferralsPage() {
             </div>
             <div className="overflow-auto flex-1">
               <table className="w-full text-sm">
-                <thead className="sticky top-0 bg-[#1e293b]">
-                  <tr className="border-b border-slate-700 text-slate-400 text-xs uppercase tracking-wider">
+                <thead className="sticky top-0 bg-[#0a0f1e]">
+                  <tr className="border-b border-white/8 text-slate-400 text-xs uppercase tracking-wider">
                     <th className="text-left px-4 py-3">Referred Member</th>
                     <th className="text-left px-4 py-3">Code</th>
                     <th className="text-right px-4 py-3">Deposit</th>
@@ -700,7 +700,7 @@ export default function AdminReferralsPage() {
       {/* Confirm Status Change Modal */}
       {confirmModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-[#1e293b] rounded-2xl border border-slate-700 w-full max-w-sm shadow-2xl p-6">
+          <div className="bg-[#0a0f1e] rounded-2xl border border-white/8 w-full max-w-sm shadow-2xl p-6">
             <div className="flex items-start gap-3 mb-4">
               <div className="w-10 h-10 rounded-full bg-yellow-500/10 flex items-center justify-center flex-shrink-0">
                 <ExclamationTriangleIcon className="w-5 h-5 text-yellow-400" />
