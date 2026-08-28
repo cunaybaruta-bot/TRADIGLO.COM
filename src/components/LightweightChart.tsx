@@ -4,12 +4,17 @@ import React, { useEffect, useRef, useImperativeHandle, forwardRef, useState, us
 import {
   createChart,
   CandlestickSeries,
+  BarSeries,
   LineSeries,
+  AreaSeries,
+  BaselineSeries,
   HistogramSeries,
   LineStyle,
   type IChartApi,
   type ISeriesApi,
+  type SeriesType,
   type CandlestickData,
+  type LineData,
   type IPriceLine,
   type Time,
 } from 'lightweight-charts';
@@ -46,6 +51,77 @@ function fmtLegendVal(v: number): string {
 // ─── Drawing types ────────────────────────────────────────────────────────────
 
 type DrawingTool = 'trendline' | 'horizontal' | 'freehand' | 'delete' | null;
+
+// ─── Chart type (visual style of the main series) ────────────────────────────
+
+type ChartType = 'candles' | 'bars' | 'line' | 'area' | 'baseline';
+
+const UP_COLOR = '#22c55e';
+const DOWN_COLOR = '#ef4444';
+
+/** Creates and returns the main series for the given chart type, styled to
+ * match the app's green/red up/down convention. */
+function createMainSeriesForType(chart: IChartApi, type: ChartType): ISeriesApi<SeriesType> {
+  switch (type) {
+    case 'bars':
+      return chart.addSeries(BarSeries, {
+        upColor: UP_COLOR,
+        downColor: DOWN_COLOR,
+        thinBars: false,
+      });
+    case 'line':
+      return chart.addSeries(LineSeries, {
+        color: UP_COLOR,
+        lineWidth: 2,
+        priceLineVisible: true,
+        lastValueVisible: true,
+      });
+    case 'area':
+      return chart.addSeries(AreaSeries, {
+        lineColor: UP_COLOR,
+        topColor: 'rgba(34,197,94,0.32)',
+        bottomColor: 'rgba(34,197,94,0.02)',
+        lineWidth: 2,
+        priceLineVisible: true,
+        lastValueVisible: true,
+      });
+    case 'baseline':
+      return chart.addSeries(BaselineSeries, {
+        topLineColor: UP_COLOR,
+        bottomLineColor: DOWN_COLOR,
+        topFillColor1: 'rgba(34,197,94,0.28)',
+        topFillColor2: 'rgba(34,197,94,0.02)',
+        bottomFillColor1: 'rgba(239,68,68,0.02)',
+        bottomFillColor2: 'rgba(239,68,68,0.28)',
+        lineWidth: 2,
+        priceLineVisible: true,
+        lastValueVisible: true,
+      });
+    case 'candles':
+    default:
+      return chart.addSeries(CandlestickSeries, {
+        upColor: UP_COLOR,
+        downColor: DOWN_COLOR,
+        borderVisible: false,
+        wickUpColor: UP_COLOR,
+        wickDownColor: DOWN_COLOR,
+      });
+  }
+}
+
+/** Converts OHLC bars to whatever data shape the given chart type's series
+ * expects — candles/bars keep full OHLC, everything else collapses to a
+ * single value (close) per point. */
+function barsToSeriesData(bars: CandlestickData[], type: ChartType): CandlestickData[] | LineData[] {
+  if (type === 'candles' || type === 'bars') return bars;
+  return bars.map((b) => ({ time: b.time, value: b.close }));
+}
+
+/** Converts one live OHLC tick to the point shape the current series expects. */
+function barToSeriesPoint(bar: CandlestickData, type: ChartType): CandlestickData | LineData {
+  if (type === 'candles' || type === 'bars') return bar;
+  return { time: bar.time, value: bar.close };
+}
 
 interface Point { x: number; y: number }
 
@@ -684,7 +760,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     const macdChartRef = useRef<IChartApi | null>(null);
     const stochChartRef = useRef<IChartApi | null>(null);
 
-    const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+    const seriesRef = useRef<ISeriesApi<SeriesType> | null>(null);
     const wsRef = useRef<WebSocket | null>(null);
     const bookTickerWsRef = useRef<WebSocket | null>(null);
     const lastBarRef = useRef<CandlestickData | null>(null);
@@ -736,6 +812,9 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     const [dataUnavailable, setDataUnavailable] = useState(false);
     const [activeIndicators, setActiveIndicators] = useState<Set<IndicatorKey>>(new Set());
     const [chartHeight, setChartHeight] = useState<number>(CHART_HEIGHT);
+    const [chartType, setChartType] = useState<ChartType>('candles');
+    const chartTypeRef = useRef<ChartType>('candles');
+    useEffect(() => { chartTypeRef.current = chartType; }, [chartType]);
 
     // ── Indicator legends ─────────────────────────────────────────────────
     // Overlay/oscillator values live here (a compact top-left legend per
@@ -818,7 +897,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
 
         const visibleRange = chartRef.current.timeScale().getVisibleLogicalRange();
         const merged = [...additions, ...current].sort((a, b) => Number(a.time) - Number(b.time));
-        seriesRef.current.setData(merged);
+        seriesRef.current.setData(barsToSeriesData(merged, chartTypeRef.current) as any);
         candleDataRef.current = merged;
 
         if (visibleRange) {
@@ -929,6 +1008,49 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     }, [openTrades]);
 
     useEffect(() => { syncEntryLines(); }, [syncEntryLines]);
+
+    // ── Chart type switching (candles / bars / line / area / baseline) ──────────
+    // Series type can't be changed in place — the old series is removed and a
+    // new one of the requested type is created, re-fed from candleDataRef
+    // (converted to whatever shape that type needs). Price lines (trade entry
+    // markers) live on the series instance too, so they're lost with it and
+    // must be recreated on the new one.
+    const handleChartTypeChange = useCallback((newType: ChartType) => {
+      if (newType === chartTypeRef.current) return;
+      if (!chartRef.current) { setChartType(newType); return; }
+
+      if (seriesRef.current) {
+        try { chartRef.current.removeSeries(seriesRef.current); } catch {}
+      }
+
+      const newSeries = createMainSeriesForType(chartRef.current, newType);
+
+      // Use the freshest data available: candleDataRef plus the in-progress
+      // last bar (which may be more current than the last full history sync).
+      let bars = candleDataRef.current;
+      const last = lastBarRef.current;
+      if (last) {
+        if (bars.length > 0 && Number(bars[bars.length - 1].time) === Number(last.time)) {
+          bars = [...bars.slice(0, -1), last];
+        } else if (bars.length === 0 || Number(last.time) > Number(bars[bars.length - 1].time)) {
+          bars = [...bars, last];
+        }
+      }
+      if (bars.length > 0) {
+        try { newSeries.setData(barsToSeriesData(bars, newType) as any); } catch {}
+      }
+
+      seriesRef.current = newSeries;
+      chartTypeRef.current = newType;
+      setChartType(newType);
+
+      // Trade entry-price lines belonged to the removed series — recreate
+      // them on the new one.
+      entryLinesRef.current.clear();
+      syncEntryLines();
+
+      requestAnimationFrame(redrawCanvas);
+    }, [syncEntryLines, redrawCanvas]);
 
     // ── Stop WS/poll helpers ──────────────────────────────────────────────────
 
@@ -1373,13 +1495,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
 
         chartRef.current = chart;
 
-        const series = chart.addSeries(CandlestickSeries, {
-          upColor: '#22c55e',
-          downColor: '#ef4444',
-          borderVisible: false,
-          wickUpColor: '#22c55e',
-          wickDownColor: '#ef4444',
-        });
+        const series = createMainSeriesForType(chart, chartTypeRef.current);
         seriesRef.current = series;
 
         chart.timeScale().subscribeVisibleLogicalRangeChange((range) => {
@@ -1668,7 +1784,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           });
 
           try {
-            seriesRef.current.setData(unique);
+            seriesRef.current.setData(barsToSeriesData(unique, chartTypeRef.current) as any);
             lastBarRef.current = unique[unique.length - 1];
             firstCloseRef.current = unique[0]?.close ?? null;
             chartRef.current?.timeScale().fitContent();
@@ -1760,7 +1876,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
                 close: parseFloat(k.c),
               };
               if (seriesRef.current) {
-                try { seriesRef.current.update(bar); } catch {}
+                try { seriesRef.current.update(barToSeriesPoint(bar, chartTypeRef.current) as any); } catch {}
                 lastBarRef.current = bar;
                 if (firstCloseRef.current !== null) {
                   const change = bar.close - firstCloseRef.current;
@@ -1798,7 +1914,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
               low: parseFloat(k[3]),
               close: parseFloat(k[4]),
             };
-            try { seriesRef.current.update(bar); } catch {}
+            try { seriesRef.current.update(barToSeriesPoint(bar, chartTypeRef.current) as any); } catch {}
             lastBarRef.current = bar;
             if (firstCloseRef.current !== null) {
               const change = bar.close - firstCloseRef.current;
@@ -1858,7 +1974,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
                 high: Math.max(lastBarRef.current.high as number, mid),
                 low: Math.min(lastBarRef.current.low as number, mid),
               };
-              try { seriesRef.current.update(bar); } catch {}
+              try { seriesRef.current.update(barToSeriesPoint(bar, chartTypeRef.current) as any); } catch {}
               lastBarRef.current = bar;
               if (firstCloseRef.current !== null) {
                 const change = mid - firstCloseRef.current;
@@ -1935,7 +2051,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
                 close: price,
               };
 
-          try { seriesRef.current.update(bar); } catch {}
+          try { seriesRef.current.update(barToSeriesPoint(bar, chartTypeRef.current) as any); } catch {}
           lastBarRef.current = bar;
           onPriceUpdateRef.current?.(
             price,
@@ -2014,6 +2130,12 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
               </button>
             ))}
           </div>
+
+          {/* ── Divider ── */}
+          <div className="w-px self-stretch bg-white/10 mx-1 flex-shrink-0" />
+
+          {/* ── Chart type dropdown toggle ── */}
+          <ChartTypeDropdown chartType={chartType} onChange={handleChartTypeChange} />
 
           {/* ── Divider ── */}
           <div className="w-px self-stretch bg-white/10 mx-1 flex-shrink-0" />
@@ -2176,6 +2298,131 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
 );
 
 LightweightChart.displayName = 'LightweightChart';
+
+// ─── ChartTypeDropdown sub-component ─────────────────────────────────────────
+
+const CHART_TYPE_ICONS: Record<ChartType, React.ReactNode> = {
+  candles: (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <line x1="3" y1="1" x2="3" y2="4" stroke="currentColor" strokeWidth="1" />
+      <rect x="1.5" y="4" width="3" height="5" rx="0.5" fill="currentColor" />
+      <line x1="3" y1="9" x2="3" y2="12" stroke="currentColor" strokeWidth="1" />
+      <line x1="9.5" y1="2" x2="9.5" y2="5" stroke="currentColor" strokeWidth="1" opacity="0.6" />
+      <rect x="8" y="5" width="3" height="4" rx="0.5" fill="currentColor" opacity="0.6" />
+      <line x1="9.5" y1="9" x2="9.5" y2="11" stroke="currentColor" strokeWidth="1" opacity="0.6" />
+    </svg>
+  ),
+  bars: (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round">
+      <line x1="3" y1="1" x2="3" y2="12" />
+      <line x1="1" y1="4" x2="3" y2="4" />
+      <line x1="3" y1="8" x2="5" y2="8" />
+      <line x1="9.5" y1="2" x2="9.5" y2="11" opacity="0.6" />
+      <line x1="7.5" y1="4.5" x2="9.5" y2="4.5" opacity="0.6" />
+      <line x1="9.5" y1="8" x2="11.5" y2="8" opacity="0.6" />
+    </svg>
+  ),
+  line: (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="1,10 4,6 6.5,8 9,3 12,5" />
+    </svg>
+  ),
+  area: (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <path d="M1 10L4 6L6.5 8L9 3L12 5V12H1V10Z" fill="currentColor" opacity="0.3" />
+      <polyline points="1,10 4,6 6.5,8 9,3 12,5" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+  baseline: (
+    <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+      <line x1="0" y1="6.5" x2="13" y2="6.5" stroke="currentColor" strokeWidth="1" strokeDasharray="1.5 1.2" opacity="0.5" />
+      <path d="M1 4L4 2L6.5 6.5L9 9.5L12 8V6.5H1V4Z" fill="currentColor" opacity="0.25" />
+      <polyline points="1,4 4,2 6.5,6.5 9,9.5 12,8" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  ),
+};
+
+const CHART_TYPE_LABELS: Record<ChartType, string> = {
+  candles: 'Candles',
+  bars: 'Bars',
+  line: 'Line',
+  area: 'Area',
+  baseline: 'Baseline',
+};
+
+const CHART_TYPE_ORDER: ChartType[] = ['candles', 'bars', 'line', 'area', 'baseline'];
+
+interface ChartTypeDropdownProps {
+  chartType: ChartType;
+  onChange: (type: ChartType) => void;
+}
+
+function ChartTypeDropdown({ chartType, onChange }: ChartTypeDropdownProps) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const [dropPos, setDropPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node) && btnRef.current && !btnRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const handleOpen = () => {
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setDropPos({ top: rect.bottom + 4, left: rect.left });
+    }
+    setOpen((v) => !v);
+  };
+
+  return (
+    <div className="relative flex-shrink-0">
+      <button
+        ref={btnRef}
+        onClick={handleOpen}
+        title={`Chart type: ${CHART_TYPE_LABELS[chartType]}`}
+        className={`flex items-center gap-1 px-2 h-[34px] transition-all ${open ? 'text-indigo-400' : 'text-slate-400 hover:text-slate-200'}`}
+      >
+        {CHART_TYPE_ICONS[chartType]}
+        <svg width="8" height="8" viewBox="0 0 8 8" fill="none" className={`transition-transform ${open ? 'rotate-180' : ''}`}>
+          <path d="M1 2.5L4 5.5L7 2.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
+        </svg>
+      </button>
+
+      {open && (
+        <div
+          ref={ref}
+          className="z-[9999] rounded-lg border border-white/10 shadow-2xl p-1.5"
+          style={{ position: 'fixed', top: dropPos.top, left: dropPos.left, background: '#0f1117', width: 148 }}
+        >
+          <div className="text-[9px] text-slate-600 uppercase tracking-widest font-semibold px-1 mb-1">Chart Type</div>
+          <div className="flex flex-col">
+            {CHART_TYPE_ORDER.map((type) => {
+              const isActive = chartType === type;
+              return (
+                <button
+                  key={type}
+                  onClick={() => { onChange(type); setOpen(false); }}
+                  className={`flex items-center gap-2 px-2 py-1.5 rounded text-[11px] font-medium transition-all text-left ${
+                    isActive ? 'bg-indigo-500/15 text-indigo-300' : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                  }`}
+                >
+                  <span className={isActive ? 'text-indigo-300' : 'text-slate-500'}>{CHART_TYPE_ICONS[type]}</span>
+                  {CHART_TYPE_LABELS[type]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 // ─── IndicatorDropdown sub-component ─────────────────────────────────────────
 
