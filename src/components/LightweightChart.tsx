@@ -58,7 +58,7 @@ function fmtLegendVal(v: number): string {
 
 // ─── Drawing types ────────────────────────────────────────────────────────────
 
-type DrawingTool = 'trendline' | 'horizontal' | 'freehand' | 'delete' | null;
+type DrawingTool = 'trendline' | 'horizontal' | 'freehand' | 'fibonacci' | 'delete' | null;
 
 // ─── Chart type (visual style of the main series) ────────────────────────────
 
@@ -160,7 +160,27 @@ interface FreehandDrawing {
   color: string;
 }
 
-type Drawing = TrendLineDrawing | HorizontalDrawing | FreehandDrawing;
+interface FibonacciDrawing {
+  id: string;
+  type: 'fibonacci';
+  p1: Point;
+  p2: Point;
+  color: string;
+}
+
+type Drawing = TrendLineDrawing | HorizontalDrawing | FreehandDrawing | FibonacciDrawing;
+
+// Standard retracement ratios, each with its own conventional color so
+// levels are distinguishable at a glance (matches common charting tools).
+const FIB_LEVELS: { ratio: number; color: string }[] = [
+  { ratio: 0,     color: '#94a3b8' },
+  { ratio: 0.236, color: '#f59e0b' },
+  { ratio: 0.382, color: '#eab308' },
+  { ratio: 0.5,   color: '#22c55e' },
+  { ratio: 0.618, color: '#38bdf8' },
+  { ratio: 0.786, color: '#a78bfa' },
+  { ratio: 1,     color: '#94a3b8' },
+];
 
 // ─── Timeframe config ─────────────────────────────────────────────────────────
 
@@ -648,7 +668,8 @@ function drawAllOnCanvas(
   pendingTrendP1: Point | null,
   pendingMousePos: Point | null,
   activeTool: DrawingTool,
-  drawColor: string
+  drawColor: string,
+  getPriceAt?: (y: number) => number | null
 ) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
@@ -672,6 +693,44 @@ function drawAllOnCanvas(
       ctx.lineTo(p2.x, p2.y);
     }
     ctx.stroke();
+    ctx.restore();
+  };
+
+  const drawFibonacci = (p1: Point, p2: Point, alpha = 1) => {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    // Swing line between the two anchor points, same convention as trendline.
+    ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.stroke();
+
+    const left = Math.min(p1.x, p2.x);
+    const right = Math.max(p1.x, p2.x);
+    for (const { ratio, color } of FIB_LEVELS) {
+      const y = p1.y + (p2.y - p1.y) * ratio;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(left, y);
+      ctx.lineTo(right, y);
+      ctx.stroke();
+
+      const price = getPriceAt?.(y);
+      const label = price != null ? `${(ratio * 100).toFixed(1)}%  ${fmtLegendVal(price)}` : `${(ratio * 100).toFixed(1)}%`;
+      ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.fillStyle = color;
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(label, left + 4, y - 2);
+    }
+
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.beginPath(); ctx.arc(p1.x, p1.y, 3, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(p2.x, p2.y, 3, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   };
 
@@ -708,6 +767,8 @@ function drawAllOnCanvas(
       }
       ctx.stroke();
       ctx.restore();
+    } else if (d.type === 'fibonacci') {
+      drawFibonacci(d.p1, d.p2);
     }
   }
 
@@ -717,6 +778,8 @@ function drawAllOnCanvas(
     ctx.fillStyle = drawColor;
     ctx.beginPath(); ctx.arc(pendingTrendP1.x, pendingTrendP1.y, 4, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
+  } else if (activeTool === 'fibonacci' && pendingTrendP1 && pendingMousePos) {
+    drawFibonacci(pendingTrendP1, pendingMousePos, 0.6);
   }
 }
 
@@ -728,6 +791,15 @@ function pointNearDrawing(pt: Point, drawing: Drawing, threshold = 8): boolean {
   } else if (drawing.type === 'freehand') {
     for (let i = 1; i < drawing.points.length; i++) {
       if (pointNearSegment(pt, drawing.points[i - 1], drawing.points[i], threshold)) return true;
+    }
+    return false;
+  } else if (drawing.type === 'fibonacci') {
+    const left = Math.min(drawing.p1.x, drawing.p2.x);
+    const right = Math.max(drawing.p1.x, drawing.p2.x);
+    if (pt.x < left - threshold || pt.x > right + threshold) return false;
+    for (const { ratio } of FIB_LEVELS) {
+      const y = drawing.p1.y + (drawing.p2.y - drawing.p1.y) * ratio;
+      if (Math.abs(pt.y - y) <= threshold) return true;
     }
     return false;
   }
@@ -971,7 +1043,8 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         pendingTrendP1Ref.current,
         pendingMousePosRef.current,
         activeToolRef.current,
-        drawColorRef.current
+        drawColorRef.current,
+        (y) => seriesRef.current?.coordinateToPrice(y) ?? null
       );
     }, []);
 
@@ -1534,7 +1607,8 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
               pendingTrendP1Ref.current,
               pendingMousePosRef.current,
               activeToolRef.current,
-              drawColorRef.current
+              drawColorRef.current,
+              (y) => seriesRef.current?.coordinateToPrice(y) ?? null
             );
           });
 
@@ -1587,7 +1661,8 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
                     pendingTrendP1Ref.current,
                     pendingMousePosRef.current,
                     activeToolRef.current,
-                    drawColorRef.current
+                    drawColorRef.current,
+                    (y) => seriesRef.current?.coordinateToPrice(y) ?? null
                   );
                 });
               }
@@ -1647,18 +1722,14 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
       if (!tool) return;
       const pt = getCanvasPoint(e);
 
-      if (tool === 'trendline') {
+      if (tool === 'trendline' || tool === 'fibonacci') {
         if (!pendingTrendP1Ref.current) {
           setPendingTrendP1(pt);
         } else {
           const p1 = pendingTrendP1Ref.current;
-          const newDrawing: TrendLineDrawing = {
-            id: `tl-${Date.now()}`,
-            type: 'trendline',
-            p1,
-            p2: pt,
-            color: drawColorRef.current,
-          };
+          const newDrawing: TrendLineDrawing | FibonacciDrawing = tool === 'fibonacci'
+            ? { id: `fib-${Date.now()}`, type: 'fibonacci', p1, p2: pt, color: drawColorRef.current }
+            : { id: `tl-${Date.now()}`, type: 'trendline', p1, p2: pt, color: drawColorRef.current };
           setDrawings(prev => [...prev, newDrawing]);
           setPendingTrendP1(null);
           setPendingMousePos(null);
@@ -1687,7 +1758,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
       if (!tool) return;
       const pt = getCanvasPoint(e);
 
-      if (tool === 'trendline' && pendingTrendP1Ref.current) {
+      if ((tool === 'trendline' || tool === 'fibonacci') && pendingTrendP1Ref.current) {
         setPendingMousePos(pt);
       } else if (tool === 'freehand' && isFreehandDrawingRef.current) {
         freehandPointsRef.current.push(pt);
@@ -1728,7 +1799,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     }, []);
 
     const handleCanvasMouseLeave = useCallback(() => {
-      if (activeToolRef.current === 'trendline') {
+      if (activeToolRef.current === 'trendline' || activeToolRef.current === 'fibonacci') {
         setPendingMousePos(null);
       }
       if (activeToolRef.current === 'freehand' && isFreehandDrawingRef.current) {
@@ -2152,6 +2223,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
       { key: 'trendline', label: 'Trend Line', icon: '↗', title: 'Trend Line: click two points' },
       { key: 'horizontal', label: 'H. Level', icon: '—', title: 'Horizontal Level: click to place' },
       { key: 'freehand', label: 'Freehand', icon: '✏', title: 'Freehand: click and drag' },
+      { key: 'fibonacci', label: 'Fibonacci', icon: 'φ', title: 'Fibonacci Retracement: click swing low then swing high (or reverse)' },
       { key: 'delete', label: 'Delete', icon: '✕', title: 'Delete: click a drawing to remove it' },
     ];
 
@@ -2811,10 +2883,12 @@ function DrawingDropdown({ tools, activeTool, drawColor, drawings, pendingTrendP
             </button>
           </div>
 
-          {activeTool === 'trendline' && (
+          {(activeTool === 'trendline' || activeTool === 'fibonacci') && (
             <div className="mt-1.5 px-1">
               <span className={`text-[9px] ${pendingTrendP1 ? 'text-blue-400 animate-pulse' : 'text-slate-500'}`}>
-                {pendingTrendP1 ? 'Click second point…' : 'Click first point…'}
+                {pendingTrendP1
+                  ? (activeTool === 'fibonacci' ? 'Click the swing high…' : 'Click second point…')
+                  : (activeTool === 'fibonacci' ? 'Click the swing low…' : 'Click first point…')}
               </span>
             </div>
           )}
