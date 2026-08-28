@@ -143,161 +143,6 @@ const DEFAULT_RATES: Record<string, number> = {
   SRD: 0.028,
 };
 
-const DEFAULT_PAYMENT_METHODS: PaymentMethod[] = [
-  // Germany 🇩🇪
-  { id: 'def-de-1', country: 'Germany', type: 'bank', name: 'Deutsche Bank', account_number: 'DE89 3704 0044 0532 0130 00', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'Direct transfer to Deutsche Bank account via SEPA / Online Banking.', min_deposit: 10, max_deposit: 50000, is_active: true },
-  { id: 'def-de-2', country: 'Germany', type: 'bank', name: 'Commerzbank', account_number: 'DE43 5008 0000 0123 4567 89', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'Direct transfer to Commerzbank account.', min_deposit: 10, max_deposit: 50000, is_active: true },
-  { id: 'def-de-3', country: 'Germany', type: 'bank', name: 'N26 Bank', account_number: 'DE92 1001 1001 2612 3456 78', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'Instant mobile SEPA transfer from your N26 app.', min_deposit: 10, max_deposit: 50000, is_active: true },
-  { id: 'def-de-4', country: 'Germany', type: 'bank', name: 'Sparkasse / Girokonto', account_number: 'DE12 5005 0000 0987 6543 21', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'Sparkasse online banking transfer.', min_deposit: 10, max_deposit: 50000, is_active: true },
-  { id: 'def-de-5', country: 'Germany', type: 'bank', name: 'SEPA Instant Transfer (Eurozone)', account_number: 'DE89 3704 0044 0532 0130 00', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'Instant Euro transfer arriving in seconds.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // United Kingdom 🇬🇧
-  { id: 'def-uk-1', country: 'United Kingdom', type: 'bank', name: 'Barclays Bank UK', account_number: '20-00-00 12345678', account_name: 'Tradiglo UK Ltd', network: null, instructions: 'UK Faster Payments / Online banking transfer.', min_deposit: 10, max_deposit: 50000, is_active: true },
-  { id: 'def-uk-2', country: 'United Kingdom', type: 'bank', name: 'HSBC UK', account_number: '40-05-15 87654321', account_name: 'Tradiglo UK Ltd', network: null, instructions: 'HSBC UK online transfer.', min_deposit: 10, max_deposit: 50000, is_active: true },
-  { id: 'def-uk-3', country: 'United Kingdom', type: 'bank', name: 'Revolut UK / Monzo', account_number: '04-00-04 55667788', account_name: 'Tradiglo UK Ltd', network: null, instructions: 'Instant app transfer via Revolut or Monzo.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // France 🇫🇷
-  { id: 'def-fr-1', country: 'France', type: 'bank', name: 'BNP Paribas', account_number: 'FR76 3000 4000 0100 0123 4567 890', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'Virement bancaire SEPA BNP Paribas.', min_deposit: 10, max_deposit: 50000, is_active: true },
-  { id: 'def-fr-2', country: 'France', type: 'bank', name: 'Crédit Agricole', account_number: 'FR76 1000 2000 0300 0987 6543 210', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'Virement bancaire Crédit Agricole.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Italy 🇮🇹
-  { id: 'def-it-1', country: 'Italy', type: 'bank', name: 'Intesa Sanpaolo', account_number: 'IT60 X030 6905 0000 0001 2345 678', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'Bonifico bancario SEPA Intesa Sanpaolo.', min_deposit: 10, max_deposit: 50000, is_active: true },
-  { id: 'def-it-2', country: 'Italy', type: 'bank', name: 'UniCredit Italia', account_number: 'IT02 Y020 0805 0000 0009 8765 432', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'Bonifico online UniCredit.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Spain 🇪🇸
-  { id: 'def-es-1', country: 'Spain', type: 'bank', name: 'Banco Santander España', account_number: 'ES91 0049 1500 0512 3456 7890', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'Transferencia bancaria Santander / Bizum.', min_deposit: 10, max_deposit: 50000, is_active: true },
-  { id: 'def-es-2', country: 'Spain', type: 'bank', name: 'BBVA España', account_number: 'ES21 0182 2300 0898 7654 3210', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'Transferencia online BBVA.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Netherlands 🇳🇱
-  { id: 'def-nl-1', country: 'Netherlands', type: 'bank', name: 'ING Bank Netherlands', account_number: 'NL91 INGB 0001 2345 67', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'iDEAL / SEPA bankoverschrijving via ING.', min_deposit: 10, max_deposit: 50000, is_active: true },
-  { id: 'def-nl-2', country: 'Netherlands', type: 'bank', name: 'Rabobank / ABN AMRO', account_number: 'NL02 RABO 0300 9876 54', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'Bankoverschrijving via Rabobank of ABN AMRO.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Switzerland 🇨🇭
-  { id: 'def-ch-1', country: 'Switzerland', type: 'bank', name: 'UBS Switzerland', account_number: 'CH93 0023 0230 1234 5678 A', account_name: 'Tradiglo AG', network: null, instructions: 'Banküberweisung / Virement via UBS.', min_deposit: 10, max_deposit: 50000, is_active: true },
-  { id: 'def-ch-2', country: 'Switzerland', type: 'bank', name: 'Credit Suisse / Raiffeisen', account_number: 'CH56 0483 5048 8765 4321 B', account_name: 'Tradiglo AG', network: null, instructions: 'Online banking transfer.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Brazil 🇧🇷
-  { id: 'def-br-1', country: 'Brazil', type: 'bank', name: 'Banco do Brasil / PIX', account_number: 'pix@tradiglo.com', account_name: 'Tradiglo LatAm Ltda', network: null, instructions: 'Transferência instantânea via Chave PIX ou Banco do Brasil.', min_deposit: 10, max_deposit: 50000, is_active: true },
-  { id: 'def-br-2', country: 'Brazil', type: 'bank', name: 'Itaú Unibanco', account_number: 'Agência 1234 Conta 56789-0', account_name: 'Tradiglo LatAm Ltda', network: null, instructions: 'Transferência TED/DOC/PIX Itaú.', min_deposit: 10, max_deposit: 50000, is_active: true },
-  { id: 'def-br-3', country: 'Brazil', type: 'bank', name: 'Nubank / Bradesco', account_number: 'Agência 0001 Conta 98765-4', account_name: 'Tradiglo LatAm Ltda', network: null, instructions: 'Transferência Nubank ou Bradesco.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Argentina 🇦🇷
-  { id: 'def-ar-1', country: 'Argentina', type: 'bank', name: 'Banco de la Nación Argentina', account_number: 'CBU: 0110599520000012345678', account_name: 'Tradiglo LatAm SA', network: null, instructions: 'Transferencia bancaria CBU / Alias.', min_deposit: 10, max_deposit: 50000, is_active: true },
-  { id: 'def-ar-2', country: 'Argentina', type: 'bank', name: 'Mercado Pago / Santander', account_number: 'CVU: 0000003100012345678901', account_name: 'Tradiglo LatAm SA', network: null, instructions: 'Transferencia Mercado Pago o Santander Río.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Colombia 🇨🇴
-  { id: 'def-co-1', country: 'Colombia', type: 'bank', name: 'Bancolombia / PSE', account_number: 'Ahorros: 123-456789-01', account_name: 'Tradiglo Colombia SAS', network: null, instructions: 'Transferencia Bancolombia / PSE / Nequi.', min_deposit: 10, max_deposit: 50000, is_active: true },
-  { id: 'def-co-2', country: 'Colombia', type: 'bank', name: 'Davivienda / Nequi', account_number: 'Ahorros: 987-654321-02', account_name: 'Tradiglo Colombia SAS', network: null, instructions: 'Transferencia Davivienda o Nequi.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Chile 🇨🇱
-  { id: 'def-cl-1', country: 'Chile', type: 'bank', name: 'Banco de Chile / BancoEstado', account_number: 'Cuenta Corriente: 00-123-45678-01', account_name: 'Tradiglo Chile SpA', network: null, instructions: 'Transferencia electrónica Banco de Chile o CuentaRUT.', min_deposit: 10, max_deposit: 50000, is_active: true },
-  { id: 'def-cl-2', country: 'Chile', type: 'bank', name: 'Banco Santander-Chile', account_number: 'Cuenta Corriente: 00-987-65432-02', account_name: 'Tradiglo Chile SpA', network: null, instructions: 'Transferencia online Santander.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Peru 🇵🇪
-  { id: 'def-pe-1', country: 'Peru', type: 'bank', name: 'BCP (Banco de Crédito del Perú) / Yape', account_number: 'Cuenta Soles: 191-12345678-0-91', account_name: 'Tradiglo Perú SAC', network: null, instructions: 'Transferencia BCP o Yape.', min_deposit: 10, max_deposit: 50000, is_active: true },
-  { id: 'def-pe-2', country: 'Peru', type: 'bank', name: 'BBVA Perú / Interbank / Plin', account_number: 'Cuenta Soles: 0011-0123-0100045678', account_name: 'Tradiglo Perú SAC', network: null, instructions: 'Transferencia BBVA, Interbank o Plin.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Portugal 🇵🇹
-  { id: 'def-pt-1', country: 'Portugal', type: 'bank', name: 'Caixa Geral de Depósitos', account_number: 'PT50 0035 0100 0001 2345 6789 0', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'Transferência bancária CGD / MB WAY.', min_deposit: 10, max_deposit: 50000, is_active: true },
-  { id: 'def-pt-2', country: 'Portugal', type: 'bank', name: 'Millennium BCP', account_number: 'PT50 0033 0000 0009 8765 4321 0', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'Transferência online Millennium BCP.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Oman 🇴🇲
-  { id: 'def-om-1', country: 'Oman', type: 'bank', name: 'Bank Muscat', account_number: '0345 0123 4567 001', account_name: 'Tradiglo ME LLC', network: null, instructions: 'Online bank transfer via Bank Muscat.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Cambodia 🇰🇭
-  { id: 'def-kh-1', country: 'Cambodia', type: 'bank', name: 'ABA Bank Cambodia / KHQR', account_number: '001 234 567', account_name: 'Tradiglo Asia Ltd', network: null, instructions: 'ABA Mobile / KHQR bank transfer.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Bolivia 🇧🇴
-  { id: 'def-bo-1', country: 'Bolivia', type: 'bank', name: 'Banco Nacional de Bolivia (BNB)', account_number: 'Cuenta: 4012345678', account_name: 'Tradiglo Bolivia SRL', network: null, instructions: 'Transferencia bancaria BNB o Banco Unión.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Ecuador 🇪🇨
-  { id: 'def-ec-1', country: 'Ecuador', type: 'bank', name: 'Banco Pichincha', account_number: 'Cuenta: 2201234567', account_name: 'Tradiglo Ecuador SA', network: null, instructions: 'Transferencia bancaria Banco Pichincha (USD).', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Paraguay 🇵🇾
-  { id: 'def-py-1', country: 'Paraguay', type: 'bank', name: 'Banco Itaú Paraguay', account_number: 'Cuenta: 1102345678', account_name: 'Tradiglo Paraguay SRL', network: null, instructions: 'Transferencia bancaria Itaú o Banco Continental.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Uruguay 🇺🇾
-  { id: 'def-uy-1', country: 'Uruguay', type: 'bank', name: 'Banco República (BROU)', account_number: 'Cuenta: 001-0012345-0', account_name: 'Tradiglo Uruguay SA', network: null, instructions: 'Transferencia bancaria BROU o Santander Uruguay.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Guyana 🇬🇾
-  { id: 'def-gy-1', country: 'Guyana', type: 'bank', name: 'Republic Bank Guyana', account_number: 'Acct: 070-123-45678', account_name: 'Tradiglo Guyana Inc', network: null, instructions: 'Local bank transfer via Republic Bank.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Suriname 🇸🇷
-  { id: 'def-sr-1', country: 'Suriname', type: 'bank', name: 'De Surinaamsche Bank (DSB)', account_number: 'Acct: 12-345678-01', account_name: 'Tradiglo Suriname NV', network: null, instructions: 'Local bank transfer via DSB.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Luxembourg 🇱🇺
-  { id: 'def-lu-1', country: 'Luxembourg', type: 'bank', name: 'Banque et Caisse d’Épargne (BCEE)', account_number: 'LU28 0019 4006 4475 0000', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'SEPA bank transfer via BCEE.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Liechtenstein 🇱🇮
-  { id: 'def-li-1', country: 'Liechtenstein', type: 'bank', name: 'LGT Bank', account_number: 'LI21 0881 0000 2324 013A A', account_name: 'Tradiglo AG', network: null, instructions: 'Bank transfer via LGT Bank Liechtenstein.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Monaco 🇲🇨
-  { id: 'def-mc-1', country: 'Monaco', type: 'bank', name: 'CMB Monaco', account_number: 'MC58 1122 2000 0101 2345 6789 030', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'Virement bancaire via CMB Monaco.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Malta 🇲🇹
-  { id: 'def-mt-1', country: 'Malta', type: 'bank', name: 'Bank of Valletta (BOV)', account_number: 'MT84 MALT 0110 0001 2345 MTLC AST0 01', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'SEPA transfer via Bank of Valletta.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Cyprus 🇨🇾
-  { id: 'def-cy-1', country: 'Cyprus', type: 'bank', name: 'Bank of Cyprus', account_number: 'CY17 0020 0128 0000 0012 0052 7600', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'SEPA transfer via Bank of Cyprus.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Croatia 🇭🇷
-  { id: 'def-hr-1', country: 'Croatia', type: 'bank', name: 'Zagrebačka banka', account_number: 'HR12 1001 0051 8630 0016 0', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'SEPA transfer via Zagrebačka banka.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Slovenia 🇸🇮
-  { id: 'def-si-1', country: 'Slovenia', type: 'bank', name: 'Nova Ljubljanska Banka (NLB)', account_number: 'SI56 0201 0001 2345 678', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'SEPA transfer via NLB.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Albania 🇦🇱
-  { id: 'def-al-1', country: 'Albania', type: 'bank', name: 'Raiffeisen Bank Albania', account_number: 'AL47 2121 1009 0000 0002 3569 8741', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via Raiffeisen Bank Albania.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Andorra 🇦🇩
-  { id: 'def-ad-1', country: 'Andorra', type: 'bank', name: 'Crèdit Andorrà', account_number: 'AD12 0001 0012 0123 4567 8901', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'Bank transfer via Crèdit Andorrà.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // San Marino 🇸🇲
-  { id: 'def-sm-1', country: 'San Marino', type: 'bank', name: 'Banca di San Marino', account_number: 'SM86 U032 2509 8000 0000 0270 100', account_name: 'Tradiglo Europe Ltd', network: null, instructions: 'Bank transfer via Banca di San Marino.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Bosnia and Herzegovina 🇧🇦
-  { id: 'def-ba-1', country: 'Bosnia and Herzegovina', type: 'bank', name: 'UniCredit Bank d.d.', account_number: 'BA39 1290 0794 0102 8494', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via UniCredit Bank BiH.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Montenegro 🇲🇪
-  { id: 'def-me-1', country: 'Montenegro', type: 'bank', name: 'Crnogorska Komercijalna Banka (CKB)', account_number: 'ME25 5050 0001 2345 6789 51', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via CKB Montenegro.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // North Macedonia 🇲🇰
-  { id: 'def-mk-1', country: 'North Macedonia', type: 'bank', name: 'Stopanska Banka', account_number: 'MK07 2501 2000 0058 984', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via Stopanska Banka.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Serbia 🇷🇸
-  { id: 'def-rs-1', country: 'Serbia', type: 'bank', name: 'Banca Intesa Beograd', account_number: 'RS35 2600 0560 1001 6113 79', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via Banca Intesa Beograd.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Kosovo 🇽🇰
-  { id: 'def-xk-1', country: 'Kosovo', type: 'bank', name: 'ProCredit Bank Kosovo', account_number: 'XK05 1212 0123 4567 8906', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via ProCredit Bank Kosovo.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Czech Republic 🇨🇿
-  { id: 'def-cz-1', country: 'Czech Republic', type: 'bank', name: 'Česká spořitelna', account_number: 'CZ65 0800 0000 1920 0014 5399', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via Česká spořitelna.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Slovakia 🇸🇰
-  { id: 'def-sk-1', country: 'Slovakia', type: 'bank', name: 'Slovenská sporiteľňa', account_number: 'SK31 1200 0000 1987 4263 7541', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'SEPA transfer via Slovenská sporiteľňa.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Hungary 🇭🇺
-  { id: 'def-hu-1', country: 'Hungary', type: 'bank', name: 'OTP Bank', account_number: 'HU42 1177 3016 1111 1018 0000 0000', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via OTP Bank.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Romania 🇷🇴
-  { id: 'def-ro-1', country: 'Romania', type: 'bank', name: 'Banca Transilvania', account_number: 'RO49 AAAA 1B31 0075 9384 0000', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via Banca Transilvania.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Bulgaria 🇧🇬
-  { id: 'def-bg-1', country: 'Bulgaria', type: 'bank', name: 'UniCredit Bulbank', account_number: 'BG80 BNBG 9661 1020 3456 78', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via UniCredit Bulbank.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Ukraine 🇺🇦
-  { id: 'def-ua-1', country: 'Ukraine', type: 'bank', name: 'PrivatBank', account_number: 'UA21 3223 1300 0002 6007 2335 6600 1', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via PrivatBank.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Moldova 🇲🇩
-  { id: 'def-md-1', country: 'Moldova', type: 'bank', name: 'Moldova Agroindbank (MAIB)', account_number: 'MD24 AG00 0000 0022 1234 5678', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via MAIB.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Belarus 🇧🇾
-  { id: 'def-by-1', country: 'Belarus', type: 'bank', name: 'Belarusbank', account_number: 'BY13 NBRB 3600 9000 0000 2Z00 AB00', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via Belarusbank.', min_deposit: 10, max_deposit: 50000, is_active: true },
-
-  // Russia 🇷🇺
-  { id: 'def-ru-1', country: 'Russia', type: 'bank', name: 'Sberbank', account_number: 'Acct: 4081 7810 0000 1234 567', account_name: 'Tradiglo CEE Ltd', network: null, instructions: 'Bank transfer via Sberbank.', min_deposit: 10, max_deposit: 50000, is_active: true },
-];
-
 export default function DepositModal({ isOpen, onClose, userId, isDemo }: DepositModalProps) {
   const [step, setStep] = useState<Step>('country');
   const [methods, setMethods] = useState<PaymentMethod[]>([]);
@@ -331,16 +176,11 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
       supabase.from('users').select('country').eq('id', userId).maybeSingle(),
     ]);
     
-    // Merge database methods with built-in default methods for Europe, South America, etc.
-    const remoteMethods = ((methodsRes.data as PaymentMethod[]) || []).filter(
+    // Payment methods come solely from the database — admin is the single
+    // source of truth (see admin/countries and admin/payment-methods).
+    const mergedMethods = ((methodsRes.data as PaymentMethod[]) || []).filter(
       (method) => method.country?.trim().toLowerCase() !== 'indonesia'
     );
-    const mergedMethods = [...remoteMethods];
-    DEFAULT_PAYMENT_METHODS.forEach((defMethod) => {
-      if (!mergedMethods.some((m) => m.country === defMethod.country && m.name === defMethod.name)) {
-        mergedMethods.push(defMethod);
-      }
-    });
     setMethods(mergedMethods);
 
     const profileCountry = String(profileRes.data?.country || '').trim();
