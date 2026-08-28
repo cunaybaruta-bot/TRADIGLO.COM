@@ -864,9 +864,6 @@ export default function InvestmentPackagePage() {
                               </div>
                             )}
                             <p className="text-sm font-extrabold text-white">{fmtFull(pkg.capital)}</p>
-                            <p className="text-[10px] mt-1 font-medium" style={{ color: currentTier.color }}>
-                              up to {fmt(getProfit(pkg.baseProfit, durationOptions[durationOptions.length - 1]?.factor ?? 3.2))} profit
-                            </p>
                           </button>
                         ))}
                       </div>
