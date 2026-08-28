@@ -274,7 +274,7 @@ export default function UsersPage() {
       <div className="flex items-center justify-between gap-4 flex-wrap">
         <div>
           <h2 className="text-white text-xl font-bold">User Management</h2>
-          <p className="text-slate-400 text-sm mt-1">{users.length} total users</p>
+          <p className="text-slate-400 text-sm mt-1">{loading ? 'Loading users…' : `${users.length} total users`}</p>
         </div>
         <div className="relative">
           <MagnifyingGlassIcon className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -286,15 +286,15 @@ export default function UsersPage() {
       {/* Summary Cards */}
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-[#0a0f1e] rounded-xl p-4 border border-white/8 text-center">
-          <div className="text-white text-2xl font-bold">{users.length}</div>
+          {loading ? <div className="h-8 w-10 mx-auto bg-white/10 rounded animate-pulse" /> : <div className="text-white text-2xl font-bold">{users.length}</div>}
           <div className="text-slate-400 text-xs mt-1">Total Users</div>
         </div>
         <div className="bg-[#0a0f1e] rounded-xl p-4 border border-green-400/20 text-center">
-          <div className="text-green-400 text-2xl font-bold">{activeCount}</div>
+          {loading ? <div className="h-8 w-10 mx-auto bg-green-400/10 rounded animate-pulse" /> : <div className="text-green-400 text-2xl font-bold">{activeCount}</div>}
           <div className="text-slate-400 text-xs mt-1">Active</div>
         </div>
         <div className="bg-[#0a0f1e] rounded-xl p-4 border border-red-400/20 text-center">
-          <div className="text-red-400 text-2xl font-bold">{suspendedCount}</div>
+          {loading ? <div className="h-8 w-10 mx-auto bg-red-400/10 rounded animate-pulse" /> : <div className="text-red-400 text-2xl font-bold">{suspendedCount}</div>}
           <div className="text-slate-400 text-xs mt-1">Suspended</div>
         </div>
       </div>
