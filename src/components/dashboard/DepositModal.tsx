@@ -258,6 +258,35 @@ function getCountryFlag(countryName: string): string {
   return '🌍';
 }
 
+const REGION_ORDER = ['Asia & Pacific', 'Middle East', 'Europe', 'South America', 'Americas', 'Other'] as const;
+
+const REGION_MAP: Record<string, (typeof REGION_ORDER)[number]> = {
+  // Asia & Pacific
+  Malaysia: 'Asia & Pacific', Singapore: 'Asia & Pacific', Thailand: 'Asia & Pacific', Vietnam: 'Asia & Pacific',
+  Japan: 'Asia & Pacific', 'South Korea': 'Asia & Pacific', Philippines: 'Asia & Pacific', China: 'Asia & Pacific',
+  India: 'Asia & Pacific', 'Hong Kong': 'Asia & Pacific', Taiwan: 'Asia & Pacific', Pakistan: 'Asia & Pacific',
+  Bangladesh: 'Asia & Pacific', 'Sri Lanka': 'Asia & Pacific', Myanmar: 'Asia & Pacific', Cambodia: 'Asia & Pacific',
+  Laos: 'Asia & Pacific', Nepal: 'Asia & Pacific', Australia: 'Asia & Pacific', 'New Zealand': 'Asia & Pacific',
+  // Middle East
+  'Saudi Arabia': 'Middle East', UAE: 'Middle East', 'United Arab Emirates': 'Middle East', Qatar: 'Middle East',
+  Kuwait: 'Middle East', Bahrain: 'Middle East', Oman: 'Middle East', Jordan: 'Middle East',
+  // Europe
+  Germany: 'Europe', 'United Kingdom': 'Europe', UK: 'Europe', France: 'Europe', Italy: 'Europe', Spain: 'Europe',
+  Netherlands: 'Europe', Switzerland: 'Europe', Belgium: 'Europe', Austria: 'Europe', Portugal: 'Europe',
+  Ireland: 'Europe', Finland: 'Europe', Sweden: 'Europe', Norway: 'Europe', Denmark: 'Europe', Poland: 'Europe',
+  Greece: 'Europe',
+  // South America
+  Brazil: 'South America', Argentina: 'South America', Colombia: 'South America', Chile: 'South America',
+  Peru: 'South America', Uruguay: 'South America', Paraguay: 'South America', Bolivia: 'South America',
+  Ecuador: 'South America', Venezuela: 'South America',
+  // Americas (North)
+  'United States': 'Americas', USA: 'Americas', Canada: 'Americas', Mexico: 'Americas',
+};
+
+function getRegion(countryName: string): (typeof REGION_ORDER)[number] {
+  return REGION_MAP[countryName] || 'Other';
+}
+
 const DEFAULT_RATES: Record<string, number> = {
   USD: 1.0,
   EUR: 1.08,
@@ -393,6 +422,7 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
   const [bonusSetting, setBonusSetting] = useState<BonusSetting | null>(null);
   const [proofValidating, setProofValidating] = useState(false);
   const [proofValidationError, setProofValidationError] = useState('');
+  const [countrySearch, setCountrySearch] = useState('');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -465,6 +495,7 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
       setProofBase64(null);
       setProofValidating(false);
       setProofValidationError('');
+      setCountrySearch('');
     }
   }, [isOpen, fetchData]);
 
@@ -475,6 +506,13 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
     if (b === 'Global') return -1;
     return a.localeCompare(b);
   });
+  const filteredCountries = countries.filter((c) =>
+    c.toLowerCase().includes(countrySearch.trim().toLowerCase())
+  );
+  const groupedCountries = REGION_ORDER.reduce<Record<string, string[]>>((acc, region) => {
+    acc[region] = filteredCountries.filter((c) => getRegion(c) === region);
+    return acc;
+  }, {});
   const currency = selectedCountry ? (COUNTRY_CURRENCY[selectedCountry] || 'USD') : 'USD';
   const rate: CurrencyRate | { currency_code: string; currency_name: string; rate_to_usd: number } = currencyRates[currency] ?? {
     currency_code: currency,
@@ -731,25 +769,66 @@ export default function DepositModal({ isOpen, onClose, userId, isDemo }: Deposi
               ) : countries.length === 0 ? (
                 <div className="text-center py-12 text-slate-500 text-sm">No active payment methods available</div>
               ) : (
-                <div className="grid grid-cols-2 gap-2">
-                  {countries.map((country) => {
-                    const countryMethods = methods.filter((m) => (m.country || 'Global') === country);
-                    const curr = COUNTRY_CURRENCY[country] || 'USD';
-                    return (
-                      <button
-                        key={country}
-                        onClick={() => handleSelectCountry(country)}
-                        className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/4 border border-white/8 hover:bg-white/8 hover:border-emerald-500/30 transition-all text-left group"
+                <>
+                  {/* Search */}
+                  <div
+                    className="sticky top-0 z-10 -mx-4 px-4 pb-3 mb-1"
+                    style={{ background: 'linear-gradient(135deg, #0d0d0d 0%, #111827 100%)' }}
+                  >
+                    <div className="relative">
+                      <svg
+                        className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 pointer-events-none"
+                        width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
                       >
-                        <span className="text-2xl flex-shrink-0">{getCountryFlag(country)}</span>
-                        <div className="min-w-0">
-                          <div className="text-white text-xs font-semibold truncate">{country}</div>
-                          <div className="text-slate-500 text-[10px]">{curr} · {countryMethods.length} methods</div>
+                        <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+                      </svg>
+                      <input
+                        type="text"
+                        value={countrySearch}
+                        onChange={(e) => setCountrySearch(e.target.value)}
+                        placeholder="Search your country..."
+                        className="w-full bg-white/5 border border-white/10 rounded-xl pl-9 pr-3 py-2.5 text-white text-sm focus:outline-none focus:border-emerald-500/50 transition-colors placeholder:text-slate-500"
+                      />
+                    </div>
+                  </div>
+
+                  {filteredCountries.length === 0 ? (
+                    <div className="text-center py-12 text-slate-500 text-sm">
+                      No countries match &ldquo;{countrySearch}&rdquo;
+                    </div>
+                  ) : (
+                    REGION_ORDER.map((region) => {
+                      const list = groupedCountries[region];
+                      if (!list || list.length === 0) return null;
+                      return (
+                        <div key={region} className="mb-4 last:mb-0">
+                          <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 mb-2 px-0.5">
+                            {region}
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            {list.map((country) => {
+                              const countryMethods = methods.filter((m) => (m.country || 'Global') === country);
+                              const curr = COUNTRY_CURRENCY[country] || 'USD';
+                              return (
+                                <button
+                                  key={country}
+                                  onClick={() => handleSelectCountry(country)}
+                                  className="flex items-center gap-3 px-4 py-3 rounded-xl bg-white/4 border border-white/8 hover:bg-white/8 hover:border-emerald-500/30 hover:-translate-y-0.5 transition-all text-left group"
+                                >
+                                  <span className="text-2xl flex-shrink-0">{getCountryFlag(country)}</span>
+                                  <div className="min-w-0">
+                                    <div className="text-white text-xs font-semibold truncate">{country}</div>
+                                    <div className="text-slate-500 text-[10px]">{curr} · {countryMethods.length} methods</div>
+                                  </div>
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
-                      </button>
-                    );
-                  })}
-                </div>
+                      );
+                    })
+                  )}
+                </>
               )}
             </div>
           )}
