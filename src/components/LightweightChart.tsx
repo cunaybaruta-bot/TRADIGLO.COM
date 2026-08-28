@@ -69,8 +69,11 @@ type ChartType = 'candles' | 'bars' | 'line' | 'area' | 'baseline';
 // app, which keeps its own Inter/Geist Mono typography.
 const TRADINGVIEW_FONT = '-apple-system, BlinkMacSystemFont, "Trebuchet MS", Roboto, Ubuntu, sans-serif';
 
-const UP_COLOR = '#22c55e';
-const DOWN_COLOR = '#ef4444';
+// TradingView's own signature candle palette (teal/coral) — not the generic
+// saturated Tailwind green/red used before. Single source of truth: every
+// series type, drawing color default, and legend text reads from these two.
+const UP_COLOR = '#26a69a';
+const DOWN_COLOR = '#ef5350';
 
 /** Creates and returns the main series for the given chart type, styled to
  * match the app's green/red up/down convention. */
@@ -1060,7 +1063,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         if (existing) { try { seriesRef.current.removePriceLine(existing); } catch {} }
         const priceLine = seriesRef.current.createPriceLine({
           price,
-          color: orderType === 'buy' ? '#22c55e' : '#ef4444',
+          color: orderType === 'buy' ? UP_COLOR : DOWN_COLOR,
           lineWidth: 1,
           lineStyle: LineStyle.Dashed,
           axisLabelVisible: true,
@@ -1096,7 +1099,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
           try {
             const priceLine = seriesRef.current!.createPriceLine({
               price: t.entry_price,
-              color: t.order_type === 'buy' ? '#22c55e' : '#ef4444',
+              color: t.order_type === 'buy' ? UP_COLOR : DOWN_COLOR,
               lineWidth: 1,
               lineStyle: LineStyle.Dashed,
               axisLabelVisible: true,
@@ -1935,7 +1938,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
               try {
                 const priceLine = seriesRef.current!.createPriceLine({
                   price: t.entry_price,
-                  color: t.order_type === 'buy' ? '#22c55e' : '#ef4444',
+                  color: t.order_type === 'buy' ? UP_COLOR : DOWN_COLOR,
                   lineWidth: 1,
                   lineStyle: LineStyle.Dashed,
                   axisLabelVisible: true,
