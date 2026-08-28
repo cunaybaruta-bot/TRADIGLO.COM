@@ -2054,11 +2054,14 @@ export default function DashboardPage() {
             {activeNav === 'trade' && (
               <div className="flex-1 flex flex-col overflow-hidden px-2 sm:px-3 pt-3 pb-2 min-h-0">
 
-                {/* Mobile: collapsed toggle bar — fixed, does not scroll */}
-                <div className="sm:hidden flex-shrink-0">
+                {/* Mobile: toggle bar + card that fills remaining space (mirrors
+                    desktop below) instead of leaving dead space beneath a
+                    collapsed bar. Only stays compact when the user has
+                    explicitly collapsed a non-empty list. */}
+                <div className="sm:hidden flex flex-col min-h-0" style={{ flex: (openTrades.length === 0 || openTradesMobileExpanded) ? '1 1 0%' : '0 0 auto' }}>
                   <button
                     onClick={() => openTrades.length > 0 && setOpenTradesMobileExpanded(prev => !prev)}
-                    className={`w-full flex items-center justify-between px-3 py-2 rounded-xl border transition-all ${openTrades.length > 0 ? 'bg-[#0d0d0d] border-white/10 cursor-pointer' : 'bg-[#0d0d0d] border-white/10 cursor-default'}`}
+                    className={`w-full flex-shrink-0 flex items-center justify-between px-3 py-2 rounded-xl border transition-all ${openTrades.length > 0 ? 'bg-[#0d0d0d] border-white/10 cursor-pointer' : 'bg-[#0d0d0d] border-white/10 cursor-default'}`}
                   >
                     <div className="flex items-center gap-2">
                       <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
@@ -2077,11 +2080,13 @@ export default function DashboardPage() {
                     </div>
                   </button>
 
-                  {/* Expanded content on mobile — scrollable */}
-                  {openTradesMobileExpanded && openTrades.length > 0 && (
-                    <div className="mt-1 bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden flex flex-col" style={{ maxHeight: 'calc(100vh - 420px)' }}>
-                      <div className="px-3 py-2 border-b border-white/10 flex items-center justify-end flex-shrink-0">
-                        {openTrades.length > 0 && (
+                  {/* Body: fills the rest of the card — empty-state placeholder
+                      or the trade list. Only shown when there's nothing to
+                      hide (0 trades) or the user expanded it. */}
+                  {(openTrades.length === 0 || openTradesMobileExpanded) && (
+                    <div className="mt-1 flex-1 bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden flex flex-col min-h-0">
+                      {openTrades.length > 0 && (
+                        <div className="px-3 py-2 border-b border-white/10 flex items-center justify-end flex-shrink-0">
                           <button
                             onClick={() => setShowCloseAllConfirm(true)}
                             disabled={closeAllLoading || closingTradeIds.size > 0}
@@ -2094,58 +2099,64 @@ export default function DashboardPage() {
                             )}
                             {t('dash_close_all')}
                           </button>
-                        )}
-                      </div>
-                      <div className="flex flex-col divide-y divide-white/5 overflow-y-auto">
-                        {openTrades.map((trade) => (
-                          <div key={trade.id} className={`px-3 py-2.5 flex flex-col gap-1.5 transition-all duration-300 ${fadingTradeIds.has(trade.id) ? 'opacity-0' : 'opacity-100'}`}>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                <span className="text-sm font-bold text-white">{trade.asset_symbol}</span>
-                                <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${trade.order_type === 'buy' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
-                                  {trade.order_type.toUpperCase()}
-                                </span>
+                        </div>
+                      )}
+                      <div className="flex-1 overflow-y-auto min-h-0">
+                        {openTrades.length === 0 ? (
+                          <div className="flex items-center justify-center h-full py-8 text-slate-500 text-sm">{t('dash_no_open_trades')}</div>
+                        ) : (
+                          <div className="flex flex-col divide-y divide-white/5">
+                            {openTrades.map((trade) => (
+                              <div key={trade.id} className={`px-3 py-2.5 flex flex-col gap-1.5 transition-all duration-300 ${fadingTradeIds.has(trade.id) ? 'opacity-0' : 'opacity-100'}`}>
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-bold text-white">{trade.asset_symbol}</span>
+                                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${trade.order_type === 'buy' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'}`}>
+                                      {trade.order_type.toUpperCase()}
+                                    </span>
+                                  </div>
+                                  <button
+                                    onClick={() => handleCloseTrade(trade)}
+                                    disabled={closingTradeIds.has(trade.id) || closeAllLoading}
+                                    title="Close trade"
+                                    className="w-7 h-7 flex items-center justify-center rounded bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                  >
+                                    {closingTradeIds.has(trade.id) ? (
+                                      <span className="w-3.5 h-3.5 border border-red-400 border-t-transparent rounded-full animate-spin" />
+                                    ) : (
+                                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7 7 7" /></svg>
+                                    )}
+                                  </button>
+                                </div>
+                                <div className="grid grid-cols-3 gap-1.5 text-xs">
+                                  <div>
+                                    <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{t('dash_col_amount')}</div>
+                                    <div className="text-slate-300 font-medium text-[11px]" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.amount)}</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{t('dash_col_entry')}</div>
+                                    <div className="text-slate-300 font-medium text-[11px]" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.entry_price)}</div>
+                                  </div>
+                                  <div>
+                                    <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{t('dash_col_duration')}</div>
+                                    <CountdownCell tradeId={trade.id} openedAt={trade.opened_at} durationSeconds={trade.duration_seconds} onExpired={handleTradeRowExpired} />
+                                  </div>
+                                </div>
                               </div>
-                              <button
-                                onClick={() => handleCloseTrade(trade)}
-                                disabled={closingTradeIds.has(trade.id) || closeAllLoading}
-                                title="Close trade"
-                                className="w-7 h-7 flex items-center justify-center rounded bg-red-500/15 border border-red-500/30 text-red-400 hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                              >
-                                {closingTradeIds.has(trade.id) ? (
-                                  <span className="w-3.5 h-3.5 border border-red-400 border-t-transparent rounded-full animate-spin" />
-                                ) : (
-                                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7 7 7" /></svg>
-                                )}
-                              </button>
-                            </div>
-                            <div className="grid grid-cols-3 gap-1.5 text-xs">
-                              <div>
-                                <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{t('dash_col_amount')}</div>
-                                <div className="text-slate-300 font-medium text-[11px]" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.amount)}</div>
-                              </div>
-                              <div>
-                                <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{t('dash_col_entry')}</div>
-                                <div className="text-slate-300 font-medium text-[11px]" style={{ fontFamily: "'Geist Mono', ui-monospace, monospace", fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>${formatCurrency(trade.entry_price)}</div>
-                              </div>
-                              <div>
-                                <div className="text-[9px] text-slate-500 uppercase tracking-wider mb-0.5">{t('dash_col_duration')}</div>
-                                <CountdownCell tradeId={trade.id} openedAt={trade.opened_at} durationSeconds={trade.duration_seconds} onExpired={handleTradeRowExpired} />
-                              </div>
-                            </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
                       </div>
                     </div>
                   )}
                 </div>
 
                 {/* Desktop/Tablet: header fixed + trade rows scrollable.
-                    Capped height (not flex-1) so an empty/short trade list
-                    doesn't stretch this card to fill all leftover vertical
-                    space below the chart — it only grows to fit its rows,
-                    up to maxHeight, and scrolls internally beyond that. */}
-                <div className="hidden sm:flex flex-col bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden min-h-0" style={{ maxHeight: 260 }}>
+                    Fills the space reserved for this panel (rather than a
+                    small fixed-height card floating above dead space) — an
+                    empty/short list just centers its placeholder within
+                    that space, and a long list scrolls internally. */}
+                <div className="hidden sm:flex flex-1 flex-col bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden min-h-0">
                   {/* Header — fixed, does not scroll */}
                   <div className="flex-shrink-0 px-3 py-2.5 border-b border-white/10 flex items-center justify-between">
                     <div className="flex items-center gap-2">
@@ -2173,11 +2184,11 @@ export default function DashboardPage() {
                   {/* Trade list — scrollable */}
                   <div className="flex-1 overflow-y-auto overflow-x-auto min-h-0">
                     {tradesLoading && openTrades.length === 0 ? (
-                      <div className="flex items-center justify-center py-6">
+                      <div className="flex items-center justify-center h-full py-6">
                         <span className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
                       </div>
                     ) : openTrades.length === 0 ? (
-                      <div className="text-center py-5 text-slate-500 text-sm">{t('dash_no_open_trades')}</div>
+                      <div className="flex items-center justify-center h-full text-slate-500 text-sm">{t('dash_no_open_trades')}</div>
                     ) : (
                       <table className="w-full text-xs">
                         <thead className="sticky top-0 bg-[#0d0d0d]">
