@@ -2004,9 +2004,9 @@ export default function DashboardPage() {
               <div className="flex-shrink-0 px-2 sm:px-3 pt-3">
                 <button
                   onClick={() => router.push('/dashboard/leaderboard')}
-                  className="w-full relative overflow-hidden rounded-xl border border-yellow-500/30 flex items-center gap-3 px-3 py-2.5 transition-all hover:border-yellow-500/50 group"
+                  className="w-full relative overflow-hidden rounded-xl border border-emerald-500/25 flex items-center gap-3 px-3 py-2.5 transition-all hover:border-emerald-500/40 group"
                   style={{
-                    background: 'linear-gradient(135deg, rgba(234,179,8,0.08) 0%, rgba(0,0,0,0) 60%, rgba(59,130,246,0.05) 100%)',
+                    background: 'linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(0,0,0,0) 70%)',
                   }}
                 >
                   {/* Shimmer */}
@@ -2018,8 +2018,8 @@ export default function DashboardPage() {
                     }}
                   />
                   {/* Trophy icon */}
-                  <div className="w-8 h-8 rounded-lg bg-yellow-500/15 border border-yellow-500/25 flex items-center justify-center flex-shrink-0">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-yellow-400">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center flex-shrink-0">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="text-emerald-400">
                       <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
                       <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
                       <path d="M4 22h16" />
@@ -2032,15 +2032,15 @@ export default function DashboardPage() {
                   <div className="flex-1 min-w-0 text-left">
                     <div className="flex items-center gap-1.5">
                       <span className="text-white text-xs font-bold">Daily Leaderboard</span>
-                      <span className="px-1.5 py-0.5 rounded-full bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 text-[9px] font-bold uppercase tracking-wide">Live</span>
+                      <span className="px-1.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 text-[9px] font-bold uppercase tracking-wide">Live</span>
                     </div>
                     <div className="text-slate-500 text-[10px] mt-0.5">Top 10 traders · Prize pool $72,500 · Resets daily</div>
                   </div>
                   {/* Prize + arrow */}
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <div className="text-right hidden xs:block">
-                      <div className="text-yellow-400 text-xs font-bold">#1 wins</div>
-                      <div className="text-yellow-300 text-sm font-bold">$20K</div>
+                      <div className="text-emerald-400 text-xs font-bold">#1 wins</div>
+                      <div className="text-emerald-300 text-sm font-bold">$20K</div>
                     </div>
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-500 group-hover:text-slate-300 transition-colors">
                       <path d="M9 18l6-6-6-6" />
@@ -2054,11 +2054,11 @@ export default function DashboardPage() {
             {activeNav === 'trade' && (
               <div className="flex-1 flex flex-col overflow-hidden px-2 sm:px-3 pt-3 pb-2 min-h-0">
 
-                {/* Mobile: toggle bar + card that fills remaining space (mirrors
-                    desktop below) instead of leaving dead space beneath a
-                    collapsed bar. Only stays compact when the user has
-                    explicitly collapsed a non-empty list. */}
-                <div className="sm:hidden flex flex-col min-h-0" style={{ flex: (openTrades.length === 0 || openTradesMobileExpanded) ? '1 1 0%' : '0 0 auto' }}>
+                {/* Mobile: toggle bar + capped-height card (mirrors desktop
+                    below) — the chart gets the bigger share of vertical
+                    space, so this panel stays a reasonable fixed size
+                    instead of stretching to fill whatever's left. */}
+                <div className="sm:hidden flex-shrink-0 flex flex-col min-h-0">
                   <button
                     onClick={() => openTrades.length > 0 && setOpenTradesMobileExpanded(prev => !prev)}
                     className={`w-full flex-shrink-0 flex items-center justify-between px-3 py-2 rounded-xl border transition-all ${openTrades.length > 0 ? 'bg-[#0d0d0d] border-white/10 cursor-pointer' : 'bg-[#0d0d0d] border-white/10 cursor-default'}`}
@@ -2084,7 +2084,7 @@ export default function DashboardPage() {
                       or the trade list. Only shown when there's nothing to
                       hide (0 trades) or the user expanded it. */}
                   {(openTrades.length === 0 || openTradesMobileExpanded) && (
-                    <div className="mt-1 flex-1 bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden flex flex-col min-h-0">
+                    <div className="mt-1 bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden flex flex-col min-h-0" style={{ maxHeight: 220 }}>
                       {openTrades.length > 0 && (
                         <div className="px-3 py-2 border-b border-white/10 flex items-center justify-end flex-shrink-0">
                           <button
@@ -2152,11 +2152,12 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Desktop/Tablet: header fixed + trade rows scrollable.
-                    Fills the space reserved for this panel (rather than a
-                    small fixed-height card floating above dead space) — an
-                    empty/short list just centers its placeholder within
-                    that space, and a long list scrolls internally. */}
-                <div className="hidden sm:flex flex-1 flex-col bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden min-h-0">
+                    Capped height — the chart is the primary content and gets
+                    the bigger share of vertical space; this panel stays a
+                    reasonable size and scrolls internally when there are
+                    many trades, rather than competing with the chart for
+                    all the leftover space. */}
+                <div className="hidden sm:flex flex-col bg-[#0d0d0d] border border-white/10 rounded-xl overflow-hidden min-h-0" style={{ maxHeight: 240 }}>
                   {/* Header — fixed, does not scroll */}
                   <div className="flex-shrink-0 px-3 py-2.5 border-b border-white/10 flex items-center justify-between">
                     <div className="flex items-center gap-2">

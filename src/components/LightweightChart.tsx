@@ -102,7 +102,12 @@ const TIMEFRAMES: TimeframeConfig[] = [
 ];
 
 const WS_TIMEOUT_MS = 10_000;
-const CHART_HEIGHT = 380;
+// Chart is the primary content of the trade screen — sized generously per
+// breakpoint so it dominates the layout instead of competing for space with
+// the Open Trades panel below it (which is capped separately).
+const MOBILE_CHART_HEIGHT = 300;
+const TABLET_CHART_HEIGHT = 400;
+const CHART_HEIGHT = 480;
 const INITIAL_HISTORY_LIMIT = 500;
 const HISTORY_PAGE_SIZE = 500;
 const HISTORY_LOAD_THRESHOLD = 25;
@@ -837,9 +842,9 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
     useEffect(() => {
       const updateHeight = () => {
         if (window.innerWidth < 640) {
-          setChartHeight(240);
+          setChartHeight(MOBILE_CHART_HEIGHT);
         } else if (window.innerWidth < 1024) {
-          setChartHeight(320);
+          setChartHeight(TABLET_CHART_HEIGHT);
         } else {
           setChartHeight(CHART_HEIGHT);
         }
@@ -1345,7 +1350,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
         const w = containerRef.current.clientWidth || 800;
         const isMobile = window.innerWidth < 640;
         const isTablet = window.innerWidth < 1024;
-        const chartH = isMobile ? 240 : isTablet ? 320 : CHART_HEIGHT;
+        const chartH = isMobile ? MOBILE_CHART_HEIGHT : isTablet ? TABLET_CHART_HEIGHT : CHART_HEIGHT;
 
         const chart = createChart(containerRef.current, {
           width: w,
@@ -1400,7 +1405,7 @@ const LightweightChart = forwardRef<LightweightChartHandle, LightweightChartProp
             if (cw > 0 && chartRef.current) {
               const isMob = window.innerWidth < 640;
               const isTab = window.innerWidth < 1024;
-              const newH = isMob ? 240 : isTab ? 320 : CHART_HEIGHT;
+              const newH = isMob ? MOBILE_CHART_HEIGHT : isTab ? TABLET_CHART_HEIGHT : CHART_HEIGHT;
               try { chartRef.current.applyOptions({ width: cw, height: newH }); } catch {}
               [rsiChartRef, macdChartRef, stochChartRef, atrChartRef, cciChartRef].forEach(r => {
                 if (r.current) { try { r.current.applyOptions({ width: cw }); } catch {} }
