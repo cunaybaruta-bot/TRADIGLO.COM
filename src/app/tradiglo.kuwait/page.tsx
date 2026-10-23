@@ -244,7 +244,7 @@ function KuwaitHeader({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => voi
     <header dir={dir} className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${scrolled ? 'bg-[#07091F]/90 backdrop-blur-2xl border-b border-[rgba(139,92,246,0.18)] shadow-2xl shadow-black/50' : 'bg-transparent border-b border-transparent'}`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 md:h-20">
-          <a href="/tradiglo.kuwait" className="flex items-center gap-3 group">
+          <a href="/" className="flex items-center gap-3 group">
             <div className="relative flex items-center">
               <div style={{ width: 36, height: 36, background: 'linear-gradient(135deg, #a78bfa, #8B5CF6, #6366F1)', WebkitMaskImage: 'url(/assets/images/chart-646_1024-1773102864640.png)', WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'center', maskImage: 'url(/assets/images/chart-646_1024-1773102864640.png)', maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center', filter: 'drop-shadow(0 0 10px rgba(139,92,246,0.6))' }} />
             </div>
@@ -644,7 +644,7 @@ function KuwaitFooter({ lang }: { lang: Lang }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10">
         <div className="grid md:grid-cols-4 gap-10 mb-12">
           <div className="md:col-span-2 space-y-5">
-            <a href="/tradiglo.kuwait" className="flex items-center gap-3 group w-fit">
+            <a href="/" className="flex items-center gap-3 group w-fit">
               <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #a78bfa, #8B5CF6, #6366F1)', WebkitMaskImage: 'url(/assets/images/chart-646_1024-1773102864640.png)', WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'center', maskImage: 'url(/assets/images/chart-646_1024-1773102864640.png)', maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center', filter: 'drop-shadow(0 0 8px rgba(139,92,246,0.5))' }} />
               <div className="flex flex-col leading-none">
                 <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 800, letterSpacing: '0.08em' }} className="text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-purple-300 to-indigo-300 text-sm tracking-widest uppercase">TRADIGLO</span>

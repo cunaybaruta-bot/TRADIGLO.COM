@@ -43,6 +43,8 @@ export default function Footer() {
       { label: 'Brunei', href: '/tradiglo.brunei' },
       { label: 'Oman', href: '/tradiglo.oman' },
       { label: 'Kuwait', href: '/tradiglo.kuwait' },
+      { label: 'Chile', href: '/tradiglo.chile' },
+      { label: 'Ecuador', href: '/tradiglo.ecuador' },
       { label: 'Japan', href: '/community' },
       { label: 'Korea', href: '/community' },
       { label: 'Tiongkok', href: '/community' },

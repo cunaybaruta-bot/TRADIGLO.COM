@@ -197,7 +197,7 @@ function OmanHeader({ lang, setLang }: { lang: Lang; setLang: (l: Lang) => void 
     <header dir={dir} className="sticky top-0 z-40 w-full" style={{ background: 'rgba(7,9,31,0.95)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(139,92,246,0.15)' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-14 gap-4">
-          <a href="/tradiglo.oman" className="flex items-center gap-2.5 group flex-shrink-0">
+          <a href="/" className="flex items-center gap-2.5 group flex-shrink-0">
             <div style={{ width: 28, height: 28, background: 'linear-gradient(135deg, #a78bfa, #8B5CF6, #6366F1)', WebkitMaskImage: 'url(/assets/images/chart-646_1024-1773102864640.png)', WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'center', maskImage: 'url(/assets/images/chart-646_1024-1773102864640.png)', maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center', filter: 'drop-shadow(0 0 6px rgba(139,92,246,0.5))' }} />
             <div className="flex flex-col leading-none">
               <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 800, letterSpacing: '0.08em' }} className="text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-purple-300 to-indigo-300 text-xs tracking-widest uppercase">TRADIGLO</span>
@@ -596,7 +596,7 @@ function OmanFooter({ lang }: { lang: Lang }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10">
         <div className="grid md:grid-cols-4 gap-10 mb-12">
           <div className="md:col-span-2 space-y-5">
-            <a href="/tradiglo.oman" className="flex items-center gap-3 group w-fit">
+            <a href="/" className="flex items-center gap-3 group w-fit">
               <div style={{ width: 32, height: 32, background: 'linear-gradient(135deg, #a78bfa, #8B5CF6, #6366F1)', WebkitMaskImage: 'url(/assets/images/chart-646_1024-1773102864640.png)', WebkitMaskSize: 'contain', WebkitMaskRepeat: 'no-repeat', WebkitMaskPosition: 'center', maskImage: 'url(/assets/images/chart-646_1024-1773102864640.png)', maskSize: 'contain', maskRepeat: 'no-repeat', maskPosition: 'center', filter: 'drop-shadow(0 0 8px rgba(139,92,246,0.5))' }} />
               <div className="flex flex-col leading-none">
                 <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 800, letterSpacing: '0.08em' }} className="text-transparent bg-clip-text bg-gradient-to-r from-violet-300 via-purple-300 to-indigo-300 text-sm tracking-widest uppercase">TRADIGLO</span>

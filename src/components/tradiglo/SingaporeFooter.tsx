@@ -22,7 +22,7 @@ export default function SingaporeFooter() {
         <div className="mb-12">
           {/* Brand */}
           <div className="space-y-5 max-w-sm">
-            <a href="/tradiglo.singapore" className="flex items-center gap-3 group w-fit">
+            <a href="/" className="flex items-center gap-3 group w-fit">
               <div
                 style={{
                   width: 32,

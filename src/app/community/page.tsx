@@ -67,6 +67,22 @@ const tradigloCountries: TradigloCountry[] = [
     desc: 'إشارات الفوركس والذهب والعملات المشفرة للمتداولين في الكويت عبر قناة واتساب وأدمن واتساب.',
   },
   {
+    name: 'Tradiglo Chile',
+    flag: '🇨🇱',
+    lang: 'Español',
+    href: '/tradiglo.chile',
+    status: 'active',
+    desc: 'Señales de Forex, Oro y Cripto para traders de Chile por WhatsApp y Telegram.',
+  },
+  {
+    name: 'Tradiglo Ecuador',
+    flag: '🇪🇨',
+    lang: 'Español',
+    href: '/tradiglo.ecuador',
+    status: 'active',
+    desc: 'Señales de Forex, Oro y Cripto para traders de Ecuador por WhatsApp y Telegram.',
+  },
+  {
     name: 'Tradiglo Japan',
     flag: '🇯🇵',
     lang: '日本語',
@@ -94,19 +110,19 @@ const tradigloCountries: TradigloCountry[] = [
 
 export default function CommunityPage() {
   return (
-    <div className="min-h-screen text-white" style={{ background: '#07091F' }}>
+    <div className="min-h-screen text-white bg-black">
       <div className="max-w-5xl mx-auto px-6 py-16">
         <div className="mb-8">
           <Link href="/" className="text-gray-400 hover:text-white text-sm transition-colors">← Back to Home</Link>
         </div>
 
-        <h1 className="text-3xl font-bold mb-3 text-transparent bg-clip-text bg-gradient-to-r from-violet-400 via-indigo-400 to-blue-400">Community</h1>
-        <p className="text-gray-400 text-lg mb-12">Sertai komuniti Tradiglo di seluruh rantau. Pilih negara anda untuk mula.</p>
+        <h1 className="text-3xl font-bold mb-3 w-fit text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-blue-500 to-purple-500">Community</h1>
+        <p className="text-slate-400 text-lg mb-12">Sertai komuniti Tradiglo di seluruh rantau. Pilih negara anda untuk mula.</p>
 
         {/* Tradiglo by Country */}
         <section>
           <div className="flex items-center gap-3 mb-6">
-            <div className="w-1 h-6 rounded-full bg-gradient-to-b from-indigo-400 to-violet-500" />
+            <div className="w-1 h-6 rounded-full bg-gradient-to-b from-blue-500 to-purple-500" />
             <h2 className="text-lg font-semibold text-white">Tradiglo by Country</h2>
             <span className="text-xs text-gray-500 border border-white/10 px-2.5 py-1 rounded-full" style={{ background: 'rgba(255,255,255,0.04)' }}>Regional Communities</span>
           </div>
@@ -119,8 +135,8 @@ export default function CommunityPage() {
                     href={country.href}
                     className="flex flex-col gap-3 p-5 rounded-xl transition-all duration-200 block"
                     style={{
-                      border: '1px solid rgba(139,92,246,0.35)',
-                      background: 'rgba(139,92,246,0.07)',
+                      border: '1px solid rgba(59,130,246,0.35)',
+                      background: 'rgba(59,130,246,0.08)',
                     }}
                   >
                     <div className="flex items-center justify-between">
@@ -128,7 +144,7 @@ export default function CommunityPage() {
                         <span className="text-2xl">{country.flag}</span>
                         <div>
                           <h3 className="text-white font-semibold text-sm">{country.name}</h3>
-                          <p className="text-xs" style={{ color: '#A78BFA' }}>{country.lang}</p>
+                          <p className="text-xs text-blue-400">{country.lang}</p>
                         </div>
                       </div>
                       <span className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full" style={{ color: '#4ade80', background: 'rgba(74,222,128,0.1)', border: '1px solid rgba(74,222,128,0.2)' }}>
@@ -136,8 +152,8 @@ export default function CommunityPage() {
                         Live
                       </span>
                     </div>
-                    <p className="text-xs leading-relaxed" style={{ color: '#A6A8C3' }}>{country.desc}</p>
-                    <span className="text-xs font-medium transition-colors" style={{ color: '#A78BFA' }}>
+                    <p className="text-xs leading-relaxed text-slate-400">{country.desc}</p>
+                    <span className="text-xs font-medium transition-colors text-blue-400 group-hover:text-blue-300">
                       Lawati halaman →
                     </span>
                   </Link>
